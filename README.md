@@ -5,29 +5,31 @@
 </p>
 
 <p align="center">
-  <strong>An elegant, private, offline Text-to-Speech reader for the GNOME desktop.</strong>
+  <strong>An elegant, private, offline Text-to-Speech reader for Windows and Linux (GNOME, KDE Plasma & more).</strong>
 </p>
 
 <p align="center">
-  <a href="https://flathub.org/apps/im.zackarious.ReadAloud"><img src="https://dl.flathub.org/assets/badges/flathub-badge-en.svg" alt="Download on Flathub" height="48"></a>
+  <a href="https://github.com/Zackarious/ReadAloud/releases/latest"><img src="https://img.shields.io/badge/Windows-Download%20Installer%20(.exe)-blue?logo=windows&logoColor=white" alt="Windows Download" height="32"></a>
+  <a href="https://flathub.org/apps/im.zackarious.ReadAloud"><img src="https://dl.flathub.org/assets/badges/flathub-badge-en.svg" alt="Download on Flathub" height="32"></a>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-1.8.10-blue.svg" alt="Version 1.8.10"/>
   <img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg" alt="GPL-3.0 License"/>
+  <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-0078D6.svg" alt="Platform: Windows & Linux"/>
+  <img src="https://img.shields.io/badge/Desktop-GNOME%20%7C%20KDE%20Plasma%20%7C%20Windows-green.svg" alt="Desktop: GNOME, KDE Plasma & Windows"/>
   <img src="https://img.shields.io/badge/GTK-4-green.svg" alt="GTK 4"/>
   <img src="https://img.shields.io/badge/Libadwaita-1.0-purple.svg" alt="Libadwaita"/>
   <img src="https://img.shields.io/badge/Engine-Piper%20TTS-orange.svg" alt="Piper TTS"/>
-  <img src="https://img.shields.io/badge/Platform-Linux-lightgrey.svg" alt="Linux"/>
 </p>
 
 ---
 
-**ReadAloud** is a modern, privacy-focused text-to-speech desktop application crafted with GTK4 and Libadwaita. Powered by the high-performance Piper neural speech engine, ReadAloud transforms your written text into rich, natural-sounding audio across diverse voices, accents, pitches, and speeds—complete with synchronized word highlighting, seamless playback controls, preset demos, and voice-optimized audio export.
+**ReadAloud** is a modern, privacy-focused, cross-platform text-to-speech desktop application crafted with GTK4 and Libadwaita. Built for both **Microsoft Windows (10/11)** and **Linux** (including **GNOME**, **KDE Plasma**, Cinnamon, MATE, and XFCE), ReadAloud delivers a native, responsive experience across operating systems and desktop environments. Powered by the high-performance Piper neural speech engine, ReadAloud transforms your written text into rich, natural-sounding audio across diverse voices, accents, pitches, and speeds—complete with synchronized word highlighting, intelligent sentence segmentation, seamless playback controls, preset demos, and voice-optimized audio export.
 
 Unlike conventional cloud-based voice assistants and commercial speech tools, ReadAloud is completely offline. Every syllable is synthesized locally on your own machine using efficient on-device neural models. ReadAloud requires zero internet connection, contains no telemetry, and transmits no data to external servers or third parties. Your personal documents, confidential manuscripts, private notes, and generated recordings remain entirely private, secure, and under your absolute personal control at all times.
 
-ReadAloud is proud to be free and open-source software, licensed under the GNU General Public License v3.0. There are no subscriptions, no recurring fees, no locked paywalls, and no artificial daily usage limits. Transparent by design, the entire source code is openly audited and maintained by the community on GitHub at [https://github.com/Zackarious/ReadAloud](https://github.com/Zackarious/ReadAloud). Whether you are proofreading drafts, studying long articles, creating audio notes, or enhancing accessibility, ReadAloud offers an ethical, dependable, and always-accessible speech companion that forever puts your personal privacy and freedom first.
+ReadAloud is proud to be free and open-source software, licensed under the GNU General Public License v3.0. There are no subscriptions, no recurring fees, no locked paywalls, and no artificial daily usage limits. Transparent by design, the entire source code is openly audited and maintained by the community on GitHub at [https://github.com/Zackarious/ReadAloud](https://github.com/Zackarious/ReadAloud). Whether you are proofreading drafts, studying long articles, creating audio notes, or enhancing accessibility on Windows or Linux, ReadAloud offers an ethical, dependable, and always-accessible speech companion that forever puts your personal privacy and freedom first.
 
 ---
 
@@ -41,11 +43,12 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ## ✨ Features
 
+- 🖥️ **Cross-Platform & Multi-Desktop**: Native experience on **Microsoft Windows (10/11)** and **Linux** across **GNOME**, **KDE Plasma**, Cinnamon, MATE, and XFCE with adaptive dark/light system theme matching.
 - 🔒 **100% Offline & Private**: Text synthesis is performed entirely on your machine using local ONNX neural models.
-- 🗣️ **Bundled Neural Voices**: Includes 26 natural-sounding English voices across **English (UK)** and **English (US)** with multiple voice actors, qualities (low, medium, high), and accents.
+- 🗣️ **Bundled Neural Voices**: Includes 35 natural-sounding voices across English and multilingual accents with multiple voice actors, qualities (low, medium, high), and styles.
+- 📄 **Intelligent Sentence Segmentation**: Smoothly un-breaks PDF and multi-column line breaks, stitches hyphenated words, and safeguards abbreviations and numerical values from premature pauses.
 - ⭐ **Preset Voice Demos ("Run Demo")**: Instant 1-click test presets showcasing diverse neural voices, speeds, and pitches with overwrite warning protection.
 - ⏳ **Loading HUD with Real-Time Countdown**: Sleek translucent HUD displaying a progress bar and estimated time remaining countdown during speech generation.
-- 🎨 **Adaptive GNOME HIG Interface**: Built using Libadwaita with seamless support for light and dark system color schemes.
 - 🎯 **Real-Time Word Highlighting**: Synchronized word-by-word visual highlight that smoothly tracks speech progression and automatically keeps text in view.
 - ⏯️ **Complete Playback Controls**: Dedicated Play, Pause, Resume, and Stop controls with clean audio state transitions.
 - 📍 **Read from Cursor or Selection**: Start listening from your current cursor location or selected text passage without needing to start from the beginning.
@@ -95,11 +98,28 @@ Multi-speaker models can quickly switch between different speakers, but the qual
 
 ---
 
-## 📦 Installation
+## 📦 Installation & Downloads
 
-### From Flathub (Recommended)
+### 🪟 Microsoft Windows (10 / 11)
 
-ReadAloud is available as a sandboxed Flatpak on Flathub:
+Download the official standalone Windows releases from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
+
+- 💽 **Windows Setup Installer (`.exe`)**: [`ReadAloud-1.8.10-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/latest)
+  - Full Inno Setup 6 installer with desktop and Start Menu integration.
+  - Pre-bundles all 35 neural voices, GTK4/Libadwaita runtimes, and MSVC 2022 libraries.
+  - Supports silent enterprise installation: `ReadAloud-1.8.10-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
+- 💼 **Windows Portable Edition (`.zip`)**: [`ReadAloud-1.8.10-Windows-Portable-x64.zip`](https://github.com/Zackarious/ReadAloud/releases/latest)
+  - Zero-installation standalone folder. Extract anywhere (including USB thumb drives) and double-click `ReadAloud.exe`.
+
+---
+
+### 🐧 Linux (GNOME, KDE Plasma, XFCE & All Environments)
+
+ReadAloud is fully supported across all Linux distributions and desktop environments, with adaptive header controls and native color scheme integration.
+
+#### From Flathub (Recommended)
+
+ReadAloud is available as a verified sandboxed Flatpak on Flathub:
 
 ```bash
 # Install ReadAloud
