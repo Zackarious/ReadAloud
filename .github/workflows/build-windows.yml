@@ -52,9 +52,8 @@ jobs:
           python3 -m pip install --break-system-packages lameenc || true
           python3 -c "import urllib.request, zipfile, sysconfig, io; url = 'https://files.pythonhosted.org/packages/e5/e9/9112e9322aef42bff80e805915b61cdcbb82577589bdd42dedf73a5ff9b6/onnxruntime-1.31.1-cp314-cp314-win_amd64.whl'; sp = sysconfig.get_paths()['purelib']; r = urllib.request.urlopen(url); zipfile.ZipFile(io.BytesIO(r.read())).extractall(sp)"
           python3 -c "import urllib.request, zipfile, sysconfig, io; url = 'https://files.pythonhosted.org/packages/12/9c/c736d1961cf9ce0655278731b9430df41892ca2ded7b09dabcb340612158/piper_tts-1.8.0-cp39-abi3-win_amd64.whl'; sp = sysconfig.get_paths()['purelib']; r = urllib.request.urlopen(url); zipfile.ZipFile(io.BytesIO(r.read())).extractall(sp)"
-          cp /ucrt64/bin/libpython3.14.dll /ucrt64/bin/python314.dll || true
-          cp /ucrt64/bin/libpython3.dll /ucrt64/bin/python3.dll || true
-          python3 -c "import pathlib, shutil, sysconfig; sp = pathlib.Path(sysconfig.get_paths()['purelib']); [shutil.copy(f, '/ucrt64/bin/') for f in (sp / 'onnxruntime' / 'capi').glob('*.dll')]"
+          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; (b/'libpython3.14.dll').is_file() and shutil.copy(b/'libpython3.14.dll', b/'python314.dll'); (b/'libpython3.dll').is_file() and shutil.copy(b/'libpython3.dll', b/'python3.dll')"
+          python3 -c "import pathlib, shutil, sys, sysconfig; bin_dir = pathlib.Path(sys.executable).parent; sp = pathlib.Path(sysconfig.get_paths()['purelib']); [shutil.copy(f, bin_dir) for f in (sp / 'onnxruntime' / 'capi').glob('*.dll')]"
           python3 -c "import onnxruntime; print('ONNX Runtime successfully loaded from', onnxruntime.__file__)"
           python3 -c "import piper; print('Piper successfully loaded from', piper.__file__)"
 
@@ -67,9 +66,7 @@ jobs:
           mkdir -p dist/ReadAloud/_internal/piper
           python3 -c "import piper, pathlib, shutil; src = pathlib.Path(piper.__file__).parent / 'espeak-ng-data'; dst = pathlib.Path('dist/ReadAloud/_internal/piper/espeak-ng-data'); shutil.copytree(src, dst, dirs_exist_ok=True) if src.is_dir() else None"
           python3 -c "import piper, pathlib, shutil; src = pathlib.Path(piper.__file__).parent / 'tashkeel'; dst = pathlib.Path('dist/ReadAloud/_internal/piper/tashkeel'); shutil.copytree(src, dst, dirs_exist_ok=True) if src.is_dir() else None"
-          cp /ucrt64/bin/python314.dll dist/ReadAloud/_internal/ || true
-          cp /ucrt64/bin/python3.dll dist/ReadAloud/_internal/ || true
-          cp /ucrt64/bin/onnxruntime*.dll dist/ReadAloud/_internal/ || true
+          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud/_internal'); [shutil.copy(b/name, target) for name in ['python314.dll', 'python3.dll', 'onnxruntime.dll', 'onnxruntime_providers_shared.dll'] if (b/name).is_file()]"
 
       - name: Copy MSVC 2022 CRT Libraries
         shell: cmd
