@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/im/zackarious/ReadAloud">
+    <file preprocess="xml-stripblanks">window.ui</file>
+    <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
+  </gresource>
+  <gresource prefix="/im/zackarious/ReadAloud/icons/scalable/actions">
+    <file preprocess="xml-stripblanks" alias="im.zackarious.ReadAloud.pitch-symbolic.svg">icons/im.zackarious.ReadAloud.pitch-symbolic.svg</file>
+    <file preprocess="xml-stripblanks" alias="im.zackarious.ReadAloud.speed-symbolic.svg">icons/im.zackarious.ReadAloud.speed-symbolic.svg</file>
+    <file preprocess="xml-stripblanks" alias="media-floppy-symbolic.svg">icons/media-floppy-symbolic.svg</file>
+    <file preprocess="xml-stripblanks" alias="im.zackarious.ReadAloud.rewind-15-symbolic.svg">icons/im.zackarious.ReadAloud.rewind-15-symbolic.svg</file>
+    <file preprocess="xml-stripblanks" alias="im.zackarious.ReadAloud.forward-15-symbolic.svg">icons/im.zackarious.ReadAloud.forward-15-symbolic.svg</file>
+    <file preprocess="xml-stripblanks" alias="im.zackarious.ReadAloud.stop-symbolic.svg">icons/im.zackarious.ReadAloud.stop-symbolic.svg</file>
+  </gresource>
+  <gresource prefix="/im/zackarious/ReadAloud/images">
+    <file alias="wikipedia-logo.png">icons/wikipedia-logo.png</file>
+  </gresource>
+</gresources>

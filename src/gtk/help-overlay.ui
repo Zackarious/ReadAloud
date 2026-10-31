@@ -17,8 +17,120 @@
             </child>
             <child>
               <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Toggle Maximize</property>
+                <property name="action-name">win.toggle-maximize</property>
+                <property name="accelerator">F11</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
                 <property name="title" translatable="yes" context="shortcut window">Quit</property>
                 <property name="action-name">app.quit</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkShortcutsGroup">
+            <property name="title" translatable="yes" context="shortcut window">File</property>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Open Text File</property>
+                <property name="action-name">win.open</property>
+                <property name="accelerator">&lt;primary&gt;o</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Save Text to File</property>
+                <property name="action-name">win.save-as</property>
+                <property name="accelerator">&lt;primary&gt;s</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Save Audio to File</property>
+                <property name="action-name">win.save-audio-as</property>
+                <property name="accelerator">&lt;primary&gt;e</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkShortcutsGroup">
+            <property name="title" translatable="yes" context="shortcut window">Playback</property>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Play / Pause</property>
+                <property name="action-name">win.play-audio</property>
+                <property name="accelerator">&lt;primary&gt;p F5</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Stop Playback</property>
+                <property name="accelerator">Escape</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Increase Speed (+0.1)</property>
+                <property name="action-name">win.speed-up</property>
+                <property name="accelerator">&lt;primary&gt;Up</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Decrease Speed (-0.1)</property>
+                <property name="action-name">win.speed-down</property>
+                <property name="accelerator">&lt;primary&gt;Down</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkShortcutsGroup">
+            <property name="title" translatable="yes" context="shortcut window">Text View</property>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Zoom In</property>
+                <property name="accelerator">&lt;primary&gt;plus &lt;primary&gt;equal</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Zoom Out</property>
+                <property name="accelerator">&lt;primary&gt;minus</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Reset Zoom</property>
+                <property name="accelerator">&lt;primary&gt;0</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Unwrap / Reflow Text</property>
+                <property name="action-name">win.unwrap-text</property>
+                <property name="accelerator">&lt;primary&gt;&lt;shift&gt;w &lt;primary&gt;j</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkShortcutsGroup">
+            <property name="title" translatable="yes" context="shortcut window">Tabs</property>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">New Tab</property>
+                <property name="accelerator">&lt;primary&gt;t</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="title" translatable="yes" context="shortcut window">Close Tab</property>
+                <property name="accelerator">&lt;primary&gt;w</property>
               </object>
             </child>
           </object>

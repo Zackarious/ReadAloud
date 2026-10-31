@@ -1,0 +1,33 @@
+{
+    "id": "im.zackarious.ReadAloud",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "50",
+    "sdk": "org.gnome.Sdk",
+    "command": "readaloud",
+    "appstream-compose": false,
+    "finish-args": [
+        "--share=network",
+        "--share=ipc",
+        "--socket=fallback-x11",
+        "--device=dri",
+        "--socket=wayland",
+        "--socket=pulseaudio"
+    ],
+    "cleanup-commands": [
+        "python3 -m compileall --invalidation-mode=unchecked-hash /app"
+    ],
+    "modules": [
+        "pip-dependencies.json",
+        {
+            "name": "readaloud",
+            "builddir": true,
+            "buildsystem": "meson",
+            "sources": [
+                {
+                    "type": "dir",
+                    "path": "."
+                }
+            ]
+        }
+    ]
+}

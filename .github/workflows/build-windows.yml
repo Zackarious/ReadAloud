@@ -1,0 +1,95 @@
+name: Build Windows Executable
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSYS2 (MINGW64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-python-pip
+            mingw-w64-x86_64-python-gobject
+            mingw-w64-x86_64-gtk4
+            mingw-w64-x86_64-libadwaita
+            mingw-w64-x86_64-gstreamer
+            mingw-w64-x86_64-gst-plugins-base
+            mingw-w64-x86_64-gst-plugins-good
+            mingw-w64-x86_64-glib2
+
+      - name: Compile GLib GResource Bundle
+        run: |
+          glib-compile-resources src/readaloud.gresource.xml --target=src/readaloud.gresource --sourcedir=src
+
+      - name: Install Python Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements-windows.txt
+
+      - name: Build Standalone Executable with PyInstaller
+        run: |
+          pyinstaller build_windows/ReadAloud.spec --clean -y
+
+      - name: Post-Build Runtime Enforcement
+        run: |
+          mkdir -p dist/ReadAloud/_internal/piper
+          python3 -c "import piper, pathlib, shutil; src = pathlib.Path(piper.__file__).parent / 'espeak-ng-data'; dst = pathlib.Path('dist/ReadAloud/_internal/piper/espeak-ng-data'); shutil.copytree(src, dst, dirs_exist_ok=True) if src.is_dir() else None"
+          python3 -c "import piper, pathlib, shutil; src = pathlib.Path(piper.__file__).parent / 'tashkeel'; dst = pathlib.Path('dist/ReadAloud/_internal/piper/tashkeel'); shutil.copytree(src, dst, dirs_exist_ok=True) if src.is_dir() else None"
+
+      - name: Copy MSVC 2022 CRT Libraries
+        shell: cmd
+        run: |
+          for %%D in (msvcp140.dll msvcp140_1.dll vcruntime140.dll vcruntime140_1.dll) do (
+            if exist "%SystemRoot%\System32\%%D" (
+              copy /Y "%SystemRoot%\System32\%%D" "dist\ReadAloud\_internal\"
+            )
+          )
+
+      - name: Bundle Voice Models
+        run: |
+          mkdir -p dist/ReadAloud/models
+          cp -r models/* dist/ReadAloud/models/
+          if [ -f "build_windows/ReadAloud.ico" ]; then
+            cp "build_windows/ReadAloud.ico" "dist/ReadAloud/"
+          fi
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup -y
+
+      - name: Compile Windows Installer (.exe)
+        shell: cmd
+        run: |
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build_windows\installer.iss
+
+      - name: Create Portable Zip Package
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist\ReadAloud -DestinationPath dist\ReadAloud-1.8.10-Windows-Portable-x64.zip
+
+      - name: Upload Standalone Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ReadAloud-Windows-x64
+          path: |
+            dist/ReadAloud-1.8.10-Windows-Portable-x64.zip
+            dist/ReadAloud-1.8.10-Windows-Setup-x64.exe

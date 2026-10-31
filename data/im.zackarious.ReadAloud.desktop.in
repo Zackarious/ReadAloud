@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=ReadAloud
+Exec=readaloud
+Icon=im.zackarious.ReadAloud
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Player;
+Comment=Offline Text-to-Speech Reader
+Keywords=text-to-speech;tts;speech;piper;reader;accessibility;

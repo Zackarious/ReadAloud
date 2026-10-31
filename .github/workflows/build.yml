@@ -1,0 +1,40 @@
+name: Build and Validate
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          meson \
+          ninja-build \
+          desktop-file-utils \
+          appstream \
+          libglib2.0-dev \
+          libadwaita-1-dev \
+          gettext \
+          python3
+
+    - name: Setup Meson
+      run: meson setup build
+
+    - name: Compile and Test
+      run: ninja -C build test
+
+    - name: Validate Desktop File
+      run: desktop-file-validate data/im.zackarious.ReadAloud.desktop
+
+    - name: Validate AppStream Metainfo
+      run: appstreamcli validate --no-net data/im.zackarious.ReadAloud.metainfo.xml.in

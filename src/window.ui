@@ -2,26 +2,48 @@
 <interface>
   <requires lib="gtk" version="4.0"/>
   <requires lib="Adw" version="1.0"/>
-  <template class="ParoluWindow" parent="AdwApplicationWindow">
+  <template class="ReadAloudWindow" parent="AdwApplicationWindow">
     <property name="default-width">700</property>
-    <property name="default-height">300</property>
-    <property name="title">Parolu</property>
+    <property name="default-height">700</property>
+    <property name="title">ReadAloud</property>
     <property name="content">
       <object class="AdwToolbarView">
         <child type="top">
           <object class="AdwHeaderBar" id="header_bar">
+            <property name="decoration-layout">:minimize,maximize,close</property>
             <child type="start">
               <object class="GtkButton" id="open_button">
-                <property name="icon-name">document-open</property>
+                <property name="width-request">48</property>
+                <property name="height-request">42</property>
+                <property name="icon-name">im.zackarious.ReadAloud.folder-open</property>
                 <property name="tooltip-text" translatable="yes">Open Text File</property>
                 <property name="action-name">win.open</property>
               </object>
             </child>
-            <child>
+            <child type="start">
+              <object class="GtkButton" id="wiki_button">
+                <property name="width-request">48</property>
+                <property name="height-request">42</property>
+                <property name="tooltip-text" translatable="yes">Import from Wikipedia</property>
+                <property name="action-name">win.import-wikipedia</property>
+              </object>
+            </child>
+            <child type="start">
               <object class="GtkButton" id="save_text_button">
-                <property name="icon-name">document-save</property>
+                <property name="width-request">48</property>
+                <property name="height-request">42</property>
+                <property name="icon-name">im.zackarious.ReadAloud.disk</property>
                 <property name="tooltip-text" translatable="yes">Save Text to File</property>
                 <property name="action-name">win.save-as</property>
+              </object>
+            </child>
+            <child type="start">
+              <object class="GtkButton" id="unwrap_button">
+                <property name="width-request">48</property>
+                <property name="height-request">42</property>
+                <property name="icon-name">format-justify-fill-symbolic</property>
+                <property name="tooltip-text" translatable="yes">Unwrap / Reflow Text (Ctrl+Shift+W)</property>
+                <property name="action-name">win.unwrap-text</property>
               </object>
             </child>
             <child type="end">
@@ -32,7 +54,21 @@
                 <property name="menu-model">primary_menu</property>
               </object>
             </child>
+          </object>
+        </child>
 
+        <child type="top">
+          <object class="AdwTabBar" id="tab_bar">
+            <property name="view">tab_view</property>
+            <property name="autohide">false</property>
+            <property name="expand-tabs">false</property>
+            <property name="end-action-widget">
+              <object class="GtkButton" id="new_tab_button">
+                <property name="icon-name">list-add-symbolic</property>
+                <property name="tooltip-text" translatable="yes">New Tab (Ctrl+T)</property>
+                <property name="action-name">win.new-tab</property>
+              </object>
+            </property>
           </object>
         </child>
 
@@ -62,6 +98,7 @@
                     <property name="model">
                       <object class="GtkStringList">
                         <items>
+                          <item>English</item>
                           <item>Esperanto</item>
                           <item>Deutsch</item>
                           <item>Italiano</item>
@@ -78,150 +115,34 @@
                     <property name="enable-search">false</property>
                     <property name="tooltip-text" translatable="yes">Choose Voice</property>
                     <property name="valign">GTK_ALIGN_CENTER</property>
-                    <signal name="notify::selected" handler="on_voice_download_selected"/>
                   </object>
                 </child>
-
               </object>
             </child>
 
             <child>
-              <object class="GtkBox">
+              <object class="GtkBox" id="speed_button">
                 <property name="orientation">0</property>
                 <property name="margin-top">12</property>
                 <property name="margin-bottom">12</property>
                 <property name="margin-start">12</property>
                 <property name="margin-end">12</property>
                 <property name="halign">GTK_ALIGN_START</property>
-                <property name="spacing">6</property>
                 <child>
-                  <object class="GtkMenuButton" id="pitch_button">
-                    <property name="tooltip-text" translatable="yes">Adjust Pitch</property>
-                    <property name="valign">GTK_ALIGN_CENTER</property>
-
-                    <style>
-                      <class name="flat"/>
-                      <class name="numeric"/>
-                    </style>
-
-                    <child>
-                      <object class="GtkBox">
-                        <child>
-                          <object class="GtkImage">
-                            <property name="icon-name">im.bernard.Parolu.pitch-symbolic</property>
-                            <property name="margin-end">6</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="label_1">
-                            <property name="label">× 1.0</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-
-                    <property name="popover">
-                      <object class="GtkPopover">
-                        <child>
-                          <object class="GtkBox">
-                            <property name="margin-start">4</property>
-                            <property name="margin-end">4</property>
-                            <property name="margin-top">4</property>
-                            <property name="margin-bottom">4</property>
-                            <property name="spacing">4</property>
-                            <property name="orientation">1</property>
-                            <child>
-                              <object class="GtkScale" id="pitch_chooser">
-                                <property name="height-request">200</property>
-                                <property name="vexpand">true</property>
-                                <property name="orientation">1</property>
-                                <property name="inverted">true</property>
-                                <property name="adjustment">
-                                  <object class="GtkAdjustment" id="adjustment_1">
-                                    <property name="step-increment">0.5</property>
-                                    <property name="lower">0.4</property>
-                                    <property name="upper">1.8</property>
-                                    <property name="value">1</property>
-                                  </object>
-                                </property>
-                                <signal name="change-value" handler="scale_change_value_cb"/>
-                                <marks>
-                                  <mark value="0.5" position="bottom"></mark>
-                                  <mark value="1" position="bottom"></mark>
-                                  <mark value="2" position="bottom"></mark>
-                                  <mark value="3" position="bottom"></mark>
-                                </marks>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                    </property>
-
-                  </object>
-                </child>
-
-                <child>
-                  <object class="GtkMenuButton" id="speed_button">
+                  <object class="GtkDropDown" id="speed_chooser">
+                    <property name="enable-search">false</property>
                     <property name="tooltip-text" translatable="yes">Adjust Speed</property>
                     <property name="valign">GTK_ALIGN_CENTER</property>
-
-                    <style>
-                      <class name="flat"/>
-                      <class name="numeric"/>
-                    </style>
-
-                    <child>
-                      <object class="GtkBox">
-                        <child>
-                          <object class="GtkImage">
-                            <property name="icon-name">im.bernard.Parolu.speed-symbolic</property>
-                            <property name="margin-end">6</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="label_2">
-                            <property name="label">× 1.0</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-
-                    <property name="popover">
-                      <object class="GtkPopover">
-                        <child>
-                          <object class="GtkBox">
-                            <property name="margin-start">4</property>
-                            <property name="margin-end">4</property>
-                            <property name="margin-top">4</property>
-                            <property name="margin-bottom">4</property>
-                            <property name="spacing">4</property>
-                            <property name="orientation">1</property>
-                            <child>
-                              <object class="GtkScale" id="speed_chooser">
-                                <property name="height-request">200</property>
-                                <property name="vexpand">true</property>
-                                <property name="orientation">1</property>
-                                <property name="inverted">true</property>
-                                <property name="adjustment">
-                                  <object class="GtkAdjustment" id="adjustment_2">
-                                    <property name="step-increment">0.5</property>
-                                    <property name="lower">0.1</property>
-                                    <property name="upper">2</property>
-                                    <property name="value">1</property>
-                                  </object>
-                                </property>
-                                <signal name="change-value" handler="scale_change_value_cb"/>
-                                <marks>
-                                  <mark value="0.5" position="bottom"></mark>
-                                  <mark value="1" position="bottom"></mark>
-                                  <mark value="2" position="bottom"></mark>
-                                  <mark value="3" position="bottom"></mark>
-                                </marks>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
+                    <property name="selected">2</property>
+                    <property name="model">
+                      <object class="GtkStringList">
+                        <items>
+                          <item>Slower</item>
+                          <item>Slow</item>
+                          <item>Normal</item>
+                          <item>Fast</item>
+                          <item>Super Fast</item>
+                        </items>
                       </object>
                     </property>
                   </object>
@@ -240,48 +161,108 @@
                 <property name="hexpand">true</property>
                 <property name="spacing">6</property>
 
-                <child type="end">
-                  <object class="GtkButton" id="save_button">
-                    <property name="tooltip-text" translatable="yes">Save Audio to File</property>
-                    <property name="icon-name">document-save</property>
+                <child>
+                  <object class="GtkButton" id="read_button">
+                    <property name="width-request">48</property>
+                    <property name="height-request">42</property>
+                    <property name="icon-name">media-playback-start-symbolic</property>
+                    <property name="tooltip-text" translatable="yes">Read Text</property>
                     <property name="valign">GTK_ALIGN_CENTER</property>
+                    <signal name="clicked" handler="read_text" swapped="no"/>
                   </object>
                 </child>
 
                 <child>
-                  <object class="GtkButton" id="read_button">
-                    <property name="icon-name">media-playback-start-symbolic</property>
-                    <property name="tooltip-text" translatable="yes">Read Text</property>
-                    <signal name="clicked" handler="read_text" swapped="no"/>
+                  <object class="GtkButton" id="pause_button">
+                    <property name="width-request">48</property>
+                    <property name="height-request">42</property>
+                    <property name="icon-name">media-playback-pause-symbolic</property>
+                    <property name="tooltip-text" translatable="yes">Pause</property>
+                    <property name="sensitive">false</property>
+                    <property name="valign">GTK_ALIGN_CENTER</property>
+                  </object>
+                </child>
+
+                <child type="end">
+                  <object class="GtkButton" id="save_button">
+                    <property name="width-request">48</property>
+                    <property name="height-request">42</property>
+                    <property name="tooltip-text" translatable="yes">Save Audio to File</property>
+                    <property name="icon-name">im.zackarious.ReadAloud.cd</property>
+                    <property name="valign">GTK_ALIGN_CENTER</property>
                   </object>
                 </child>
 
               </object>
             </child>
 
-
-
           </object>
         </child>
 
         <property name="content">
-          <object class="GtkScrolledWindow">
+          <object class="GtkOverlay" id="editor_overlay">
             <property name="hexpand">true</property>
             <property name="vexpand">true</property>
-            <property name="margin-top">0</property>
-            <property name="margin-bottom">0</property>
-            <property name="margin-start">0</property>
-            <property name="margin-end">0</property>
             <property name="child">
-              <object class="GtkTextView" id="main_text_view">
-                <property name="top-margin">6</property>
-                <property name="bottom-margin">12</property>
-                <property name="left-margin">12</property>
-                <property name="right-margin">12</property>
-                <property name="wrap-mode">GTK_WRAP_WORD_CHAR</property>
+              <object class="AdwTabView" id="tab_view">
+                <property name="hexpand">true</property>
+                <property name="vexpand">true</property>
               </object>
             </property>
+            <child type="overlay">
+              <object class="GtkBox" id="drop_placeholder">
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">14</property>
+                <property name="can-target">true</property>
+                <style>
+                  <class name="drag-drop-card"/>
+                </style>
+                <child>
+                  <object class="GtkImage">
+                    <property name="icon-name">document-open-symbolic</property>
+                    <property name="pixel-size">64</property>
+                    <style>
+                      <class name="accent"/>
+                      <class name="drag-drop-icon"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">Drag &amp; Drop Files Here</property>
+                    <style>
+                      <class name="title-2"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">Drop .txt, .md, .pdf, or .epub files into ReadAloud to import them into tabs.
 
+• Compatible with TXT, MD, PDF, and EPUB documents
+• Extracts book chapters into separate tabs
+• Strip brackets, pipes, hashes, or stars on import</property>
+                    <property name="justify">center</property>
+                    <property name="wrap">true</property>
+                    <style>
+                      <class name="body"/>
+                      <class name="drag-drop-desc"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">Or click anywhere and start typing to begin</property>
+                    <style>
+                      <class name="caption"/>
+                      <class name="dim-label"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
         </property>
       </object>
@@ -289,15 +270,93 @@
   </template>
   <menu id="primary_menu">
     <section>
+      <submenu>
+        <attribute name="label" translatable="yes">Tools</attribute>
+        <section>
+          <item>
+            <attribute name="label" translatable="yes">Remove ( ) Brackets</attribute>
+            <attribute name="action">win.remove-round-brackets</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Remove [ ] Brackets</attribute>
+            <attribute name="action">win.remove-square-brackets</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Remove | Pipes</attribute>
+            <attribute name="action">win.remove-pipe-brackets</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Remove # Hashes</attribute>
+            <attribute name="action">win.remove-hashes</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Remove * Stars (Asterisks)</attribute>
+            <attribute name="action">win.remove-stars</attribute>
+          </item>
+        </section>
+        <section>
+          <item>
+            <attribute name="label" translatable="yes">Remove All</attribute>
+            <attribute name="action">win.remove-all-tags</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">_Unwrap / Reflow Text</attribute>
+            <attribute name="action">win.unwrap-text</attribute>
+          </item>
+        </section>
+        <section>
+          <item>
+            <attribute name="label" translatable="yes">Import Wikipedia Article…</attribute>
+            <attribute name="action">win.import-wikipedia</attribute>
+          </item>
+        </section>
+        <section>
+          <submenu>
+            <attribute name="label" translatable="yes">Preset Voice Demos</attribute>
+            <item>
+              <attribute name="label" translatable="yes">Demo 1 — English (UK) Jenny</attribute>
+              <attribute name="action">win.load-demo</attribute>
+              <attribute name="target">demo_1</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">Demo 2 — English (UK) Northern English Male</attribute>
+              <attribute name="action">win.load-demo</attribute>
+              <attribute name="target">demo_2</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">Demo 3 — English (US) Joe</attribute>
+              <attribute name="action">win.load-demo</attribute>
+              <attribute name="target">demo_3</attribute>
+            </item>
+          </submenu>
+        </section>
+      </submenu>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Minimize Window</attribute>
+        <attribute name="action">win.minimize</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Ma_ximize Window</attribute>
+        <attribute name="action">win.toggle-maximize</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Toggle Floating Bubble</attribute>
+        <attribute name="action">app.toggle-bubble</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Change Logs</attribute>
+        <attribute name="action">app.changelog</attribute>
+      </item>
       <item>
         <attribute name="label" translatable="yes">_Keyboard Shortcuts</attribute>
         <attribute name="action">win.show-help-overlay</attribute>
       </item>
       <item>
-        <attribute name="label" translatable="yes">_About Parolu</attribute>
+        <attribute name="label" translatable="yes">_About ReadAloud</attribute>
         <attribute name="action">app.about</attribute>
       </item>
     </section>
   </menu>
 </interface>
-

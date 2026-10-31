@@ -1,9 +1,10 @@
+# Desktop file configuration
 desktop_file = i18n.merge_file(
-        input: 'im.bernard.Parolu.desktop.in',
-       output: 'im.bernard.Parolu.desktop',
-         type: 'desktop',
-       po_dir: '../po',
-      install: true,
+  input: 'im.zackarious.ReadAloud.desktop.in',
+  output: 'im.zackarious.ReadAloud.desktop',
+  type: 'desktop',
+  po_dir: '../po',
+  install: true,
   install_dir: get_option('datadir') / 'applications'
 )
 
@@ -12,25 +13,30 @@ if desktop_utils.found()
   test('Validate desktop file', desktop_utils, args: [desktop_file])
 endif
 
+# AppStream metadata installation
 appstream_file = i18n.merge_file(
-        input: 'im.bernard.Parolu.metainfo.xml.in',
-       output: 'im.bernard.Parolu.metainfo.xml',
-       po_dir: '../po',
-      install: true,
+  input: 'im.zackarious.ReadAloud.metainfo.xml.in',
+  output: 'im.zackarious.ReadAloud.metainfo.xml',
+  po_dir: '../po',
+  install: true,
   install_dir: get_option('datadir') / 'metainfo'
 )
 
-install_data('im.bernard.Parolu.gschema.xml',
+appstreamcli = find_program('appstreamcli', required: false)
+if appstreamcli.found()
+  test('Validate appstream file', appstreamcli, args: ['validate', '--no-net', appstream_file])
+endif
+
+# Process icon theme assets
+subdir('icons')
+
+# Install GSettings schema file properly
+install_data(
+  'im.zackarious.ReadAloud.gschema.xml',
   install_dir: get_option('datadir') / 'glib-2.0' / 'schemas'
 )
 
-appstreamcli = find_program('appstreamcli', required: false, disabler: true)
-test('Validate appstream file', appstreamcli,
-     args: ['validate', '--no-net', '--explain', appstream_file])
-
-compile_schemas = find_program('glib-compile-schemas', required: false, disabler: true)
-test('Validate schema file',
-     compile_schemas,
-     args: ['--strict', '--dry-run', meson.current_source_dir()])
-
-subdir('icons')
+# Compile schemas locally for testing environments
+gnome.compile_schemas(
+  build_by_default: true
+)
