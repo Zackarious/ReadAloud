@@ -30,6 +30,12 @@ repo_root = spec_root.parent
 
 # Extra datas and binaries collection
 extra_binaries = []
+if sys.platform == "win32":
+    for py_dll in ["python314.dll", "python3.dll", "onnxruntime.dll", "onnxruntime_providers_shared.dll"]:
+        for cand in [Path(r"C:\msys64\ucrt64\bin") / py_dll, Path(sys.executable).parent / py_dll]:
+            if cand.is_file():
+                extra_binaries.append((str(cand), "."))
+                break
 extra_datas = [
     (str(repo_root / "data" / "icons"), "data/icons"),
 ]
