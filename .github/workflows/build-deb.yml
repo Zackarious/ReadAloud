@@ -41,6 +41,7 @@ jobs:
             libespeak-ng-dev \
             lame \
             appstream \
+            desktop-file-utils \
             dpkg-dev \
             python3-venv \
             python3-pip
