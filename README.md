@@ -157,11 +157,11 @@ Multi-speaker models can quickly switch between different speakers, but the qual
 
 Download the official standalone Windows releases from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
 
-- 💽 **Windows Setup Installer (`.exe`)**: [`ReadAloud-1.8.10-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- 💽 **Windows Setup Installer**: Download [`ReadAloud-1.8.10-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.10-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then double-click the `.exe` to run the setup wizard.
   - Full Inno Setup 6 installer with desktop and Start Menu integration.
   - Pre-bundles all 35 neural voices, GTK4/Libadwaita runtimes, and MSVC 2022 libraries.
   - Supports silent enterprise installation: `ReadAloud-1.8.10-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
-- 💼 **Windows Portable Edition (`.7z`)**: [`ReadAloud-1.8.10-Windows-Portable-x64.7z`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- 💼 **Windows Portable Edition**: Download [`ReadAloud-1.8.10-Windows-Portable-x64.7z.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.10-Windows-Portable-x64.7z.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip or WinRAR.
   - Zero-installation standalone folder. Extract anywhere (including USB thumb drives) and double-click `ReadAloud.exe`.
 
 ---
