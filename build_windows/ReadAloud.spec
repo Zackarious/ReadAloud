@@ -8,14 +8,20 @@ import os
 import sys
 from pathlib import Path
 
-# Register MSYS2 MinGW64 DLL directory if available on Windows
+# Register MSYS2 MinGW64 / UCRT64 DLL directory if available on Windows
 if sys.platform == "win32":
-    mingw_bin = Path(r"C:\msys64\mingw64\bin")
-    if mingw_bin.is_dir() and hasattr(os, "add_dll_directory"):
-        try:
-            os.add_dll_directory(str(mingw_bin))
-        except Exception:
-            pass
+    prefix = os.environ.get("MINGW_PREFIX")
+    candidates = []
+    if prefix:
+        candidates.append(Path(prefix) / "bin")
+    candidates.extend([Path(r"C:\msys64\ucrt64\bin"), Path(r"C:\msys64\mingw64\bin")])
+    for mingw_bin in candidates:
+        if mingw_bin.is_dir() and hasattr(os, "add_dll_directory"):
+            try:
+                os.add_dll_directory(str(mingw_bin))
+                break
+            except Exception:
+                pass
 
 block_cipher = None
 
@@ -69,6 +75,8 @@ if not msys_prefix and sys.platform == "win32":
     py_dir = Path(sys.executable).parent
     if (py_dir.parent / "share" / "glib-2.0" / "schemas").is_dir():
         msys_prefix = str(py_dir.parent)
+    elif Path(r"C:\msys64\ucrt64").is_dir():
+        msys_prefix = r"C:\msys64\ucrt64"
     elif Path(r"C:\msys64\mingw64").is_dir():
         msys_prefix = r"C:\msys64\mingw64"
 
