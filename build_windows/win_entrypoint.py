@@ -123,13 +123,6 @@ try:
     import numpy
     import onnxruntime
     import piper
-    from piper import espeakbridge
-    if _espeak_data_path:
-        try:
-            espeakbridge.initialize(_espeak_data_path)
-            print("[win_entrypoint] espeakbridge pre-initialized successfully")
-        except Exception as e:
-            print(f"[win_entrypoint] espeakbridge pre-init notice: {e}")
     import sounddevice
     import lameenc
 except Exception as e:

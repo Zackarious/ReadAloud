@@ -42,6 +42,7 @@ jobs:
             mingw-w64-ucrt-x86_64-python-requests
             mingw-w64-ucrt-x86_64-python-beautifulsoup4
             mingw-w64-ucrt-x86_64-onnxruntime
+            mingw-w64-ucrt-x86_64-espeak-ng
             mingw-w64-ucrt-x86_64-lame
             mingw-w64-ucrt-x86_64-pyinstaller
 
@@ -66,10 +67,11 @@ jobs:
           python3 -m pip install --break-system-packages pypdf pathvalidate
           python3 -m pip install --break-system-packages lameenc || true
           python3 -c "import urllib.request, zipfile, sysconfig, io; url = 'https://files.pythonhosted.org/packages/12/9c/c736d1961cf9ce0655278731b9430df41892ca2ded7b09dabcb340612158/piper_tts-1.8.0-cp39-abi3-win_amd64.whl'; sp = sysconfig.get_paths()['purelib']; r = urllib.request.urlopen(url); zipfile.ZipFile(io.BytesIO(r.read())).extractall(sp)"
-          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; (b/'libpython3.14.dll').is_file() and shutil.copy(b/'libpython3.14.dll', b/'python3.dll')"
+          # Replace MSVC espeakbridge.pyd with pure ctypes implementation
+          python3 -c "import pathlib, shutil, sysconfig; sp = pathlib.Path(sysconfig.get_paths()['purelib']); (sp / 'piper' / 'espeakbridge.pyd').unlink(missing_ok=True); (sp / 'piper' / 'espeakbridge.pyi').unlink(missing_ok=True); shutil.copy('build_windows/espeakbridge_shim/espeakbridge.py', sp / 'piper' / 'espeakbridge.py')"
           python3 -c "import shutil, sysconfig; sp = sysconfig.get_paths()['purelib']; shutil.copytree('build_windows/onnxruntime_shim', sp + '/onnxruntime', dirs_exist_ok=True)"
           python3 -c "import onnxruntime; print('ONNX Runtime successfully loaded from', onnxruntime.__file__)"
-          python3 -c "import piper; print('Piper successfully loaded from', piper.__file__)"
+          python3 -c "import piper; from piper import espeakbridge; print('Piper and pure ctypes espeakbridge successfully loaded from', espeakbridge.__file__)"
 
       - name: Build Standalone Executable with PyInstaller
         run: |
@@ -83,7 +85,7 @@ jobs:
           piper_dir = pathlib.Path(piper.__file__).parent
           src_espeak = piper_dir / 'espeak-ng-data'
           src_tashkeel = piper_dir / 'tashkeel'
-          src_bridge = piper_dir / 'espeakbridge.pyd'
+          shim_bridge = pathlib.Path('build_windows/espeakbridge_shim/espeakbridge.py')
           
           # Targets for espeak-ng-data
           espeak_targets = [
@@ -109,17 +111,23 @@ jobs:
               if src_tashkeel.is_dir():
                   shutil.copytree(src_tashkeel, target, dirs_exist_ok=True)
           
-          # Targets for espeakbridge.pyd
+          # Targets for pure ctypes espeakbridge.py
           bridge_targets = [
-              pathlib.Path('dist/ReadAloud/_internal/piper/espeakbridge.pyd'),
-              pathlib.Path('dist/ReadAloud/piper/espeakbridge.pyd'),
-              pathlib.Path('dist/ReadAloud/_internal/espeakbridge.pyd'),
-              pathlib.Path('dist/ReadAloud/espeakbridge.pyd'),
+              pathlib.Path('dist/ReadAloud/_internal/piper/espeakbridge.py'),
+              pathlib.Path('dist/ReadAloud/piper/espeakbridge.py'),
           ]
           for target in bridge_targets:
               target.parent.mkdir(parents=True, exist_ok=True)
-              if src_bridge.is_file():
-                  shutil.copy2(src_bridge, target)
+              if shim_bridge.is_file():
+                  shutil.copy2(shim_bridge, target)
+          
+          # Remove any incompatible MSVC C-extension binaries
+          for bad_pyd in pathlib.Path('dist/ReadAloud').rglob('espeakbridge.pyd'):
+              bad_pyd.unlink(missing_ok=True)
+              print(f'Removed incompatible binary: {bad_pyd}')
+          for bad_py3 in pathlib.Path('dist/ReadAloud').glob('python3.dll'):
+              bad_py3.unlink(missing_ok=True)
+              print(f'Removed artificial forwarder: {bad_py3}')
           
           # Strict verification of critical phonemization files
           for target in espeak_targets:
@@ -127,8 +135,8 @@ jobs:
               assert phontab.is_file(), f'CRITICAL: {phontab} missing!'
               print(f'Verified phoneme table: {phontab}')
           "
-          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud/_internal'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; [shutil.copy(f, target) for f in b.glob('*absl*.dll')]; (b/'python3.dll').is_file() and shutil.copy(b/'python3.dll', target)"
-          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; [shutil.copy(f, target) for f in b.glob('*absl*.dll')]; (b/'python3.dll').is_file() and shutil.copy(b/'python3.dll', target)"
+          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud/_internal'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; [shutil.copy(f, target) for f in b.glob('*absl*.dll')]; [shutil.copy(f, target) for f in b.glob('*espeak*.dll')]"
+          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; [shutil.copy(f, target) for f in b.glob('*absl*.dll')]; [shutil.copy(f, target) for f in b.glob('*espeak*.dll')]"
 
       - name: Copy MSVC 2022 CRT Libraries
         shell: cmd

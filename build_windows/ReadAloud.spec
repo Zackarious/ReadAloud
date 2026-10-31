@@ -44,7 +44,7 @@ if sys.platform == "win32":
         search_dirs.append(Path(prefix) / "bin")
     search_dirs.extend([Path(r"C:\msys64\ucrt64\bin"), Path(r"C:\msys64\mingw64\bin")])
 
-    for py_dll in ["python314.dll", "python3.dll", "onnxruntime.dll", "onnxruntime_providers_shared.dll"]:
+    for py_dll in ["python314.dll", "onnxruntime.dll", "onnxruntime_providers_shared.dll", "libespeak-ng.dll"]:
         for d in search_dirs:
             cand = d / py_dll
             if cand.is_file():
@@ -67,7 +67,7 @@ for candidate in gresource_candidates:
         extra_datas.append((str(candidate), "_internal"))
         break
 
-# Harvest piper / espeak-ng-data, tashkeel, and espeakbridge extension
+# Harvest piper / espeak-ng-data, tashkeel, and pure ctypes espeakbridge
 try:
     import piper
     piper_path = Path(piper.__file__).resolve().parent
@@ -79,12 +79,10 @@ try:
     if tashkeel_data.is_dir():
         extra_datas.append((str(tashkeel_data), "piper/tashkeel"))
         extra_datas.append((str(tashkeel_data), "tashkeel"))
-    # Collect espeakbridge native extension
-    for esp_cand in [piper_path / "espeakbridge.pyd", piper_path.parent / "piper" / "espeakbridge.pyd"]:
-        if esp_cand.is_file():
-            extra_binaries.append((str(esp_cand), "."))
-            extra_binaries.append((str(esp_cand), "piper"))
-            break
+    # Bundle pure ctypes espeakbridge replacement
+    espeak_shim = repo_root / "build_windows" / "espeakbridge_shim" / "espeakbridge.py"
+    if espeak_shim.is_file():
+        extra_datas.append((str(espeak_shim), "piper"))
 except Exception as e:
     print(f"Notice: piper spec harvest: {e}")
 
