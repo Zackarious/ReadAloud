@@ -67,20 +67,26 @@ for candidate in gresource_candidates:
         extra_datas.append((str(candidate), "_internal"))
         break
 
-# Harvest piper / espeak-ng-data and tashkeel
+# Harvest piper / espeak-ng-data, tashkeel, and espeakbridge extension
 try:
     import piper
     piper_path = Path(piper.__file__).resolve().parent
     espeak_data = piper_path / "espeak-ng-data"
     if espeak_data.is_dir():
         extra_datas.append((str(espeak_data), "piper/espeak-ng-data"))
-        extra_datas.append((str(espeak_data), "_internal/piper/espeak-ng-data"))
+        extra_datas.append((str(espeak_data), "espeak-ng-data"))
     tashkeel_data = piper_path / "tashkeel"
     if tashkeel_data.is_dir():
         extra_datas.append((str(tashkeel_data), "piper/tashkeel"))
-        extra_datas.append((str(tashkeel_data), "_internal/piper/tashkeel"))
-except Exception:
-    pass
+        extra_datas.append((str(tashkeel_data), "tashkeel"))
+    # Collect espeakbridge native extension
+    for esp_cand in [piper_path / "espeakbridge.pyd", piper_path.parent / "piper" / "espeakbridge.pyd"]:
+        if esp_cand.is_file():
+            extra_binaries.append((str(esp_cand), "."))
+            extra_binaries.append((str(esp_cand), "piper"))
+            break
+except Exception as e:
+    print(f"Notice: piper spec harvest: {e}")
 
 # Harvest PyGObject gi package tree from site-packages
 try:
@@ -158,6 +164,12 @@ a = Analysis(
         'gi.repository.Gst',
         'piper',
         'piper.voice',
+        'piper.espeakbridge',
+        'piper.phonemize_espeak',
+        'piper.tashkeel',
+        'piper.phoneme_ids',
+        'piper.config',
+        'piper.const',
         'piper_phonemize',
         'onnxruntime',
         'sounddevice',

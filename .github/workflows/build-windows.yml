@@ -78,9 +78,55 @@ jobs:
 
       - name: Post-Build Runtime Enforcement
         run: |
-          mkdir -p dist/ReadAloud/_internal/piper
-          python3 -c "import piper, pathlib, shutil; src = pathlib.Path(piper.__file__).parent / 'espeak-ng-data'; dst = pathlib.Path('dist/ReadAloud/_internal/piper/espeak-ng-data'); shutil.copytree(src, dst, dirs_exist_ok=True) if src.is_dir() else None"
-          python3 -c "import piper, pathlib, shutil; src = pathlib.Path(piper.__file__).parent / 'tashkeel'; dst = pathlib.Path('dist/ReadAloud/_internal/piper/tashkeel'); shutil.copytree(src, dst, dirs_exist_ok=True) if src.is_dir() else None"
+          python3 -c "
+          import piper, pathlib, shutil, sys
+          piper_dir = pathlib.Path(piper.__file__).parent
+          src_espeak = piper_dir / 'espeak-ng-data'
+          src_tashkeel = piper_dir / 'tashkeel'
+          src_bridge = piper_dir / 'espeakbridge.pyd'
+          
+          # Targets for espeak-ng-data
+          espeak_targets = [
+              pathlib.Path('dist/ReadAloud/_internal/piper/espeak-ng-data'),
+              pathlib.Path('dist/ReadAloud/piper/espeak-ng-data'),
+              pathlib.Path('dist/ReadAloud/_internal/espeak-ng-data'),
+              pathlib.Path('dist/ReadAloud/espeak-ng-data'),
+          ]
+          for target in espeak_targets:
+              target.parent.mkdir(parents=True, exist_ok=True)
+              if src_espeak.is_dir():
+                  shutil.copytree(src_espeak, target, dirs_exist_ok=True)
+          
+          # Targets for tashkeel
+          tashkeel_targets = [
+              pathlib.Path('dist/ReadAloud/_internal/piper/tashkeel'),
+              pathlib.Path('dist/ReadAloud/piper/tashkeel'),
+              pathlib.Path('dist/ReadAloud/_internal/tashkeel'),
+              pathlib.Path('dist/ReadAloud/tashkeel'),
+          ]
+          for target in tashkeel_targets:
+              target.parent.mkdir(parents=True, exist_ok=True)
+              if src_tashkeel.is_dir():
+                  shutil.copytree(src_tashkeel, target, dirs_exist_ok=True)
+          
+          # Targets for espeakbridge.pyd
+          bridge_targets = [
+              pathlib.Path('dist/ReadAloud/_internal/piper/espeakbridge.pyd'),
+              pathlib.Path('dist/ReadAloud/piper/espeakbridge.pyd'),
+              pathlib.Path('dist/ReadAloud/_internal/espeakbridge.pyd'),
+              pathlib.Path('dist/ReadAloud/espeakbridge.pyd'),
+          ]
+          for target in bridge_targets:
+              target.parent.mkdir(parents=True, exist_ok=True)
+              if src_bridge.is_file():
+                  shutil.copy2(src_bridge, target)
+          
+          # Strict verification of critical phonemization files
+          for target in espeak_targets:
+              phontab = target / 'phontab'
+              assert phontab.is_file(), f'CRITICAL: {phontab} missing!'
+              print(f'Verified phoneme table: {phontab}')
+          "
           python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud/_internal'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; [shutil.copy(f, target) for f in b.glob('*absl*.dll')]; (b/'python3.dll').is_file() and shutil.copy(b/'python3.dll', target)"
           python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; [shutil.copy(f, target) for f in b.glob('*absl*.dll')]; (b/'python3.dll').is_file() and shutil.copy(b/'python3.dll', target)"
 

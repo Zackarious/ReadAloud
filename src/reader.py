@@ -367,8 +367,28 @@ class Reader():
             espeak_dir = get_espeak_data_dir()
             load_kwargs = {}
             if espeak_dir:
-                load_kwargs["espeak_data_dir"] = str(espeak_dir)
+                short_espeak = str(espeak_dir)
+                if sys.platform == "win32":
+                    try:
+                        import ctypes
+                        from ctypes import wintypes
+                        _buf = ctypes.create_unicode_buffer(1024)
+                        if ctypes.windll.kernel32.GetShortPathNameW(str(espeak_dir), _buf, 1024) > 0:
+                            short_espeak = _buf.value
+                    except Exception:
+                        pass
+                os.environ["ESPEAK_DATA_PATH"] = short_espeak
+                os.environ["ESPEAK_DATA_DIR"] = short_espeak
+                load_kwargs["espeak_data_dir"] = short_espeak
 
+            # Enforce pre-flight validation to avoid silent native C exit(1) crash
+            if not espeak_dir or not (Path(espeak_dir) / "phontab").is_file():
+                raise RuntimeError(
+                    f"Phonemization data (espeak-ng-data) not found at: {espeak_dir}. "
+                    "Synthesis aborted safely."
+                )
+
+            print(f"[Reader] Loading Piper voice: {voice_id} (espeak_data_dir={load_kwargs.get('espeak_data_dir')})")
             self.p = PiperVoice.load(model_path, config_path, **load_kwargs)
 
             if getattr(self, '_cancelled', False) or getattr(self, '_stopped', False):

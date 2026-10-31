@@ -155,31 +155,58 @@ def get_espeak_data_dir() -> Path | None:
     Locates the espeak-ng-data phoneme table directory required by Piper phonemization.
     Prevents silent native C exit(1) when loading Piper models.
     """
+    # 1. Environment variable override
+    for env_var in ("ESPEAK_DATA_PATH", "ESPEAK_DATA_DIR"):
+        env_val = os.environ.get(env_var)
+        if env_val:
+            p = Path(env_val)
+            if p.is_dir() and (p / "phontab").is_file():
+                return p
+            # In case env_val points to parent directory containing espeak-ng-data
+            if (p / "espeak-ng-data" / "phontab").is_file():
+                return p / "espeak-ng-data"
+
     candidates = []
 
     if is_frozen():
-        candidates.append(get_app_dir() / "piper" / "espeak-ng-data")
-        candidates.append(get_app_dir() / "_internal" / "piper" / "espeak-ng-data")
-        candidates.append(get_executable_dir() / "_internal" / "piper" / "espeak-ng-data")
-        candidates.append(get_executable_dir() / "piper" / "espeak-ng-data")
-        candidates.append(get_app_dir() / "espeak-ng-data")
-        candidates.append(get_executable_dir() / "espeak-ng-data")
+        candidates.extend([
+            get_app_dir() / "piper" / "espeak-ng-data",
+            get_app_dir() / "_internal" / "piper" / "espeak-ng-data",
+            get_executable_dir() / "_internal" / "piper" / "espeak-ng-data",
+            get_executable_dir() / "piper" / "espeak-ng-data",
+            get_app_dir() / "espeak-ng-data",
+            get_app_dir() / "_internal" / "espeak-ng-data",
+            get_executable_dir() / "espeak-ng-data",
+            get_executable_dir() / "_internal" / "espeak-ng-data",
+        ])
 
     # Development mode: inspect piper package location
     try:
         import piper
         piper_pkg_dir = Path(piper.__file__).resolve().parent
-        candidates.append(piper_pkg_dir / "espeak-ng-data")
-        candidates.append(piper_pkg_dir.parent / "piper" / "espeak-ng-data")
+        candidates.extend([
+            piper_pkg_dir / "espeak-ng-data",
+            piper_pkg_dir.parent / "piper" / "espeak-ng-data",
+            piper_pkg_dir.parent / "espeak-ng-data",
+        ])
     except Exception:
         pass
 
     # Standard system or local directories
-    candidates.append(Path.home() / ".local" / "share" / "espeak-ng-data")
-    candidates.append(Path("/usr/share/espeak-ng-data"))
-    candidates.append(Path("/usr/lib/x86_64-linux-gnu/espeak-ng-data"))
+    candidates.extend([
+        Path.home() / ".local" / "share" / "espeak-ng-data",
+        Path("/usr/share/espeak-ng-data"),
+        Path("/usr/lib/x86_64-linux-gnu/espeak-ng-data"),
+        Path("/usr/lib/espeak-ng-data"),
+        Path("/app/share/espeak-ng-data"),
+    ])
 
+    seen = set()
     for c in candidates:
+        c_str = str(c)
+        if c_str in seen:
+            continue
+        seen.add(c_str)
         if c.is_dir() and (c / "phontab").is_file():
             return c
 

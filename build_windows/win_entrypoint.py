@@ -10,7 +10,40 @@ from pathlib import Path
 
 _dll_directory_handles: list = []
 
+
+def get_short_path_name(path_obj: Path | str) -> str:
+    """Returns the Windows 8.3 short path name to avoid spaces or non-ASCII in native C fopen."""
+    p_str = str(path_obj)
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            from ctypes import wintypes
+            _GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW
+            _GetShortPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
+            _GetShortPathNameW.restype = wintypes.DWORD
+            buf = ctypes.create_unicode_buffer(1024)
+            ret = _GetShortPathNameW(p_str, buf, 1024)
+            if ret > 0:
+                return buf.value
+        except Exception:
+            pass
+    return p_str
+
+
 if sys.platform == "win32":
+    # Redirect stdout and stderr to persistent log file when frozen without console
+    if getattr(sys, "frozen", False):
+        try:
+            local_app = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
+            log_dir = Path(local_app) / "ReadAloud"
+            log_dir.mkdir(parents=True, exist_ok=True)
+            log_file = open(log_dir / "readaloud.log", "a", encoding="utf-8", buffering=1)
+            sys.stdout = log_file
+            sys.stderr = log_file
+            print("\n--- ReadAloud Windows Session Started ---")
+        except Exception:
+            pass
+
     # Ensure Windows loader can locate bundled DLLs (python3.dll, onnxruntime.dll, etc.)
     dll_candidates = [Path(sys.executable).resolve().parent]
     if getattr(sys, "frozen", False):
@@ -20,6 +53,8 @@ if sys.platform == "win32":
             base_dir / "_internal",
             base_dir / "_internal" / "onnxruntime" / "capi",
             base_dir / "onnxruntime" / "capi",
+            base_dir / "piper",
+            base_dir / "_internal" / "piper",
         ])
     for d in dll_candidates:
         if d.is_dir():
@@ -35,16 +70,70 @@ if sys.platform == "win32":
             except Exception:
                 pass
 
+
+def find_and_setup_espeak_data() -> str | None:
+    """Finds espeak-ng-data directory and sets up ESPEAK_DATA_PATH with short 8.3 path."""
+    candidates = []
+    if getattr(sys, "frozen", False):
+        base_dir = Path(getattr(sys, "_MEIPASS", sys.executable)).resolve()
+        exe_dir = Path(sys.executable).resolve().parent
+        candidates.extend([
+            base_dir / "piper" / "espeak-ng-data",
+            base_dir / "_internal" / "piper" / "espeak-ng-data",
+            base_dir / "espeak-ng-data",
+            base_dir / "_internal" / "espeak-ng-data",
+            exe_dir / "piper" / "espeak-ng-data",
+            exe_dir / "_internal" / "piper" / "espeak-ng-data",
+            exe_dir / "espeak-ng-data",
+            exe_dir / "_internal" / "espeak-ng-data",
+        ])
+
+    try:
+        import piper
+        pkg_dir = Path(piper.__file__).resolve().parent
+        candidates.extend([
+            pkg_dir / "espeak-ng-data",
+            pkg_dir.parent / "piper" / "espeak-ng-data",
+            pkg_dir.parent / "espeak-ng-data",
+        ])
+    except Exception:
+        pass
+
+    found = None
+    for cand in candidates:
+        if cand.is_dir() and (cand / "phontab").is_file():
+            found = cand
+            break
+
+    if found:
+        short_path = get_short_path_name(found)
+        os.environ["ESPEAK_DATA_PATH"] = short_path
+        os.environ["ESPEAK_DATA_DIR"] = short_path
+        print(f"[win_entrypoint] Configured ESPEAK_DATA_PATH={short_path}")
+        return short_path
+    return None
+
+
+# Discover espeak-ng-data and set environment variable before loading C extensions
+_espeak_data_path = find_and_setup_espeak_data()
+
 # CRITICAL: Pre-initialize MSVC C-extensions before MinGW64 GLib/GTK runtime DLLs
 # are added to the loader search path to prevent CRT/TLS conflicts.
 try:
     import numpy
     import onnxruntime
     import piper
+    from piper import espeakbridge
+    if _espeak_data_path:
+        try:
+            espeakbridge.initialize(_espeak_data_path)
+            print("[win_entrypoint] espeakbridge pre-initialized successfully")
+        except Exception as e:
+            print(f"[win_entrypoint] espeakbridge pre-init notice: {e}")
     import sounddevice
     import lameenc
-except Exception:
-    pass
+except Exception as e:
+    print(f"[win_entrypoint] Pre-init notice: {e}")
 
 def setup_windows_environment():
     """Sets up runtime environment variables for GTK4, Libadwaita, and GStreamer."""
