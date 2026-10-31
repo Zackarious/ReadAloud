@@ -47,7 +47,9 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
-          python3 -m pip install --break-system-packages -r requirements-windows.txt
+          python3 -m pip install --break-system-packages pypdf pathvalidate lameenc
+          python3 -c "import urllib.request, zipfile, sysconfig, io; url = 'https://files.pythonhosted.org/packages/12/9c/c736d1961cf9ce0655278731b9430df41892ca2ded7b09dabcb340612158/piper_tts-1.8.0-cp39-abi3-win_amd64.whl'; sp = sysconfig.get_paths()['purelib']; r = urllib.request.urlopen(url); zipfile.ZipFile(io.BytesIO(r.read())).extractall(sp)"
+          python3 -c "import piper; print('Piper successfully loaded from', piper.__file__)"
 
       - name: Build Standalone Executable with PyInstaller
         run: |
@@ -84,12 +86,18 @@ jobs:
       - name: Compile Windows Installer (.exe)
         shell: cmd
         run: |
-          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build_windows\installer.iss
+          if exist "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" (
+            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build_windows\installer.iss
+          ) else if exist "C:\Program Files\Inno Setup 6\ISCC.exe" (
+            "C:\Program Files\Inno Setup 6\ISCC.exe" build_windows\installer.iss
+          ) else (
+            iscc build_windows\installer.iss
+          )
 
       - name: Create Portable Zip Package
-        shell: pwsh
+        shell: cmd
         run: |
-          Compress-Archive -Path dist\ReadAloud -DestinationPath dist\ReadAloud-1.8.10-Windows-Portable-x64.zip
+          7z a -tzip dist\ReadAloud-1.8.10-Windows-Portable-x64.zip .\dist\ReadAloud
 
       - name: Upload Standalone Windows Artifacts
         uses: actions/upload-artifact@v4
