@@ -39,6 +39,7 @@ readaloud_sources = [
   'audio_backend.py',
   'document_importer.py',
   'wikipedia_importer.py',
+  'error_logger.py',
 ]
 
 install_data(readaloud_sources, install_dir: moduledir)

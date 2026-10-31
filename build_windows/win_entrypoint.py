@@ -31,16 +31,26 @@ def get_short_path_name(path_obj: Path | str) -> str:
 
 
 if sys.platform == "win32":
-    # Redirect stdout and stderr to persistent log file when frozen without console
+    # Redirect stdout and stderr to persistent error.log in the application directory when frozen
     if getattr(sys, "frozen", False):
         try:
-            local_app = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
-            log_dir = Path(local_app) / "ReadAloud"
-            log_dir.mkdir(parents=True, exist_ok=True)
-            log_file = open(log_dir / "readaloud.log", "a", encoding="utf-8", buffering=1)
-            sys.stdout = log_file
-            sys.stderr = log_file
-            print("\n--- ReadAloud Windows Session Started ---")
+            exe_dir = Path(sys.executable).resolve().parent
+            candidates = [
+                exe_dir / "error.log",
+                Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "ReadAloud" / "error.log",
+                Path(os.environ.get("LOCALAPPDATA", "")) / "ReadAloud" / "error.log",
+            ]
+            for cand in candidates:
+                try:
+                    cand.parent.mkdir(parents=True, exist_ok=True)
+                    with open(cand, "a", encoding="utf-8") as f:
+                        pass
+                    log_file = open(cand, "a", encoding="utf-8", buffering=1)
+                    sys.stdout = log_file
+                    sys.stderr = log_file
+                    break
+                except Exception:
+                    continue
         except Exception:
             pass
 
@@ -204,6 +214,13 @@ def main():
     import gi
     gi.require_version('Gtk', '4.0')
     gi.require_version('Adw', '1')
+
+    # Initialize exception hooks
+    try:
+        from src.error_logger import install_exception_hooks
+        install_exception_hooks()
+    except Exception:
+        pass
 
     # Load resources
     from src.paths import get_resource_bundle_path

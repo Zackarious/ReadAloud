@@ -1332,15 +1332,33 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
         return available_models
 
-    def _show_error(self, message):
+    def _show_error(self, message, exc=None, traceback_text=None, context=None, **kwargs):
+        log_path = None
+        try:
+            from .error_logger import log_error
+            log_path = log_error(
+                str(message),
+                exc=exc,
+                traceback_text=traceback_text,
+                context=context or "Application Window",
+            )
+        except Exception as log_err:
+            print(f"Warning: Failed to log error: {log_err}")
+
+        body_text = str(message)
+        if log_path:
+            body_text = f"{body_text}\n\n{_('A detailed error log has been saved to:')}\n{log_path}"
+
         dialog = Adw.AlertDialog(
             heading=_("Error"),
-            body=str(message)
+            body=body_text
         )
         dialog.add_response("ok", _("OK"))
         dialog.set_default_response("ok")
-        dialog.set_close_response("ok")
-        dialog.present(self)
+        try:
+            dialog.present(self)
+        except Exception:
+            pass
         return dialog
 
     def _setup_dropdown_excerpt(self, dropdown, max_chars=None, show_selection_check=False, icon_name=None):

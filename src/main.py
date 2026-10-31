@@ -1442,6 +1442,11 @@ class ReadAloudApplication(Adw.Application):
 
 def main(version):
     """The application's entry point."""
+    try:
+        from .error_logger import install_exception_hooks
+        install_exception_hooks()
+    except Exception:
+        pass
     ensure_resources_loaded()
     app = ReadAloudApplication()
     result = app.run(sys.argv)

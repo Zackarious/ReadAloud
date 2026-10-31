@@ -16,3 +16,4 @@ push_to_github.sh
 *.gresource
 dist/
 build_windows/build/
+*.log

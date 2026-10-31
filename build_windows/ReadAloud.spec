@@ -184,6 +184,7 @@ a = Analysis(
         'src.vocxpo',
         'src.document_importer',
         'src.wikipedia_importer',
+        'src.error_logger',
     ],
     hookspath=[],
     hooksconfig={},

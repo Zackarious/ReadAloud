@@ -18,6 +18,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
+import sys
+import traceback
 import array
 import time
 import math
@@ -533,16 +535,24 @@ class Reader():
                     GLib.idle_add(self.on_complete, self.temp_path)
 
         except Exception as e:
-            GLib.idle_add(self._handle_error, str(e), self.temp_path)
+            tb_str = traceback.format_exc()
+            GLib.idle_add(self._handle_error, str(e), self.temp_path, e, tb_str)
 
-    def _handle_error(self, error_msg, temp_path=None):
+    def _handle_error(self, error_msg, temp_path=None, exc=None, traceback_text=None):
         """Centralized error handling"""
         print(f"Error: {error_msg}")
+        if traceback_text:
+            print(traceback_text)
         if self.window:
             self.window.hide_wait_dialog()
             self.window.set_sensitive(True)
             self.window.stop_playback()
-            self.window._show_error(error_msg)
+            self.window._show_error(
+                error_msg,
+                exc=exc,
+                traceback_text=traceback_text,
+                context="Speech Synthesis",
+            )
 
         if self.temp_path:
             try:
