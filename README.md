@@ -33,11 +33,64 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ---
 
-## 📸 Screenshots
+## 📸 Screenshots & Feature Walkthrough
 
+### 1. Document Importer & Dropzone
 <p align="center">
-  <img src="data/screenshots/screenshot.png" alt="ReadAloud Screenshot" width="800"/>
+  <img src="data/screenshots/01-drag-drop-importer.png" alt="Drag and Drop Document Importer" width="700"/>
 </p>
+
+- **Multi-Format Document Dropzone**: Seamlessly drag and drop `.txt`, `.md`, `.pdf`, or `.epub` files directly into ReadAloud to import them into working tabs.
+- **Smart Book Chapter Extraction**: Automatically breaks EPUB and multi-chapter documents into distinct, navigable tabs.
+- **Syntax & Symbol Cleansing**: Automatically strips distracting brackets, pipes, markdown hashes, and asterisks so the Piper neural speech engine reads pure, natural language.
+- **Adaptive Window Controls**: Features standardized `:minimize,maximize,close` window controls and dedicated headerbar buttons for instant one-click actions across all desktop environments.
+
+---
+
+### 2. Direct Wikipedia Article Importer
+<p align="center">
+  <img src="data/screenshots/02-wikipedia-import-dialog.png" alt="Wikipedia Article Importer Dialog" width="700"/>
+</p>
+
+- **One-Click Quick Access**: Open the Wikipedia Importer instantly from the headerbar globe button or the Tools menu (`win.import-wikipedia`).
+- **Topic or URL Import**: Enter any article topic or paste full Wikipedia URLs—ReadAloud scrapes and cleans the content locally for offline listening.
+- **Multi-Tab Related Article Extraction**: Automatically discovers internal related `/wiki/...` reference links and imports up to 10 related topics into separate sequential tabs.
+- **Wikimedia Foundation Support**: Features a non-intrusive donation callout card encouraging direct support for free, open global knowledge.
+
+---
+
+### 3. Live Autocomplete Search with Instant Previews
+<p align="center">
+  <img src="data/screenshots/03-wikipedia-live-search.png" alt="Live Autocomplete Wikipedia Search" width="700"/>
+</p>
+
+- **Official REST API Autocomplete**: Real-time debounced search backed by Wikipedia's official REST Search API, returning exact matches as you type.
+- **Rich Visual Cards**: Displays article thumbnail previews, bold headings, and descriptive captions matching Wikipedia's website design.
+- **In-Memory Thumbnail Caching**: Thread-safe in-memory image caching eliminates redundant network requests and ensures instant, flicker-free re-querying.
+- **Keyboard-First Navigation**: Smoothly navigate down into suggestion cards with `Down Arrow`, hit `Enter` to import, or press `Escape` to dismiss.
+
+---
+
+### 4. Non-Blocking Asynchronous Fetching HUD
+<p align="center">
+  <img src="data/screenshots/04-wikipedia-fetching-progress.png" alt="Asynchronous Wikipedia Fetching HUD" width="700"/>
+</p>
+
+- **Real-Time Step Updates**: Translucent progress modal providing live status updates (e.g. `Fetching related article (3/4): 'Danish language'...`).
+- **Threaded Worker Processing**: All network fetching and HTML/markdown parsing run on background worker threads, keeping the application UI fluid and responsive.
+- **Instant Safe Cancellation**: Cancel multi-article scraping at any moment without freezing the interface or discarding previously loaded tabs.
+
+---
+
+### 5. Synchronized Speech Playback & Word Highlighting
+<p align="center">
+  <img src="data/screenshots/05-active-playback-word-highlighting.png" alt="Active Speech Playback and Real-Time Word Highlighting" width="700"/>
+</p>
+
+- **Synchronized Real-Time Word Highlighting**: High-contrast, dynamic highlighting tracks every spoken word in real-time and auto-scrolls to keep active text in view.
+- **Intelligent Sentence Segmentation**: Smooths PDF multi-column line breaks and joins hyphenated words, while guarding abbreviations (`Dr.`, `Mr.`, `e.g.`) and numerical values from premature pauses.
+- **Automatic Paragraph Gap Separation**: Enforces clean `\n\n` empty line gaps between paragraphs, providing generous vertical separation that makes long articles effortless to follow during audio synthesis.
+- **Complete Audio Control Deck**: Seamlessly switch voices (e.g. `Alba Voice - Medium quality`), adjust calibrated speech speeds (`Normal`, `Fast`, `Super Fast`), or export spoken-word audio to compressed MP3, OGG, FLAC, or uncompressed WAV.
 
 ---
 

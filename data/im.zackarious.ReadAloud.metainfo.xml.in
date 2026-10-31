@@ -27,8 +27,24 @@
 
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/zackarious/ReadAloud/main/data/screenshots/screenshot.png</image>
-      <caption>Main Application Window</caption>
+      <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/05-active-playback-word-highlighting.png</image>
+      <caption>Synchronized speech playback with real-time word highlighting across multiple document tabs</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/01-drag-drop-importer.png</image>
+      <caption>Document dropzone supporting TXT, MD, PDF, and EPUB files with chapter extraction</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/02-wikipedia-import-dialog.png</image>
+      <caption>Direct Wikipedia importer dialog with multi-tab related topic discovery and tag stripping</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/03-wikipedia-live-search.png</image>
+      <caption>Interactive live Wikipedia search autocomplete with article thumbnails and descriptions</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/04-wikipedia-fetching-progress.png</image>
+      <caption>Asynchronous multi-article scraping progress HUD with real-time status updates</caption>
     </screenshot>
   </screenshots>
 
