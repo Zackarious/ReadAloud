@@ -37,11 +37,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-; Standalone application bundle files (excluding models to avoid duplicate inclusion)
-Source: "..\dist\ReadAloud\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "models\*"
-
-; Voice Models (bundled in models/ folder next to ReadAloud.exe)
-Source: "..\models\*"; DestDir: "{app}\models"; Flags: ignoreversion recursesubdirs createallsubdirs uninsneveruninstall
+; Standalone application bundle files (including bundled voice models and runtimes)
+Source: "..\dist\ReadAloud\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\ReadAloud.ico"

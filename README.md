@@ -161,7 +161,7 @@ Download the official standalone Windows releases from the **[Releases Page](htt
   - Full Inno Setup 6 installer with desktop and Start Menu integration.
   - Pre-bundles all 35 neural voices, GTK4/Libadwaita runtimes, and MSVC 2022 libraries.
   - Supports silent enterprise installation: `ReadAloud-1.8.10-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
-- 💼 **Windows Portable Edition (`.zip`)**: [`ReadAloud-1.8.10-Windows-Portable-x64.zip`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- 💼 **Windows Portable Edition (`.7z`)**: [`ReadAloud-1.8.10-Windows-Portable-x64.7z`](https://github.com/Zackarious/ReadAloud/releases/latest)
   - Zero-installation standalone folder. Extract anywhere (including USB thumb drives) and double-click `ReadAloud.exe`.
 
 ---
