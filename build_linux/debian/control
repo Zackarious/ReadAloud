@@ -1,0 +1,19 @@
+Package: readaloud
+Version: 1.8.10
+Section: sound
+Priority: optional
+Architecture: amd64
+Maintainer: Zackarious <https://github.com/Zackarious/ReadAloud>
+Depends: python3 (>= 3.10), python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, gir1.2-glib-2.0, espeak-ng, lame, libportaudio2
+Recommends: gstreamer1.0-plugins-good, gstreamer1.0-plugins-bad, gstreamer1.0-plugins-ugly
+Description: Elegant, private, offline Text-to-Speech reader
+ ReadAloud is a modern, privacy-respecting Text-to-Speech desktop application
+ designed for Linux (GNOME, KDE Plasma, and more) and Windows.
+ .
+ Features:
+  - 100% offline neural voice synthesis with Piper TTS.
+  - Pre-bundled natural sounding voice models.
+  - Intelligent sentence segmentation and PDF line-break smoothing.
+  - Real-time synchronized word highlighting.
+  - Wikipedia article importer with live autocomplete.
+  - Multi-format audio export (MP3, WAV, OGG, FLAC).

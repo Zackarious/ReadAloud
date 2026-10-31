@@ -30,6 +30,16 @@ pkgdatadir = '@pkgdatadir@'
 localedir = '@localedir@'
 
 sys.path.insert(1, pkgdatadir)
+
+# Support self-contained Debian package venv
+for venv_root in ['/usr/lib/readaloud/venv', '/usr/local/lib/readaloud/venv']:
+    lib_dir = os.path.join(venv_root, 'lib')
+    if os.path.isdir(lib_dir):
+        for py_ver in os.listdir(lib_dir):
+            sp = os.path.join(lib_dir, py_ver, 'site-packages')
+            if os.path.isdir(sp) and sp not in sys.path:
+                sys.path.insert(0, sp)
+
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 locale.bindtextdomain('readaloud', localedir)
 locale.textdomain('readaloud')

@@ -114,8 +114,10 @@ def get_model_search_paths() -> list[Path]:
     # 5. User home directory models (~/readaloud/models)
     add_path(Path.home() / "readaloud" / "models")
 
-    # 6. Linux / Flatpak system directories (safe no-op on Windows)
+    # 6. Linux / Debian / Flatpak system directories (safe no-op on Windows)
     if sys.platform != "win32":
+        add_path(Path("/usr/share/readaloud/models"))
+        add_path(Path("/usr/local/share/readaloud/models"))
         add_path(Path("/app/share/readaloud/models"))
         add_path(Path.home() / ".var" / "app" / "im.zackarious.ReadAloud" / "data" / "models")
 

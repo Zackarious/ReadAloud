@@ -170,6 +170,19 @@ Download the official standalone Windows releases from the **[Releases Page](htt
 
 ReadAloud is fully supported across all Linux distributions and desktop environments, with adaptive header controls and native color scheme integration.
 
+#### Native Debian / Ubuntu Package (`.deb`)
+
+Download the official `.deb` package from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
+
+```bash
+# Install via APT (automatically resolves system dependencies)
+sudo apt update
+sudo apt install ./readaloud_1.8.10_amd64.deb
+
+# Launch ReadAloud
+readaloud
+```
+
 #### From Flathub (Recommended)
 
 ReadAloud is available as a verified sandboxed Flatpak on Flathub:
