@@ -10,7 +10,7 @@ from pathlib import Path
 
 if sys.platform == "win32":
     # Ensure Windows loader can locate bundled DLLs (python314.dll, onnxruntime.dll, etc.)
-    dll_candidates = []
+    dll_candidates = [Path(sys.executable).resolve().parent]
     if getattr(sys, "frozen", False):
         base_dir = Path(getattr(sys, "_MEIPASS", sys.executable)).resolve()
         dll_candidates.extend([
@@ -18,7 +18,6 @@ if sys.platform == "win32":
             base_dir / "_internal",
             base_dir / "_internal" / "onnxruntime" / "capi",
             base_dir / "onnxruntime" / "capi",
-            Path(sys.executable).resolve().parent,
         ])
     for d in dll_candidates:
         if d.is_dir() and hasattr(os, "add_dll_directory"):

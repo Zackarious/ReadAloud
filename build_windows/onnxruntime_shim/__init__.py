@@ -53,11 +53,30 @@ else:
         for f in Path(p).glob("**/libonnxruntime.so*"):
             _candidates.append(f)
 
+_errors: list[str] = []
+
+if sys.platform == "win32" and hasattr(os, "add_dll_directory"):
+    bin_dir = Path(sys.executable).parent.resolve()
+    if bin_dir.is_dir():
+        try:
+            os.add_dll_directory(str(bin_dir))
+        except Exception:
+            pass
+
 for cand in _candidates:
     try:
+        p_cand = Path(cand)
+        if sys.platform == "win32" and hasattr(os, "add_dll_directory"):
+            cand_dir = p_cand.parent.resolve() if p_cand.is_file() else None
+            if cand_dir and cand_dir.is_dir():
+                try:
+                    os.add_dll_directory(str(cand_dir))
+                except Exception:
+                    pass
         _lib = ctypes.CDLL(str(cand))
         break
-    except Exception:
+    except Exception as err:
+        _errors.append(f"{cand}: {err}")
         continue
 
 if not _lib:
@@ -65,11 +84,12 @@ if not _lib:
     if found:
         try:
             _lib = ctypes.CDLL(found)
-        except Exception:
-            pass
+        except Exception as err:
+            _errors.append(f"{found}: {err}")
 
 if not _lib:
-    raise ImportError("Could not load onnxruntime shared library")
+    details = "\n  ".join(_errors)
+    raise ImportError(f"Could not load onnxruntime shared library. Errors encountered:\n  {details}")
 
 
 class _OrtApiBase(ctypes.Structure):
