@@ -4,7 +4,6 @@
     "runtime-version": "50",
     "sdk": "org.gnome.Sdk",
     "command": "readaloud",
-    "appstream-compose": false,
     "finish-args": [
         "--share=network",
         "--share=ipc",
