@@ -20,19 +20,69 @@ import ctypes.util
 _lib = None
 _candidates: list[str | Path] = []
 
+# Keep AddedDllDirectory handles alive for the entire process lifetime
+_dll_directory_handles: list[Any] = []
+
+
+def _register_dll_dir(dir_path: Path | str | None) -> None:
+    """Register directory with Windows loader and ensure it is in PATH."""
+    if not dir_path:
+        return
+    try:
+        p = Path(dir_path).resolve()
+        if not p.is_dir():
+            return
+        p_str = str(p)
+        if sys.platform == "win32":
+            if hasattr(os, "add_dll_directory"):
+                try:
+                    handle = os.add_dll_directory(p_str)
+                    _dll_directory_handles.append(handle)
+                except Exception:
+                    pass
+            try:
+                ctypes.windll.kernel32.SetDllDirectoryW(p_str)
+            except Exception:
+                pass
+        cur_path = os.environ.get("PATH", "")
+        if p_str not in cur_path:
+            os.environ["PATH"] = f"{p_str};{cur_path}" if sys.platform == "win32" else f"{p_str}:{cur_path}"
+    except Exception:
+        pass
+
+
 if sys.platform == "win32":
+    py_dir = Path(sys.executable).resolve().parent
+    _register_dll_dir(py_dir)
+
+    prefix = os.environ.get("MINGW_PREFIX")
+    if prefix:
+        _register_dll_dir(Path(prefix) / "bin")
+    msystem_prefix = os.environ.get("MSYSTEM_PREFIX")
+    if msystem_prefix:
+        _register_dll_dir(Path(msystem_prefix) / "bin")
+
     if getattr(sys, "frozen", False):
         exe_dir = Path(getattr(sys, "_MEIPASS", sys.executable)).resolve()
+        app_dir = py_dir
+        _register_dll_dir(exe_dir)
+        _register_dll_dir(exe_dir / "_internal")
+        _register_dll_dir(app_dir)
         _candidates.extend([
             exe_dir / "onnxruntime.dll",
             exe_dir / "_internal" / "onnxruntime.dll",
             exe_dir / "_internal" / "onnxruntime" / "capi" / "onnxruntime.dll",
-            Path(sys.executable).resolve().parent / "onnxruntime.dll",
+            app_dir / "onnxruntime.dll",
+            app_dir / "_internal" / "onnxruntime.dll",
         ])
-    prefix = os.environ.get("MINGW_PREFIX", r"C:\msys64\ucrt64")
+
+    if prefix:
+        _candidates.append(Path(prefix) / "bin" / "onnxruntime.dll")
+    if msystem_prefix:
+        _candidates.append(Path(msystem_prefix) / "bin" / "onnxruntime.dll")
+
     _candidates.extend([
-        Path(prefix) / "bin" / "onnxruntime.dll",
-        Path(sys.executable).parent / "onnxruntime.dll",
+        py_dir / "onnxruntime.dll",
         Path(r"C:\msys64\ucrt64\bin\onnxruntime.dll"),
         Path(r"C:\msys64\mingw64\bin\onnxruntime.dll"),
         "onnxruntime.dll",
@@ -55,41 +105,51 @@ else:
 
 _errors: list[str] = []
 
-if sys.platform == "win32" and hasattr(os, "add_dll_directory"):
-    bin_dir = Path(sys.executable).parent.resolve()
-    if bin_dir.is_dir():
-        try:
-            os.add_dll_directory(str(bin_dir))
-        except Exception:
-            pass
-
 for cand in _candidates:
-    try:
-        p_cand = Path(cand)
-        if sys.platform == "win32" and hasattr(os, "add_dll_directory"):
-            cand_dir = p_cand.parent.resolve() if p_cand.is_file() else None
-            if cand_dir and cand_dir.is_dir():
-                try:
-                    os.add_dll_directory(str(cand_dir))
-                except Exception:
-                    pass
-        _lib = ctypes.CDLL(str(cand))
+    p_cand = Path(cand)
+    cand_dir = p_cand.parent.resolve() if p_cand.is_file() else None
+    if cand_dir:
+        _register_dll_dir(cand_dir)
+
+    # In Python 3.8+ on Windows:
+    # winmode=0 instructs LoadLibraryExW to use flags 0 (standard DLL search order),
+    # which allows searching PATH and SetDllDirectory for all transitive dependencies.
+    # winmode=8 (LOAD_WITH_ALTERED_SEARCH_PATH) uses the DLL's folder as search base.
+    modes = (0, 8, None) if sys.platform == "win32" else (None,)
+    last_err = None
+    for m in modes:
+        try:
+            if sys.platform == "win32" and m is not None:
+                _lib = ctypes.CDLL(str(cand), winmode=m)
+            else:
+                _lib = ctypes.CDLL(str(cand))
+            break
+        except Exception as err:
+            last_err = err
+            continue
+    if _lib:
         break
-    except Exception as err:
-        _errors.append(f"{cand}: {err}")
-        continue
+    else:
+        _errors.append(f"{cand} (last error: {last_err})")
 
 if not _lib:
     found = ctypes.util.find_library("onnxruntime")
     if found:
-        try:
-            _lib = ctypes.CDLL(found)
-        except Exception as err:
-            _errors.append(f"{found}: {err}")
+        modes = (0, 8, None) if sys.platform == "win32" else (None,)
+        for m in modes:
+            try:
+                if sys.platform == "win32" and m is not None:
+                    _lib = ctypes.CDLL(found, winmode=m)
+                else:
+                    _lib = ctypes.CDLL(found)
+                break
+            except Exception as err:
+                _errors.append(f"{found} (mode {m}): {err}")
 
 if not _lib:
     details = "\n  ".join(_errors)
-    raise ImportError(f"Could not load onnxruntime shared library. Errors encountered:\n  {details}")
+    sys_info = f"sys.executable={sys.executable}, PATH={os.environ.get('PATH')}"
+    raise ImportError(f"Could not load onnxruntime shared library. System: {sys_info}\nErrors encountered:\n  {details}")
 
 
 class _OrtApiBase(ctypes.Structure):

@@ -48,6 +48,7 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
+          export PATH="$MSYSTEM_PREFIX/bin:$PATH"
           python3 -m pip install --break-system-packages pypdf pathvalidate
           python3 -m pip install --break-system-packages lameenc || true
           python3 -c "import urllib.request, zipfile, sysconfig, io; url = 'https://files.pythonhosted.org/packages/12/9c/c736d1961cf9ce0655278731b9430df41892ca2ded7b09dabcb340612158/piper_tts-1.8.0-cp39-abi3-win_amd64.whl'; sp = sysconfig.get_paths()['purelib']; r = urllib.request.urlopen(url); zipfile.ZipFile(io.BytesIO(r.read())).extractall(sp)"
@@ -58,6 +59,7 @@ jobs:
 
       - name: Build Standalone Executable with PyInstaller
         run: |
+          export PATH="$MSYSTEM_PREFIX/bin:$PATH"
           pyinstaller build_windows/ReadAloud.spec --clean -y
 
       - name: Post-Build Runtime Enforcement
@@ -66,6 +68,7 @@ jobs:
           python3 -c "import piper, pathlib, shutil; src = pathlib.Path(piper.__file__).parent / 'espeak-ng-data'; dst = pathlib.Path('dist/ReadAloud/_internal/piper/espeak-ng-data'); shutil.copytree(src, dst, dirs_exist_ok=True) if src.is_dir() else None"
           python3 -c "import piper, pathlib, shutil; src = pathlib.Path(piper.__file__).parent / 'tashkeel'; dst = pathlib.Path('dist/ReadAloud/_internal/piper/tashkeel'); shutil.copytree(src, dst, dirs_exist_ok=True) if src.is_dir() else None"
           python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud/_internal'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; (b/'python3.dll').is_file() and shutil.copy(b/'python3.dll', target)"
+          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; (b/'python3.dll').is_file() and shutil.copy(b/'python3.dll', target)"
 
       - name: Copy MSVC 2022 CRT Libraries
         shell: cmd

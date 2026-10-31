@@ -8,8 +8,10 @@ import os
 import sys
 from pathlib import Path
 
+_dll_directory_handles: list = []
+
 if sys.platform == "win32":
-    # Ensure Windows loader can locate bundled DLLs (python314.dll, onnxruntime.dll, etc.)
+    # Ensure Windows loader can locate bundled DLLs (python3.dll, onnxruntime.dll, etc.)
     dll_candidates = [Path(sys.executable).resolve().parent]
     if getattr(sys, "frozen", False):
         base_dir = Path(getattr(sys, "_MEIPASS", sys.executable)).resolve()
@@ -20,9 +22,16 @@ if sys.platform == "win32":
             base_dir / "onnxruntime" / "capi",
         ])
     for d in dll_candidates:
-        if d.is_dir() and hasattr(os, "add_dll_directory"):
+        if d.is_dir():
+            d_str = str(d)
+            if hasattr(os, "add_dll_directory"):
+                try:
+                    _dll_directory_handles.append(os.add_dll_directory(d_str))
+                except Exception:
+                    pass
             try:
-                os.add_dll_directory(str(d))
+                import ctypes
+                ctypes.windll.kernel32.SetDllDirectoryW(d_str)
             except Exception:
                 pass
 

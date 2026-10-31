@@ -9,19 +9,26 @@ import sys
 from pathlib import Path
 
 # Register MSYS2 MinGW64 / UCRT64 DLL directory if available on Windows
+_spec_dll_handles = []
 if sys.platform == "win32":
+    candidates = [Path(sys.executable).resolve().parent]
     prefix = os.environ.get("MINGW_PREFIX")
-    candidates = []
     if prefix:
         candidates.append(Path(prefix) / "bin")
+    msystem_prefix = os.environ.get("MSYSTEM_PREFIX")
+    if msystem_prefix:
+        candidates.append(Path(msystem_prefix) / "bin")
     candidates.extend([Path(r"C:\msys64\ucrt64\bin"), Path(r"C:\msys64\mingw64\bin")])
     for mingw_bin in candidates:
-        if mingw_bin.is_dir() and hasattr(os, "add_dll_directory"):
-            try:
-                os.add_dll_directory(str(mingw_bin))
-                break
-            except Exception:
-                pass
+        if mingw_bin.is_dir():
+            if hasattr(os, "add_dll_directory"):
+                try:
+                    _spec_dll_handles.append(os.add_dll_directory(str(mingw_bin)))
+                except Exception:
+                    pass
+            cur_path = os.environ.get("PATH", "")
+            if str(mingw_bin) not in cur_path:
+                os.environ["PATH"] = f"{str(mingw_bin)};{cur_path}"
 
 block_cipher = None
 
@@ -31,10 +38,18 @@ repo_root = spec_root.parent
 # Extra datas and binaries collection
 extra_binaries = []
 if sys.platform == "win32":
+    py_bin = Path(sys.executable).resolve().parent
+    search_dirs = [py_bin]
+    if prefix:
+        search_dirs.append(Path(prefix) / "bin")
+    search_dirs.extend([Path(r"C:\msys64\ucrt64\bin"), Path(r"C:\msys64\mingw64\bin")])
+
     for py_dll in ["python314.dll", "python3.dll", "onnxruntime.dll", "onnxruntime_providers_shared.dll"]:
-        for cand in [Path(r"C:\msys64\ucrt64\bin") / py_dll, Path(sys.executable).parent / py_dll]:
+        for d in search_dirs:
+            cand = d / py_dll
             if cand.is_file():
                 extra_binaries.append((str(cand), "."))
+                extra_binaries.append((str(cand), "_internal"))
                 break
 extra_datas = [
     (str(repo_root / "data" / "icons"), "data/icons"),
