@@ -372,6 +372,16 @@ def convert_wav_to_mp3(src_wav_path: str, dest_mp3_path: str, bitrate: int = 64,
             f.write(mp3_data)
         return
 
+    # 3. Try system lame CLI encoder
+    try:
+        import subprocess
+        cmd = ["lame", "-b", str(bitrate), src_wav_path, dest_mp3_path]
+        res = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if res.returncode == 0 and os.path.isfile(dest_mp3_path):
+            return
+    except Exception:
+        pass
+
     raise RuntimeError(
-        "MP3 encoding failed: Neither GStreamer lamemp3enc nor the lameenc encoder is installed."
+        "MP3 encoding failed: Neither GStreamer lamemp3enc, lameenc, nor lame CLI encoder is available."
     )

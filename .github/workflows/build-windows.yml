@@ -39,6 +39,7 @@ jobs:
             mingw-w64-ucrt-x86_64-python-requests
             mingw-w64-ucrt-x86_64-python-beautifulsoup4
             mingw-w64-ucrt-x86_64-python-onnxruntime
+            mingw-w64-ucrt-x86_64-lame
             mingw-w64-ucrt-x86_64-pyinstaller
 
       - name: Compile GLib GResource Bundle
@@ -47,7 +48,8 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
-          python3 -m pip install --break-system-packages pypdf pathvalidate lameenc
+          python3 -m pip install --break-system-packages pypdf pathvalidate
+          python3 -m pip install --break-system-packages lameenc || true
           python3 -c "import urllib.request, zipfile, sysconfig, io; url = 'https://files.pythonhosted.org/packages/12/9c/c736d1961cf9ce0655278731b9430df41892ca2ded7b09dabcb340612158/piper_tts-1.8.0-cp39-abi3-win_amd64.whl'; sp = sysconfig.get_paths()['purelib']; r = urllib.request.urlopen(url); zipfile.ZipFile(io.BytesIO(r.read())).extractall(sp)"
           python3 -c "import piper; print('Piper successfully loaded from', piper.__file__)"
 
