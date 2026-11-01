@@ -44,7 +44,7 @@ if sys.platform == "win32":
         search_dirs.append(Path(prefix) / "bin")
     search_dirs.extend([Path(r"C:\msys64\ucrt64\bin"), Path(r"C:\msys64\mingw64\bin")])
 
-    for py_dll in ["python314.dll", "onnxruntime.dll", "onnxruntime_providers_shared.dll", "libespeak-ng.dll"]:
+    for py_dll in ["python314.dll", "onnxruntime.dll", "onnxruntime_providers_shared.dll", "libespeak-ng.dll", "libportaudio-2.dll", "portaudio.dll"]:
         for d in search_dirs:
             cand = d / py_dll
             if cand.is_file():
@@ -94,6 +94,19 @@ try:
 except Exception:
     pass
 
+# Harvest sounddevice and _sounddevice_data (PortAudio binaries)
+try:
+    from PyInstaller.utils.hooks import collect_all
+    for pkg in ['sounddevice', '_sounddevice_data']:
+        try:
+            d, b, h = collect_all(pkg)
+            extra_datas.extend(d)
+            extra_binaries.extend(b)
+        except Exception:
+            pass
+except Exception as e:
+    print(f"Notice: sounddevice harvest: {e}")
+
 # MSYS2 MINGW64 environment detection
 msys_prefix = os.environ.get("MINGW_PREFIX", "")
 if not msys_prefix and sys.platform == "win32":
@@ -132,6 +145,9 @@ if msys_prefix:
     gst_plugins_dir = p / "lib" / "gstreamer-1.0"
     if gst_plugins_dir.is_dir():
         extra_datas.append((str(gst_plugins_dir), "lib/gstreamer-1.0"))
+        # Also include plugin DLLs as binaries so PyInstaller links dependent GStreamer libraries
+        for plug_dll in gst_plugins_dir.glob("*.dll"):
+            extra_binaries.append((str(plug_dll), "lib/gstreamer-1.0"))
 
     # 6. Icons
     icons_dir = p / "share" / "icons"
@@ -171,6 +187,10 @@ a = Analysis(
         'piper_phonemize',
         'onnxruntime',
         'sounddevice',
+        '_sounddevice',
+        '_sounddevice_data',
+        'cffi',
+        'winsound',
         'numpy',
         'lameenc',
         'src.paths',

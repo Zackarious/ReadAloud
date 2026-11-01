@@ -42,6 +42,11 @@ jobs:
             mingw-w64-ucrt-x86_64-python-requests
             mingw-w64-ucrt-x86_64-python-beautifulsoup4
             mingw-w64-ucrt-x86_64-onnxruntime
+            mingw-w64-ucrt-x86_64-portaudio
+            mingw-w64-ucrt-x86_64-gstreamer
+            mingw-w64-ucrt-x86_64-gst-plugins-base
+            mingw-w64-ucrt-x86_64-gst-plugins-good
+            mingw-w64-ucrt-x86_64-gst-plugins-bad
             mingw-w64-ucrt-x86_64-espeak-ng
             mingw-w64-ucrt-x86_64-lame
             mingw-w64-ucrt-x86_64-pyinstaller
@@ -135,8 +140,8 @@ jobs:
               assert phontab.is_file(), f'CRITICAL: {phontab} missing!'
               print(f'Verified phoneme table: {phontab}')
           "
-          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud/_internal'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; [shutil.copy(f, target) for f in b.glob('*absl*.dll')]; [shutil.copy(f, target) for f in b.glob('*espeak*.dll')]"
-          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; [shutil.copy(f, target) for f in b.glob('*absl*.dll')]; [shutil.copy(f, target) for f in b.glob('*espeak*.dll')]"
+          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud/_internal'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; [shutil.copy(f, target) for f in b.glob('*absl*.dll')]; [shutil.copy(f, target) for f in b.glob('*espeak*.dll')]; [shutil.copy(f, target) for f in b.glob('*portaudio*.dll')]; [shutil.copy(f, target) for f in b.glob('*gst*.dll')]"
+          python3 -c "import pathlib, shutil, sys; b = pathlib.Path(sys.executable).parent; target = pathlib.Path('dist/ReadAloud'); [shutil.copy(f, target) for f in b.glob('onnxruntime*.dll')]; [shutil.copy(f, target) for f in b.glob('*absl*.dll')]; [shutil.copy(f, target) for f in b.glob('*espeak*.dll')]; [shutil.copy(f, target) for f in b.glob('*portaudio*.dll')]; [shutil.copy(f, target) for f in b.glob('*gst*.dll')]"
 
       - name: Copy MSVC 2022 CRT Libraries
         shell: cmd
@@ -174,15 +179,15 @@ jobs:
       - name: Create Portable Package
         shell: cmd
         run: |
-          7z a -t7z -m0=lzma2 -mx=9 -mfb=64 -md=64m -ms=on -v1800m dist\ReadAloud-1.8.10-Windows-Portable-x64.7z .\dist\ReadAloud
+          7z a -t7z -m0=lzma2 -mx=9 -mfb=64 -md=64m -ms=on -v1800m dist\ReadAloud-1.8.11-Windows-Portable-x64.7z .\dist\ReadAloud
 
       - name: Upload Standalone Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ReadAloud-Windows-x64
           path: |
-            dist/ReadAloud-1.8.10-Windows-Portable-x64.7z*
-            dist/ReadAloud-1.8.10-Windows-Setup-x64*
+            dist/ReadAloud-1.8.11-Windows-Portable-x64.7z*
+            dist/ReadAloud-1.8.11-Windows-Setup-x64*
 
       - name: Publish Windows Assets to GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -190,6 +195,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ls -lh dist/ReadAloud-1.8.10-Windows-Setup-x64*
-          ls -lh dist/ReadAloud-1.8.10-Windows-Portable-x64.7z*
-          gh release upload "${{ github.ref_name }}" dist/ReadAloud-1.8.10-Windows-Setup-x64* dist/ReadAloud-1.8.10-Windows-Portable-x64.7z* --clobber
+          ls -lh dist/ReadAloud-1.8.11-Windows-Setup-x64*
+          ls -lh dist/ReadAloud-1.8.11-Windows-Portable-x64.7z*
+          gh release upload "${{ github.ref_name }}" dist/ReadAloud-1.8.11-Windows-Setup-x64* dist/ReadAloud-1.8.11-Windows-Portable-x64.7z* --clobber

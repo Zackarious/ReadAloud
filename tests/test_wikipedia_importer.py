@@ -197,6 +197,17 @@ class TestWikipediaImporter(unittest.TestCase):
         donate_links = [c for c in children if isinstance(c, Gtk.LinkButton) and c.get_uri() == "https://donate.wikimedia.org/"]
         self.assertTrue(len(donate_links) > 0, "Dialog should include LinkButton to https://donate.wikimedia.org/")
 
+    def test_window_on_import_wikipedia_entry_activate(self):
+        win = ReadAloudWindow(application=self.app)
+        dialog = win.on_import_wikipedia_action()
+        self.assertIsNotNone(dialog)
+        entry = dialog._entry
+        entry.set_text("Quantum computing")
+
+        with patch.object(win, '_start_wikipedia_import') as mock_start:
+            entry.emit("activate")
+            mock_start.assert_called_once_with("Quantum computing", False, 0)
+
     def test_populate_wikipedia_tabs_into_empty_untitled_tab(self):
         win = ReadAloudWindow(application=self.app)
         # Verify initial empty untitled tab

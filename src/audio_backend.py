@@ -39,6 +39,46 @@ try:
 except Exception:
     HAS_LAMEENC = False
 
+# Try importing winsound for zero-dependency Windows fallback playback
+HAS_WINSOUND = False
+if sys.platform == "win32":
+    try:
+        import winsound
+        HAS_WINSOUND = True
+    except Exception:
+        HAS_WINSOUND = False
+
+
+def get_gst_audio_sink_candidates() -> list[str]:
+    """Returns candidate GStreamer audio sink element names ordered by platform preference."""
+    candidates = []
+    if sys.platform == "win32":
+        candidates = ["autoaudiosink", "wasapisink", "directsoundsink"]
+    elif sys.platform == "darwin":
+        candidates = ["autoaudiosink", "osxaudiosink"]
+    else:
+        candidates = ["autoaudiosink", "pulsesink", "pipewiresink", "alsasink"]
+
+    universal = ["autoaudiosink", "wasapisink", "directsoundsink", "pulsesink", "pipewiresink", "alsasink", "osxaudiosink"]
+    for c in universal:
+        if c not in candidates:
+            candidates.append(c)
+    return candidates
+
+
+def get_best_gst_audio_sink() -> str | None:
+    """Finds the best available GStreamer audio sink element that is registered in Gst."""
+    if not HAS_GST:
+        return None
+    for sink in get_gst_audio_sink_candidates():
+        try:
+            factory = Gst.ElementFactory.find(sink)
+            if factory is not None:
+                return sink
+        except Exception:
+            continue
+    return None
+
 
 class BaseAudioPlayer:
     """Abstract interface for audio playback with position tracking."""
@@ -80,28 +120,48 @@ class GStreamerAudioPlayer(BaseAudioPlayer):
         self._on_eos = on_eos
         self._on_error = on_error
 
-        try:
-            # Normalize file path for GStreamer pipeline
-            clean_path = str(Path(file_path).resolve()).replace("\\", "/")
-            pipeline_str = f'filesrc location="{clean_path}" ! decodebin ! audioconvert ! audioresample ! autoaudiosink'
-            self._pipeline = Gst.parse_launch(pipeline_str)
-            if not self._pipeline:
-                raise RuntimeError("Failed to create GStreamer pipeline")
-
-            bus = self._pipeline.get_bus()
-            bus.add_signal_watch()
-            bus.connect("message", self._on_bus_message)
-
-            initial_state = Gst.State.PAUSED if start_paused else Gst.State.PLAYING
-            ret = self._pipeline.set_state(initial_state)
-            if ret == Gst.StateChangeReturn.FAILURE:
-                raise RuntimeError("Failed to set GStreamer pipeline state")
-            return True
-        except Exception as e:
-            self.stop()
+        if not HAS_GST:
             if self._on_error:
-                self._on_error(str(e))
+                self._on_error("GStreamer is not available")
             return False
+
+        clean_path = str(Path(file_path).resolve()).replace("\\", "/")
+        available_sinks = [s for s in get_gst_audio_sink_candidates() if Gst.ElementFactory.find(s)]
+        if not available_sinks:
+            available_sinks = ["autoaudiosink"]
+
+        last_error = None
+        for sink in available_sinks:
+            try:
+                pipeline_str = f'filesrc location="{clean_path}" ! decodebin ! audioconvert ! audioresample ! {sink}'
+                pipeline = Gst.parse_launch(pipeline_str)
+                if not pipeline:
+                    continue
+
+                bus = pipeline.get_bus()
+                bus.add_signal_watch()
+                bus.connect("message", self._on_bus_message)
+
+                initial_state = Gst.State.PAUSED if start_paused else Gst.State.PLAYING
+                ret = pipeline.set_state(initial_state)
+                if ret == Gst.StateChangeReturn.FAILURE:
+                    try:
+                        bus.remove_signal_watch()
+                    except Exception:
+                        pass
+                    pipeline.set_state(Gst.State.NULL)
+                    continue
+
+                self._pipeline = pipeline
+                return True
+            except Exception as e:
+                last_error = e
+                continue
+
+        self.stop()
+        if self._on_error:
+            self._on_error(str(last_error or "Failed to create any GStreamer audio pipeline"))
+        return False
 
     def _on_bus_message(self, bus, message):
         if message.type == Gst.MessageType.EOS:
@@ -311,17 +371,286 @@ class SoundDeviceAudioPlayer(BaseAudioPlayer):
             return True
 
 
-def create_audio_player() -> BaseAudioPlayer:
-    """Factory creating best available audio player."""
-    if sys.platform == "win32" and HAS_SOUNDDEVICE:
-        return SoundDeviceAudioPlayer()
-    if HAS_GST:
-        return GStreamerAudioPlayer()
-    elif HAS_SOUNDDEVICE:
-        return SoundDeviceAudioPlayer()
+class WinSoundAudioPlayer(BaseAudioPlayer):
+    """
+    Zero-dependency fallback audio player for Windows using Python standard library winsound.
+    Guarantees audible playback even when GStreamer plugins and sounddevice PortAudio are missing.
+    """
+
+    def __init__(self):
+        self._file_path = None
+        self._start_time = 0.0
+        self._duration = 0.0
+        self._is_paused = False
+        self._stopped = True
+        self._on_eos = None
+        self._on_error = None
+        self._timer = None
+        self._lock = threading.Lock()
+
+    def play(self, file_path: str, on_eos=None, on_error=None, start_paused=False) -> bool:
+        self.stop()
+        if not HAS_WINSOUND:
+            if on_error:
+                on_error("winsound is not available on this platform")
+            return False
+
+        try:
+            # Determine duration from WAV file if possible
+            duration = 0.0
+            try:
+                with wave.open(file_path, "rb") as wf:
+                    frames = wf.getnframes()
+                    rate = wf.getframerate()
+                    if rate > 0:
+                        duration = frames / float(rate)
+            except Exception:
+                pass
+
+            with self._lock:
+                self._stopped = False
+                self._is_paused = start_paused
+                self._file_path = file_path
+                self._duration = duration
+                self._on_eos = on_eos
+                self._on_error = on_error
+                self._start_time = time.time()
+
+            if not start_paused:
+                winsound.PlaySound(file_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                if duration > 0:
+                    self._schedule_eos(duration)
+            return True
+        except Exception as e:
+            self.stop()
+            if on_error:
+                on_error(str(e))
+            return False
+
+    def _schedule_eos(self, delay: float):
+        if self._timer:
+            self._timer.cancel()
+
+        def _eos_worker():
+            with self._lock:
+                if self._stopped or self._is_paused:
+                    return
+            if self._on_eos:
+                self._on_eos()
+
+        self._timer = threading.Timer(delay, _eos_worker)
+        self._timer.daemon = True
+        self._timer.start()
+
+    def pause(self) -> bool:
+        with self._lock:
+            if self._stopped or self._is_paused:
+                return True
+            self._is_paused = True
+            try:
+                if HAS_WINSOUND:
+                    winsound.PlaySound(None, winsound.SND_PURGE)
+            except Exception:
+                pass
+            if self._timer:
+                self._timer.cancel()
+                self._timer = None
+            return True
+
+    def resume(self) -> bool:
+        with self._lock:
+            if self._stopped or not self._is_paused:
+                return True
+            self._is_paused = False
+            if self._file_path and os.path.isfile(self._file_path):
+                try:
+                    if HAS_WINSOUND:
+                        winsound.PlaySound(self._file_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+                    remaining = max(0.1, self._duration - (time.time() - self._start_time))
+                    self._schedule_eos(remaining)
+                    return True
+                except Exception:
+                    return False
+            return False
+
+    def stop(self):
+        with self._lock:
+            self._stopped = True
+            self._is_paused = False
+            if self._timer:
+                self._timer.cancel()
+                self._timer = None
+            try:
+                if HAS_WINSOUND:
+                    winsound.PlaySound(None, winsound.SND_PURGE)
+            except Exception:
+                pass
+
+    def get_position(self) -> float:
+        with self._lock:
+            if self._stopped or self._is_paused:
+                return -1.0
+            elapsed = time.time() - self._start_time
+            if self._duration > 0:
+                return min(elapsed, self._duration)
+            return elapsed
+
+    def seek(self, seconds_delta: float) -> bool:
+        # winsound does not support offset seeking
+        return False
+
+
+class SubprocessAudioPlayer(BaseAudioPlayer):
+    """
+    Subprocess fallback player using system CLI audio tools (aplay, paplay, pw-play, ffplay).
+    """
+
+    def __init__(self):
+        self._proc = None
+        self._stopped = True
+        self._is_paused = False
+        self._start_time = 0.0
+        self._duration = 0.0
+        self._on_eos = None
+        self._on_error = None
+        self._thread = None
+        self._lock = threading.Lock()
+
+    @staticmethod
+    def is_available() -> bool:
+        import shutil
+        return any(shutil.which(cmd) for cmd in ["aplay", "paplay", "pw-play", "ffplay"])
+
+    def play(self, file_path: str, on_eos=None, on_error=None, start_paused=False) -> bool:
+        self.stop()
+        import shutil
+        import subprocess
+
+        cmd = None
+        for c in ["aplay", "paplay", "pw-play"]:
+            if shutil.which(c):
+                cmd = [c, file_path]
+                break
+        if not cmd and shutil.which("ffplay"):
+            cmd = ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", file_path]
+
+        if not cmd:
+            if on_error:
+                on_error("No CLI audio playback tool available")
+            return False
+
+        try:
+            duration = 0.0
+            try:
+                with wave.open(file_path, "rb") as wf:
+                    frames = wf.getnframes()
+                    rate = wf.getframerate()
+                    if rate > 0:
+                        duration = frames / float(rate)
+            except Exception:
+                pass
+
+            with self._lock:
+                self._stopped = False
+                self._is_paused = start_paused
+                self._duration = duration
+                self._on_eos = on_eos
+                self._on_error = on_error
+                self._start_time = time.time()
+
+            self._proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+            def _wait():
+                self._proc.wait()
+                with self._lock:
+                    stopped = self._stopped
+                if not stopped and self._on_eos:
+                    self._on_eos()
+
+            self._thread = threading.Thread(target=_wait, daemon=True)
+            self._thread.start()
+            return True
+        except Exception as e:
+            self.stop()
+            if on_error:
+                on_error(str(e))
+            return False
+
+    def pause(self) -> bool:
+        return False
+
+    def resume(self) -> bool:
+        return False
+
+    def stop(self):
+        with self._lock:
+            self._stopped = True
+            if self._proc:
+                try:
+                    self._proc.terminate()
+                except Exception:
+                    pass
+                self._proc = None
+
+    def get_position(self) -> float:
+        with self._lock:
+            if self._stopped or self._is_paused:
+                return -1.0
+            elapsed = time.time() - self._start_time
+            if self._duration > 0:
+                return min(elapsed, self._duration)
+            return elapsed
+
+    def seek(self, seconds_delta: float) -> bool:
+        return False
+
+
+def get_audio_player_chain() -> list[BaseAudioPlayer]:
+    """Returns an ordered list of audio player instances to try in sequence."""
+    players = []
+    seen_classes = set()
+
+    def add(player_cls, *args, **kwargs):
+        if player_cls not in seen_classes:
+            try:
+                p = player_cls(*args, **kwargs)
+                players.append(p)
+                seen_classes.add(player_cls)
+            except Exception:
+                pass
+
+    if sys.platform == "win32":
+        if HAS_SOUNDDEVICE:
+            add(SoundDeviceAudioPlayer)
+        if HAS_GST and get_best_gst_audio_sink() is not None:
+            add(GStreamerAudioPlayer)
+        if HAS_WINSOUND:
+            add(WinSoundAudioPlayer)
+        if HAS_GST:
+            add(GStreamerAudioPlayer)
     else:
-        # Fallback dummy player if neither is available
-        return BaseAudioPlayer()
+        if HAS_GST and get_best_gst_audio_sink() is not None:
+            add(GStreamerAudioPlayer)
+        if HAS_SOUNDDEVICE:
+            add(SoundDeviceAudioPlayer)
+        if SubprocessAudioPlayer.is_available():
+            add(SubprocessAudioPlayer)
+        if HAS_GST:
+            add(GStreamerAudioPlayer)
+
+    if not players:
+        players.append(BaseAudioPlayer())
+    return players
+
+
+def create_audio_player() -> BaseAudioPlayer:
+    """Factory creating best available audio player with multi-tier fallback."""
+    chain = get_audio_player_chain()
+    return chain[0] if chain else BaseAudioPlayer()
 
 
 def convert_wav_to_mp3(src_wav_path: str, dest_mp3_path: str, bitrate: int = 64, mono: bool = True):

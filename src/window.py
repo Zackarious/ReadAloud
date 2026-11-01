@@ -2964,7 +2964,14 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         dialog._apply_suggestions = apply_suggestions
 
         # When enter is pressed in entry, trigger the import response
-        entry.connect("activate", lambda *_: dialog.response("import"))
+        def on_entry_activate(*_):
+            topic_text = entry.get_text().strip()
+            if not topic_text:
+                return
+            dialog.emit("response", "import")
+            dialog.force_close()
+
+        entry.connect("activate", on_entry_activate)
 
         def on_response(dlg, response):
             cancel_search_timer()

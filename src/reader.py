@@ -41,7 +41,13 @@ from gi.repository import GLib
 from .pipervoice import VoiceManager
 from .vocxpo import convert_text_for_eo_voice
 from .paths import get_model_search_paths
-from .audio_backend import create_audio_player, convert_wav_to_mp3, HAS_GST
+from .audio_backend import (
+    create_audio_player,
+    get_audio_player_chain,
+    GStreamerAudioPlayer,
+    convert_wav_to_mp3,
+    HAS_GST,
+)
 
 if HAS_GST:
     from gi.repository import Gst
@@ -255,6 +261,7 @@ class Reader():
                 pass
 
         self._dialog_ready = threading.Event()
+        self._player = None
         self._pipeline = None
         self._current_pipeline = None
         self._is_paused = False   # Pause intent: True even before pipeline exists
@@ -588,54 +595,58 @@ class Reader():
         return True
 
     def _play_audio_file_async(self, file_path, callback=None):
-        """Secure audio playback with error handling"""
+        """Secure audio playback with fallback across available audio backends."""
         # Guard: if this reader was explicitly stopped (replaced by a new one), do nothing
         if getattr(self, '_stopped', False):
             return
 
-        try:
-            # 1. Stop previous playback (clears any previous pipeline cleanly)
-            if self._current_pipeline:
-                try:
-                    bus = self._current_pipeline.get_bus()
-                    if bus:
-                        bus.remove_signal_watch()
-                except Exception:
-                    pass
-                self._current_pipeline.set_state(Gst.State.NULL)
-                self._current_pipeline = None
+        # 1. Stop previous playback cleanly
+        self.stop_audio()
+        self._stopped = False
+        start_paused = getattr(self, '_is_paused', False)
 
-            # 2. Create pipeline and check
-            pipeline = Gst.parse_launch(
-                f"filesrc location={file_path} ! decodebin ! audioconvert ! audioresample ! autoaudiosink"
-            )
-
-            if not pipeline:
-                raise RuntimeError("Pipeline creation failed")
-
-            # 3. Assign pipeline after successful creation
-            self._current_pipeline = pipeline
-
-            # 4. Bus configuration
-            bus = pipeline.get_bus()
-            bus.add_signal_watch()
-            bus.connect("message",
-                   lambda bus, msg: self._on_gst_message(bus, msg, pipeline, file_path, callback))
-
-            # 5. Start pipeline — honour pause intent if the user clicked Pause
-            #    during synthesis (before the pipeline was created)
-            if getattr(self, '_is_paused', False):
-                ret = pipeline.set_state(Gst.State.PAUSED)
-            else:
-                ret = pipeline.set_state(Gst.State.PLAYING)
-            if ret == Gst.StateChangeReturn.FAILURE:
-                raise RuntimeError("Failed to set pipeline state")
-
-        except Exception as e:
-            print(f"Playback error: {e}")
-            self.stop_audio()  # Cleanup
+        def on_eos():
+            print("Playback finished")
+            if hasattr(self, 'window') and self.window:
+                if getattr(self.window, 'reader', None) is self:
+                    self.window.stop_playback()
             if callback:
                 GLib.idle_add(callback)
+
+        def on_error(err):
+            print(f"Playback error: {err}")
+            if hasattr(self, 'window') and self.window:
+                if getattr(self.window, 'reader', None) is self:
+                    self.window.stop_playback()
+            if callback:
+                GLib.idle_add(callback)
+
+        # 2. Try players from the fallback chain
+        chain = get_audio_player_chain()
+        last_error = None
+        for player in chain:
+            try:
+                success = player.play(
+                    file_path,
+                    on_eos=on_eos,
+                    on_error=None,
+                    start_paused=start_paused,
+                )
+                if success:
+                    self._player = player
+                    if isinstance(player, GStreamerAudioPlayer):
+                        self._current_pipeline = player._pipeline
+                    else:
+                        self._current_pipeline = None
+                    return
+            except Exception as e:
+                last_error = e
+                continue
+
+        print(f"Playback error: All audio backends failed to start playback ({last_error})")
+        self.stop_audio()
+        if callback:
+            GLib.idle_add(callback)
 
     def _on_gst_message(self, bus, message, pipeline, file_path, callback):
         if message.type == Gst.MessageType.EOS:
@@ -659,13 +670,10 @@ class Reader():
                 GLib.idle_add(callback)
 
     def pause_audio(self):
-        """Pauses current playback.
-
-        Records pause intent even when the pipeline does not exist yet
-        (i.e. synthesis is still in progress). Returns True on success so
-        the window can set is_paused = True unconditionally.
-        """
+        """Pauses current playback."""
         self._is_paused = True
+        if hasattr(self, '_player') and self._player:
+            return self._player.pause()
         if self._current_pipeline:
             ret = self._current_pipeline.set_state(Gst.State.PAUSED)
             return ret != Gst.StateChangeReturn.FAILURE
@@ -675,6 +683,8 @@ class Reader():
     def resume_audio(self):
         """Resumes paused playback"""
         self._is_paused = False
+        if hasattr(self, '_player') and self._player:
+            return self._player.resume()
         if self._current_pipeline:
             ret = self._current_pipeline.set_state(Gst.State.PLAYING)
             return ret != Gst.StateChangeReturn.FAILURE
@@ -682,6 +692,10 @@ class Reader():
 
     def get_playback_position(self) -> float:
         """Returns current playback position in seconds, or -1.0 if not playing"""
+        if hasattr(self, '_player') and self._player:
+            pos = self._player.get_position()
+            if pos >= 0:
+                return pos
         if self._current_pipeline:
             success, pos_ns = self._current_pipeline.query_position(Gst.Format.TIME)
             if success and pos_ns >= 0:
@@ -690,6 +704,8 @@ class Reader():
 
     def seek(self, seconds_delta: float) -> bool:
         """Seeks playback relatively by seconds_delta seconds (+15s forward, -15s backward)."""
+        if hasattr(self, '_player') and self._player:
+            return self._player.seek(seconds_delta)
         if not self._current_pipeline:
             return False
         try:
@@ -728,15 +744,17 @@ class Reader():
         self.stop_audio()
 
     def stop_audio(self):
-        """Stops current playback.
-
-        Marks this reader as stopped so any in-flight synthesis thread will
-        not start a new pipeline after this call. Also removes the GStreamer
-        bus signal watch to silence stale EOS/error callbacks.
-        """
+        """Stops current playback."""
         self._stopped = True
         self._cancelled = True
         self._is_paused = False
+        if hasattr(self, '_player') and self._player:
+            try:
+                self._player.stop()
+            except Exception:
+                pass
+            self._player = None
+
         if self._current_pipeline:
             try:
                 bus = self._current_pipeline.get_bus()

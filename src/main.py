@@ -48,6 +48,44 @@ from .window import ReadAloudWindow
 from .bubble import ListenerBubbleWindow
 
 CHANGELOG_XML = r"""
+<p><em>Version 1.8.11 - (01 November 2026)</em></p>
+<p>Version 1.8.11 resolves critical audio playback silence and missing element errors on Windows by introducing dynamic GStreamer audio sink discovery, adds a zero-dependency native Windows fallback player (WinSoundAudioPlayer) and Unix CLI fallback player (SubprocessAudioPlayer), establishes a resilient multi-tier audio player fallback chain in Reader, fixes the unhandled AttributeError crash when pressing Return in the Wikipedia importer dialog, updates PyInstaller packaging to harvest PortAudio binaries and sounddevice data, includes GStreamer audio sink plugins in Windows CI builds, and expands the automated regression test suite to 267 tests.</p>
+
+<p><em>Features and Fixes Removed:</em></p>
+<ul>
+  <li><em>Hardcoded GStreamer "autoaudiosink" Pipeline Construction:</em> Removed hardcoded autoaudiosink element in reader.py and audio_backend.py. <em>Reason:</em> Systems lacking gst-plugins-good (such as Windows environments without good plugins installed) fail with gst_parse_error: no element "autoaudiosink", causing playback pipeline creation to fail completely with silence.</li>
+  <li><em>Bypassed Audio Backend Architecture in Reader:</em> Removed direct, unabstracted GStreamer calls in Reader._play_audio_file_async() that bypassed audio_backend.py. <em>Reason:</em> Bypassing the audio backend prevented Reader from using alternative audio players (sounddevice, winsound, CLI tools) when GStreamer was absent or broken.</li>
+  <li><em>Nonexistent AlertDialog.response() Invocation:</em> Removed dialog.response("import") in window.py on the Wikipedia import entry activate handler. <em>Reason:</em> Adw.AlertDialog is a Gtk.Widget in Libadwaita and does not possess a .response() method (unlike legacy Gtk.Dialog or Adw.MessageDialog), which caused pressing Return or Keypad Enter in the search input to throw AttributeError: 'AlertDialog' object has no attribute 'response' and crash the main thread.</li>
+  <li><em>Unguarded Multi-Module Pre-Initialization in Windows Entrypoint:</em> Removed the monolithic try...except block importing all C-extensions in a single block in win_entrypoint.py. <em>Reason:</em> If any single module (e.g. sounddevice due to missing _sounddevice_data) failed to import, the entire block aborted, preventing subsequent extensions (lameenc) from pre-initializing before MinGW64 GLib runtime DLLs loaded.</li>
+</ul>
+
+<p><em>Features and Fixes Added:</em></p>
+<ul>
+  <li><em>Dynamic GStreamer Audio Sink Detection (get_best_gst_audio_sink &amp; get_gst_audio_sink_candidates):</em> Added dynamic GStreamer audio sink discovery in audio_backend.py querying registered element factories in order of platform preference (autoaudiosink, wasapisink, directsoundsink, pulsesink, pipewiresink, alsasink, osxaudiosink). <em>Reason:</em> Automatically detects and utilizes whichever audio sink plugin is installed on the user's host platform instead of assuming autoaudiosink is always present.</li>
+  <li><em>Sequential GStreamer Sink Fallback Recovery:</em> Added multi-sink trial iteration in GStreamerAudioPlayer.play(). <em>Reason:</em> If the primary sink fails during pipeline launch or state transition, the player attempts remaining available sinks sequentially before failing.</li>
+  <li><em>Native Windows Standard-Library Audio Player (WinSoundAudioPlayer):</em> Added WinSoundAudioPlayer in audio_backend.py implementing BaseAudioPlayer using Python's built-in winsound module. <em>Reason:</em> Provides a zero-dependency, guaranteed audio output mechanism on Microsoft Windows that requires no external GStreamer plugins or PortAudio binaries, ensuring speech is always audible.</li>
+  <li><em>CLI Subprocess Audio Player (SubprocessAudioPlayer):</em> Added SubprocessAudioPlayer in audio_backend.py using system tools (aplay, paplay, pw-play, ffplay). <em>Reason:</em> Delivers an additional playback fallback on Linux/Unix systems where GStreamer or sounddevice may not be available.</li>
+  <li><em>Multi-Tier Audio Player Fallback Chain (get_audio_player_chain):</em> Added an ordered fallback player chain in audio_backend.py and integrated it into Reader._play_audio_file_async(). <em>Reason:</em> Seamlessly falls back to secondary and tertiary audio players if the primary player fails to launch, eliminating silent synthesis failures.</li>
+  <li><em>PortAudio and GStreamer Dependencies in Windows CI:</em> Added mingw-w64-ucrt-x86_64-portaudio, mingw-w64-ucrt-x86_64-gstreamer, mingw-w64-ucrt-x86_64-gst-plugins-base, mingw-w64-ucrt-x86_64-gst-plugins-good, and mingw-w64-ucrt-x86_64-gst-plugins-bad to build-windows.yml. <em>Reason:</em> Ensures Windows release builds include essential audio sink plugins (autoaudiosink, directsoundsink, wasapisink) and PortAudio libraries.</li>
+  <li><em>PyInstaller Hook Collection for PortAudio &amp; Sounddevice:</em> Added collect_all('sounddevice') and collect_all('_sounddevice_data'), portaudio DLL search, and plugin binary collections in ReadAloud.spec. <em>Reason:</em> Resolves ModuleNotFoundError: No module named '_sounddevice_data' in frozen Windows bundles.</li>
+  <li><em>Automated Regression Test Suite Expansion (267 Tests):</em> Added tests/test_audio_playback_fallback.py and entry activation unit tests, increasing test coverage from 258 to 267 automated unit tests. <em>Reason:</em> Guarantees verification of sink discovery, fallback chains, and dialog activation.</li>
+</ul>
+
+<p><em>Features and Fixes Updated:</em></p>
+<ul>
+  <li><em>Reader Audio Architecture Synchronization:</em> Updated Reader methods (pause_audio, resume_audio, get_playback_position, seek, stop_audio) to delegate directly to self._player while keeping _current_pipeline synchronized for legacy and test callers. <em>Reason:</em> Guarantees that word highlight synchronization, seek navigation, and pause/resume work uniformly regardless of which audio backend is active.</li>
+  <li><em>Wikipedia Importer Return Key Activation:</em> Updated the article search entry's activate signal handler in window.py to validate input, emit dialog.emit("response", "import"), and invoke dialog.force_close(). <em>Reason:</em> Allows users to press Return or Keypad Enter in the search box to import the article immediately without triggering AttributeError.</li>
+  <li><em>Isolated Windows Pre-Init Extension Loading:</em> Updated win_entrypoint.py to import C-extensions in an iterative loop with per-module exception trapping and configured _sounddevice_data PortAudio DLL directory search. <em>Reason:</em> Prevents transient import issues in one extension from cascading and blocking other required libraries.</li>
+  <li><em>Wikimedia-Compliant User-Agent Header:</em> Updated user-agent identification string to ReadAloud/1.8.11 (https://github.com/wbernard/parolu; contact@readaloud.app) in wikipedia_importer.py. <em>Reason:</em> Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version.</li>
+  <li><em>Application Version Increment (1.8.11):</em> Updated application version to 1.8.11 across meson.build, src/main.py, src/error_logger.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_linux/build_deb.sh, build_linux/debian/control, and CI workflows. <em>Reason:</em> Adheres to semantic versioning standards for the new release.</li>
+</ul>
+
+<p><em>Visual Changes and UI Updates:</em></p>
+<ul>
+  <li><em>Responsive Wikipedia Search Entry Form Submission:</em> Fixed the Wikipedia article import modal visual responsiveness upon pressing Return or Keypad Enter in the topic entry box, ensuring the dialog immediately dismisses and seamlessly transitions to the loading progress spinner without unhandled exception popups or freezing. <em>Reason:</em> Delivers a smooth, frictionless keyboard interaction for article lookups matching native Libadwaita dialog behaviors.</li>
+  <li><em>Persistent Real-Time Word Highlighting Across Audio Backends:</em> Maintained visual yellow word-level text highlighting during speech playback across all fallback audio engines (SoundDeviceAudioPlayer, WinSoundAudioPlayer, SubprocessAudioPlayer, GStreamerAudioPlayer). <em>Reason:</em> Ensures visual reading assistance remains active and responsive even when running on minimal fallback audio backends.</li>
+</ul>
+
 <p><em>Version 1.8.10 - (30 October 2026)</em></p>
 <p>Version 1.8.10 introduces automatic paragraph gap separation with an empty line gap between paragraphs upon pressing Return or Keypad Enter, integrates paragraph gap normalization for all document imports and clipboard pastes, incorporates a direct Wikipedia article importer into the Tools menu and header bar, adds an interactive live autocomplete suggestions dropdown matching Wikipedia's website design with article thumbnails and descriptions, enables multi-tab sequential import for related Wikipedia topics with automatic all-tag stripping, embeds the Wikipedia globe logo and a Wikimedia Foundation donation callout card, fixes the broken Open File dialog by eliminating gettext function shadowing, establishes a Wikimedia policy-compliant HTTP client with a resilient standard-library fallback, resolves Flatpak packaging build and site-packages cleanup issues, eliminates premature cancellation when closing modal progress dialogs, modernizes error reporting with native Adw.AlertDialog modals, and expands the automated regression test suite to 244 tests.</p>
 
@@ -925,7 +963,7 @@ class AboutReadAloudWindow(Adw.Window):
     application_name = GObject.Property(type=str, default='ReadAloud')
     application_icon = GObject.Property(type=str, default='im.zackarious.ReadAloud')
     developer_name = GObject.Property(type=str, default='zackarious')
-    version = GObject.Property(type=str, default='Version 1.8.10 - (30 October 2026)')
+    version = GObject.Property(type=str, default='Version 1.8.11 - (01 November 2026)')
     website = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
     issue_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud/issues')
     support_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
@@ -1033,7 +1071,7 @@ class AboutReadAloudWindow(Adw.Window):
         box.append(dev_label)
 
         # Version
-        ver_label = Gtk.Label(label="Version 1.8.10 - (30 October 2026)")
+        ver_label = Gtk.Label(label="Version 1.8.11 - (01 November 2026)")
         ver_label.add_css_class("caption")
         ver_label.add_css_class("dim-label")
         box.append(ver_label)
@@ -1453,4 +1491,4 @@ def main(version):
     return result
 
 if __name__ == "__main__":
-    main("1.8.10")
+    main("1.8.11")

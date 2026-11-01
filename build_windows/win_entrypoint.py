@@ -65,6 +65,10 @@ if sys.platform == "win32":
             base_dir / "onnxruntime" / "capi",
             base_dir / "piper",
             base_dir / "_internal" / "piper",
+            base_dir / "_sounddevice_data",
+            base_dir / "_internal" / "_sounddevice_data",
+            base_dir / "_sounddevice_data" / "portaudio-binaries",
+            base_dir / "_internal" / "_sounddevice_data" / "portaudio-binaries",
         ])
     for d in dll_candidates:
         if d.is_dir():
@@ -127,16 +131,13 @@ def find_and_setup_espeak_data() -> str | None:
 # Discover espeak-ng-data and set environment variable before loading C extensions
 _espeak_data_path = find_and_setup_espeak_data()
 
-# CRITICAL: Pre-initialize MSVC C-extensions before MinGW64 GLib/GTK runtime DLLs
+# Pre-initialize MSVC C-extensions before MinGW64 GLib/GTK runtime DLLs
 # are added to the loader search path to prevent CRT/TLS conflicts.
-try:
-    import numpy
-    import onnxruntime
-    import piper
-    import sounddevice
-    import lameenc
-except Exception as e:
-    print(f"[win_entrypoint] Pre-init notice: {e}")
+for mod_name in ("numpy", "onnxruntime", "piper", "sounddevice", "lameenc"):
+    try:
+        __import__(mod_name)
+    except Exception as e:
+        print(f"[win_entrypoint] Pre-init notice ({mod_name}): {e}")
 
 def setup_windows_environment():
     """Sets up runtime environment variables for GTK4, Libadwaita, and GStreamer."""
@@ -235,7 +236,7 @@ def main():
 
     # Launch application
     from src.main import main as app_main
-    sys.exit(app_main("1.8.10"))
+    sys.exit(app_main("1.8.11"))
 
 if __name__ == "__main__":
     main()
