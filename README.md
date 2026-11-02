@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.8.11-blue.svg" alt="Version 1.8.11"/>
+  <img src="https://img.shields.io/badge/version-1.8.12-blue.svg" alt="Version 1.8.12"/>
   <img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg" alt="GPL-3.0 License"/>
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-0078D6.svg" alt="Platform: Windows & Linux"/>
   <img src="https://img.shields.io/badge/Desktop-GNOME%20%7C%20KDE%20Plasma%20%7C%20Windows-green.svg" alt="Desktop: GNOME, KDE Plasma & Windows"/>
@@ -157,11 +157,11 @@ Multi-speaker models can quickly switch between different speakers, but the qual
 
 Download the official standalone Windows releases from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
 
-- 💽 **Windows Setup Installer**: Download [`ReadAloud-1.8.11-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.11-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then double-click the `.exe` to run the setup wizard.
+- 💽 **Windows Setup Installer**: Download [`ReadAloud-1.8.12-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.12-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then double-click the `.exe` to run the setup wizard.
   - Full Inno Setup 6 installer with desktop and Start Menu integration.
   - Pre-bundles all 35 neural voices, GTK4/Libadwaita runtimes, and MSVC 2022 libraries.
-  - Supports silent enterprise installation: `ReadAloud-1.8.11-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
-- 💼 **Windows Portable Edition**: Download [`ReadAloud-1.8.11-Windows-Portable-x64.7z.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.11-Windows-Portable-x64.7z.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip or WinRAR.
+  - Supports silent enterprise installation: `ReadAloud-1.8.12-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
+- 💼 **Windows Portable Edition**: Download [`ReadAloud-1.8.12-Windows-Portable-x64.7z.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.12-Windows-Portable-x64.7z.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip or WinRAR.
   - Zero-installation standalone folder. Extract anywhere (including USB thumb drives) and double-click `ReadAloud.exe`.
 
 ---
@@ -177,7 +177,7 @@ Download the official `.deb` package from the **[Releases Page](https://github.c
 ```bash
 # Install via APT (automatically resolves system dependencies)
 sudo apt update
-sudo apt install ./readaloud_1.8.11_amd64.deb
+sudo apt install ./readaloud_1.8.12_amd64.deb
 
 # Launch ReadAloud
 readaloud

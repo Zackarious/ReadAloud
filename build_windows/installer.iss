@@ -1,8 +1,8 @@
 ; Inno Setup 6 Script for ReadAloud
-; Generates ReadAloud-1.8.11-Windows-Setup-x64.exe
+; Generates ReadAloud-1.8.12-Windows-Setup-x64.exe
 
 #define MyAppName "ReadAloud"
-#define MyAppVersion "1.8.11"
+#define MyAppVersion "1.8.12"
 #define MyAppPublisher "zackarious"
 #define MyAppURL "https://github.com/Zackarious/ReadAloud"
 #define MyAppExeName "ReadAloud.exe"
@@ -20,7 +20,7 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=..\LICENSE
 OutputDir=..\dist
-OutputBaseFilename=ReadAloud-1.8.11-Windows-Setup-x64
+OutputBaseFilename=ReadAloud-1.8.12-Windows-Setup-x64
 SetupIconFile=ReadAloud.ico
 Compression=lzma2/ultra64
 SolidCompression=yes

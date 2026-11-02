@@ -70,7 +70,7 @@ class TestAboutWindow(unittest.TestCase):
         self.assertEqual(about.props.website, 'https://github.com/Zackarious/ReadAloud')
         self.assertEqual(about.props.issue_url, 'https://github.com/Zackarious/ReadAloud/issues')
         self.assertEqual(about.props.comments, APP_DESCRIPTION)
-        self.assertEqual(about.props.version, 'Version 1.8.11 - (01 November 2026)')
+        self.assertEqual(about.props.version, 'Version 1.8.12 - (02 November 2026)')
         self.assertEqual(about.props.default_width, 600)
         self.assertEqual(about.props.default_height, 680)
 

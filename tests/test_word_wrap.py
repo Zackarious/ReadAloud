@@ -116,5 +116,21 @@ class TestWordWrapAndSentenceSegmentation(unittest.TestCase):
         self.assertTrue(full_result.endswith("\nSuffix."))
 
 
+    def test_headerbar_buttons(self):
+        """Verify the redundant burger-like unwrap button is not present on the header bar."""
+        import xml.etree.ElementTree as ET
+        tree = ET.parse("src/window.ui")
+        root = tree.getroot()
+        header_bar = root.find(".//object[@id='header_bar']")
+        self.assertIsNotNone(header_bar)
+        start_button_ids = [
+            child.find("object").attrib.get("id")
+            for child in header_bar.findall("./child[@type='start']")
+            if child.find("object") is not None
+        ]
+        self.assertEqual(start_button_ids, ["open_button", "wiki_button", "save_text_button"])
+        self.assertNotIn("unwrap_button", start_button_ids)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -48,6 +48,31 @@ from .window import ReadAloudWindow
 from .bubble import ListenerBubbleWindow
 
 CHANGELOG_XML = r"""
+<p><em>Version 1.8.12 - (02 November 2026)</em></p>
+<p>Version 1.8.12 streamlines the window header bar controls by removing the redundant burger-like unwrap button following the Save to Text File icon, preserves document unwrapping via standard shortcuts and the primary application menu, introduces automated header bar layout test verification, recompiles application resources, and updates the version across all platforms and package builders.</p>
+
+<p><em>Features and Fixes Removed:</em></p>
+<ul>
+  <li><em>Redundant Left-Side Header Bar Burger / Unwrap Button:</em> Removed the unwrap_button (format-justify-fill-symbolic) widget located immediately after the Save to Text File icon in window.ui along with its @Gtk.Template.Child binding in window.py. <em>Reason:</em> The four-line justification symbol visually resembled a duplicate burger menu on the left side of the header bar directly adjacent to document action buttons, causing visual clutter and user confusion with the main application burger menu on the right. Text unwrapping and paragraph reflow remain fully accessible through the primary menu ("Unwrap / Reflow Text") and via keyboard shortcuts (Ctrl+Shift+W, Ctrl+J).</li>
+</ul>
+
+<p><em>Features and Fixes Added:</em></p>
+<ul>
+  <li><em>Header Bar Button Configuration Test (test_headerbar_buttons):</em> Added a dedicated regression test in tests/test_word_wrap.py verifying that the header bar's start child container strictly contains Open File (open_button), Wikipedia Import (wiki_button), and Save Text (save_text_button), and asserting that the redundant unwrap button is not present on the header bar. <em>Reason:</em> Guarantees that future updates maintain a clean, uncluttered header bar layout and prevents accidental reintroduction of redundant toolbar buttons.</li>
+</ul>
+
+<p><em>Features and Fixes Updated:</em></p>
+<ul>
+  <li><em>Wikimedia-Compliant User-Agent Header:</em> Updated user-agent identification string to ReadAloud/1.8.12 (https://github.com/wbernard/parolu; contact@readaloud.app) in wikipedia_importer.py. <em>Reason:</em> Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version release.</li>
+  <li><em>Compiled GResource Bundle:</em> Recompiled src/readaloud.gresource with glib-compile-resources from src/readaloud.gresource.xml. <em>Reason:</em> Packages the updated window.ui header bar definition into the application's runtime binary resource bundle.</li>
+  <li><em>Application Version Increment (1.8.12):</em> Updated application version to 1.8.12 across meson.build, src/main.py, src/error_logger.py, src/wikipedia_importer.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_linux/build_deb.sh, build_linux/debian/control, tests/test_about_window.py, and CI workflows. <em>Reason:</em> Adheres to semantic versioning standards for the new release.</li>
+</ul>
+
+<p><em>Visual Changes and UI Updates:</em></p>
+<ul>
+  <li><em>Uncluttered Header Bar Navigation:</em> Streamlined the top header bar layout by eliminating the duplicate burger-style icon between the Save to Text File icon and the centered window title. <em>Reason:</em> Restores a balanced, clean user interface with standard GNOME HIG alignment, eliminating visual distraction while keeping core reading, saving, and navigation tools cleanly distinct.</li>
+</ul>
+
 <p><em>Version 1.8.11 - (01 November 2026)</em></p>
 <p>Version 1.8.11 resolves critical audio playback silence and missing element errors on Windows by introducing dynamic GStreamer audio sink discovery, adds a zero-dependency native Windows fallback player (WinSoundAudioPlayer) and Unix CLI fallback player (SubprocessAudioPlayer), establishes a resilient multi-tier audio player fallback chain in Reader, fixes the unhandled AttributeError crash when pressing Return in the Wikipedia importer dialog, updates PyInstaller packaging to harvest PortAudio binaries and sounddevice data, includes GStreamer audio sink plugins in Windows CI builds, and expands the automated regression test suite to 267 tests.</p>
 
@@ -963,7 +988,7 @@ class AboutReadAloudWindow(Adw.Window):
     application_name = GObject.Property(type=str, default='ReadAloud')
     application_icon = GObject.Property(type=str, default='im.zackarious.ReadAloud')
     developer_name = GObject.Property(type=str, default='zackarious')
-    version = GObject.Property(type=str, default='Version 1.8.11 - (01 November 2026)')
+    version = GObject.Property(type=str, default='Version 1.8.12 - (02 November 2026)')
     website = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
     issue_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud/issues')
     support_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
@@ -1071,7 +1096,7 @@ class AboutReadAloudWindow(Adw.Window):
         box.append(dev_label)
 
         # Version
-        ver_label = Gtk.Label(label="Version 1.8.11 - (01 November 2026)")
+        ver_label = Gtk.Label(label="Version 1.8.12 - (02 November 2026)")
         ver_label.add_css_class("caption")
         ver_label.add_css_class("dim-label")
         box.append(ver_label)
@@ -1491,4 +1516,4 @@ def main(version):
     return result
 
 if __name__ == "__main__":
-    main("1.8.11")
+    main("1.8.12")

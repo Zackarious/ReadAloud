@@ -37,15 +37,6 @@
                 <property name="action-name">win.save-as</property>
               </object>
             </child>
-            <child type="start">
-              <object class="GtkButton" id="unwrap_button">
-                <property name="width-request">48</property>
-                <property name="height-request">42</property>
-                <property name="icon-name">format-justify-fill-symbolic</property>
-                <property name="tooltip-text" translatable="yes">Unwrap / Reflow Text (Ctrl+Shift+W)</property>
-                <property name="action-name">win.unwrap-text</property>
-              </object>
-            </child>
             <child type="end">
               <object class="GtkMenuButton">
                 <property name="primary">True</property>

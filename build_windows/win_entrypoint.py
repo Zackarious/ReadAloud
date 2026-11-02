@@ -236,7 +236,7 @@ def main():
 
     # Launch application
     from src.main import main as app_main
-    sys.exit(app_main("1.8.11"))
+    sys.exit(app_main("1.8.12"))
 
 if __name__ == "__main__":
     main()

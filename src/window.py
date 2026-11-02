@@ -542,7 +542,6 @@ class ReadAloudWindow(Adw.ApplicationWindow):
     open_button = Gtk.Template.Child()     # Opens a file
     wiki_button = Gtk.Template.Child()     # Wikipedia importer
     save_text_button = Gtk.Template.Child()     # Saves the text
-    unwrap_button = Gtk.Template.Child()        # Unwraps / reflows physical line breaks
     read_button = Gtk.Template.Child()     # Plays audio file
     pause_button = Gtk.Template.Child()    # Pauses/resumes audio playback
     save_button = Gtk.Template.Child()     # Saves audio file
