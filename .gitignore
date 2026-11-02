@@ -16,4 +16,8 @@ push_to_github.sh
 *.gresource
 dist/
 build_windows/build/
+build-arm64/
+build-appimage/
+build-macos/
+build-deb/
 *.log

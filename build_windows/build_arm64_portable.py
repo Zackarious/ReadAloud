@@ -104,11 +104,13 @@ def setup_arm64_runtime():
     )
 
     launcher_vbs = ARM64_BUNDLE_DIR / "ReadAloud-Silent.vbs"
-    launcher_vbs.write_text(
+    vbs_content = (
         'Set WshShell = CreateObject("WScript.Shell")\r\n'
-        'WshShell.Run "cmd /c ""' & ARM64_BUNDLE_DIR.name & '\\ReadAloud.cmd""", 0, False\r\n',
-        encoding="utf-8",
+        'Set fso = CreateObject("Scripting.FileSystemObject")\r\n'
+        'dir = fso.GetParentFolderName(WScript.ScriptFullName)\r\n'
+        'WshShell.Run Chr(34) & dir & "\\ReadAloud.cmd" & Chr(34), 0, False\r\n'
     )
+    launcher_vbs.write_text(vbs_content, encoding="utf-8")
 
     if (REPO_ROOT / "build_windows" / "ReadAloud.ico").exists():
         shutil.copy(REPO_ROOT / "build_windows" / "ReadAloud.ico", ARM64_BUNDLE_DIR / "ReadAloud.ico")
