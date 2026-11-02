@@ -1,0 +1,68 @@
+name: Build Linux AppImage
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-appimage:
+    name: build-linux-appimage
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Repository with Git LFS
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Checkout LFS Objects
+        run: git lfs checkout
+
+      - name: Install System Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            meson \
+            ninja-build \
+            libgtk-4-dev \
+            libadwaita-1-dev \
+            libglib2.0-dev \
+            gettext \
+            python3-gi \
+            gir1.2-gtk-4.0 \
+            gir1.2-adw-1 \
+            libportaudio2 \
+            libespeak-ng-dev \
+            lame \
+            p7zip-full \
+            desktop-file-utils \
+            appstream \
+            curl \
+            file \
+            squashfs-tools \
+            python3-venv \
+            python3-pip
+
+      - name: Build Linux AppImage
+        run: |
+          bash build_linux/build_appimage.sh
+
+      - name: Upload AppImage Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ReadAloud-Linux-AppImage-x64
+          path: dist/ReadAloud-*-linux-x86_64.AppImage*
+
+      - name: Publish AppImage to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ls -lh dist/ReadAloud-*-linux-x86_64.AppImage.zip*
+          gh release upload "${{ github.ref_name }}" dist/ReadAloud-*-linux-x86_64.AppImage.zip* --clobber

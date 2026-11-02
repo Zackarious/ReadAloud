@@ -151,29 +151,64 @@ Multi-speaker models can quickly switch between different speakers, but the qual
 
 ---
 
+## 💻 System & Software Requirements
+
+ReadAloud runs fully offline using on-device Piper neural speech models and ONNX Runtime. Below are the hardware and operating system requirements:
+
+### Minimum Requirements (Basic / Normal Voice Playback)
+*Suitable for real-time speech playback with `medium`, `low`, and `x_low` voice models.*
+
+| Component | Minimum Specification |
+| :--- | :--- |
+| **Processor** | 1.6 GHz or faster, 2-core processor (x86-64, ARM64, or Apple Silicon with SSE4.2 / NEON) |
+| **Operating System** | • **Windows**: Windows 11, Windows Server 2025, or Windows Server 2022 *(Note: Microsoft official consumer support for Windows 10 ended in October 2025, though ReadAloud continues to run with MSVC 2022 runtime)*<br/>• **Linux**: Ubuntu 22.04 LTS+, Debian 12+, Fedora 38+, Arch Linux with GTK 4.6+ & Libadwaita 1.0+<br/>• **macOS**: macOS 12 (Monterey) or later |
+| **Memory (RAM)** | 4 GB RAM (or 2 GB minimum available system memory) |
+| **Hard Disk Space** | 4 GB of available storage space for application executable, GTK4 runtime, and pre-bundled 35 offline neural voice models |
+| **Display** | 1280 × 768 minimum screen resolution |
+| **Graphics Card & Drivers** | DirectX 11 / OpenGL 3.3 capable GPU (Intel HD Graphics 4000+, AMD Radeon R5/HD 7000+, NVIDIA GeForce 400 series or newer with standard WDDM 1.2+ drivers; Mesa llvmpipe software rasterizer supported as fallback) |
+| **Audio Output** | Standard audio output device, sound card, or headphone jack (DirectSound / WASAPI on Windows, PulseAudio / PipeWire / ALSA on Linux, CoreAudio on macOS) |
+
+### Recommended Requirements (High-Quality Voices & Batch Synthesis)
+*Recommended for high-fidelity `high` quality voice models (28–32M parameters), instant book chapter audio rendering, and fast multi-tab playback.*
+
+| Component | Recommended Specification |
+| :--- | :--- |
+| **Processor** | 2.5 GHz or faster quad-core (4 cores / 8 threads) or higher (Intel Core i5/i7 8th Gen+, AMD Ryzen 3000+, Snapdragon X Elite, Apple Silicon M1/M2/M3/M4) with AVX2 / FMA instruction support |
+| **Operating System** | • **Windows**: Windows 11 64-bit (23H2 or newer), Windows Server 2025<br/>• **Linux**: Ubuntu 24.04 LTS+, Fedora 40+<br/>• **macOS**: macOS 14 (Sonoma) or newer |
+| **Memory (RAM)** | 8 GB RAM or higher for rapid multi-tab processing and uncompressed high-fidelity audio buffers |
+| **Hard Disk Space** | 8 GB of available space on a solid-state drive (NVMe SSD recommended for instant model loading and audio WAV/MP3 rendering) |
+| **Display** | 1920 × 1080 (Full HD) or higher resolution with 100% or 125% DPI scaling |
+| **Graphics Card & Drivers** | Dedicated or modern integrated GPU with Direct3D 12 / Vulkan / Metal support:<br/>• **NVIDIA**: GeForce GTX 1050 / RTX 2060 or newer (GeForce Game Ready / Studio Driver 535.xx or later)<br/>• **AMD**: Radeon RX 5000 / 6000 series or newer (AMD Software: Adrenalin Edition 23.x or later)<br/>• **Intel**: Intel Iris Xe Graphics, Arc A-Series, or UHD 630+ (Intel Graphics Driver 31.0.101.4000 or newer)<br/>• **Apple**: Apple Silicon Integrated GPU (M1, M2, M3, M4 with Metal 3) |
+| **Audio Output** | 24-bit / 48kHz or 96kHz low-latency stereo output device or USB DAC |
+
+---
+
 ## 📦 Installation & Downloads
 
-### 🪟 Microsoft Windows (10 / 11)
+Official releases are published on the **[GitHub Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**.
 
-Download the official standalone Windows releases from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
+> [!NOTE]
+> **Multi-Volume Split File Downloads**:
+> Because ReadAloud pre-bundles 35 offline neural voice models and full runtime engines (~2.4 GB uncompressed), large packages are split into 1800 MB volumes (`.001`, `.002`) to strictly adhere to GitHub's 2.0 GiB release asset ceiling. Download all numbered parts into the same folder before opening or extracting.
 
-- 💽 **Windows Setup Installer**: Download [`ReadAloud-1.8.12-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.12-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then double-click the `.exe` to run the setup wizard.
-  - Full Inno Setup 6 installer with desktop and Start Menu integration.
+### 🪟 Microsoft Windows (10 / 11 / Server)
+
+- 💽 **Windows Setup Installer (x64)**: Download [`ReadAloud-1.8.12-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.12-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then double-click the `.exe` to run the setup wizard.
+  - Full Inno Setup installer with desktop and Start Menu integration.
   - Pre-bundles all 35 neural voices, GTK4/Libadwaita runtimes, and MSVC 2022 libraries.
   - Supports silent enterprise installation: `ReadAloud-1.8.12-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
-- 💼 **Windows Portable Edition**: Download [`ReadAloud-1.8.12-Windows-Portable-x64.7z.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.12-Windows-Portable-x64.7z.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip or WinRAR.
-  - Zero-installation standalone folder. Extract anywhere (including USB thumb drives) and double-click `ReadAloud.exe`.
+- 💼 **Windows Portable Edition (x64)**: Download [`ReadAloud-1.8.12-Windows-Portable-x64.7z.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.12-Windows-Portable-x64.7z.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip or WinRAR.
+- ⚡ **Windows Portable Edition (ARM64)**: Download [`ReadAloud-1.8.12-windows-arm64-portable.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.12-windows-arm64-portable.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip, WinRAR, or Windows Explorer.
+  - Native ARM64 build for Microsoft Surface Pro, Snapdragon X Elite, and Windows on ARM devices.
 
 ---
 
 ### 🐧 Linux (GNOME, KDE Plasma, XFCE & All Environments)
 
-ReadAloud is fully supported across all Linux distributions and desktop environments, with adaptive header controls and native color scheme integration.
+ReadAloud is fully supported across all Linux distributions and desktop environments.
 
 #### Native Debian / Ubuntu Package (`.deb`)
-
 Download the official `.deb` package from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
-
 ```bash
 # Install via APT (automatically resolves system dependencies)
 sudo apt update
@@ -181,6 +216,41 @@ sudo apt install ./readaloud_1.8.12_amd64.deb
 
 # Launch ReadAloud
 readaloud
+```
+
+#### Standalone Linux AppImage (`.AppImage`)
+Download the multi-volume AppImage split files from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
+- [`ReadAloud-1.8.12-linux-x86_64.AppImage.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- [`ReadAloud-1.8.12-linux-x86_64.AppImage.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest)
+
+Extract and run:
+```bash
+# Combine and extract the split archive
+7z x ReadAloud-1.8.12-linux-x86_64.AppImage.zip.001
+
+# Make executable and launch
+chmod +x ReadAloud-1.8.12-linux-x86_64.AppImage
+./ReadAloud-1.8.12-linux-x86_64.AppImage
+```
+
+---
+
+### 🍏 Apple macOS (Apple Silicon & Intel)
+
+#### Standalone macOS Universal Application (`.zip`)
+Download the multi-volume macOS Universal split files from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
+- [`ReadAloud-1.8.12-macos-universal.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- [`ReadAloud-1.8.12-macos-universal.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest)
+
+Extract and run:
+```bash
+# Extract multi-volume zip using 7-Zip, The Unarchiver, or Terminal:
+7z x ReadAloud-1.8.12-macos-universal.zip.001
+# Or in Terminal:
+cat ReadAloud-1.8.12-macos-universal.zip.* > ReadAloud.zip && unzip ReadAloud.zip
+
+# Move ReadAloud.app to Applications
+mv ReadAloud.app /Applications/
 ```
 
 #### From Flathub (Recommended)

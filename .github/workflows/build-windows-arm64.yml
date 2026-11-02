@@ -1,0 +1,53 @@
+name: Build Windows ARM64 Portable Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-arm64:
+    name: build-windows-arm64-portable
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Repository with Git LFS
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Checkout LFS Objects
+        run: git lfs checkout
+
+      - name: Install Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            p7zip-full \
+            libglib2.0-dev-bin \
+            python3 \
+            python3-pip \
+            curl
+
+      - name: Build Windows ARM64 Portable Bundle
+        run: |
+          python3 build_windows/build_arm64_portable.py
+
+      - name: Upload Windows ARM64 Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ReadAloud-Windows-ARM64-Portable
+          path: dist/ReadAloud-*-windows-arm64-portable.zip*
+
+      - name: Publish Windows ARM64 to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ls -lh dist/ReadAloud-*-windows-arm64-portable.zip*
+          gh release upload "${{ github.ref_name }}" dist/ReadAloud-*-windows-arm64-portable.zip* --clobber

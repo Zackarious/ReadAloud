@@ -50,6 +50,14 @@ class TestAboutWindow(unittest.TestCase):
         self.assertIn("Anti-gravity", APP_DESCRIPTION)
         self.assertIn("Claude", APP_DESCRIPTION)
         self.assertIn("release it open-source and for free :-)", APP_DESCRIPTION)
+        self.assertIn("Minimum PC Requirements", APP_DESCRIPTION)
+        self.assertIn("Recommended PC Requirements", APP_DESCRIPTION)
+        self.assertIn("Processor:", APP_DESCRIPTION)
+        self.assertIn("Operating System:", APP_DESCRIPTION)
+        self.assertIn("Memory (RAM):", APP_DESCRIPTION)
+        self.assertIn("Hard Disk Space:", APP_DESCRIPTION)
+        self.assertIn("Display:", APP_DESCRIPTION)
+        self.assertIn("Graphics Card & Drivers:", APP_DESCRIPTION)
 
     def test_licensing_text_links(self):
         """Verify the legal page contains the updated SVGRepo author link and required sources."""

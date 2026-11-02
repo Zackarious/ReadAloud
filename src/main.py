@@ -978,7 +978,27 @@ APP_DESCRIPTION = (
     "    high - 22.05Khz audio, 28-32M params\n\n"
     "Multi-Speaker\n"
     "Some voices contain multiple speakers, which captures the style of multiple people within a single model.\n"
-    "Multi-speaker models can quickly switch between different speakers, but the quality of an individual speaker may be less than a single speaker model."
+    "Multi-speaker models can quickly switch between different speakers, but the quality of an individual speaker may be less than a single speaker model.\n\n"
+    "Minimum PC Requirements (Basic / Normal Voice Playback)\n\n"
+    "• Processor: 1.6 GHz or faster, 2-core processor (x86-64, ARM64, or Apple Silicon with SSE4.2 / NEON)\n"
+    "• Operating System: Windows 11, Windows Server 2025, or Windows Server 2022 (Note: Windows 10 support ended in October 2025, though apps may continue to run); Ubuntu 22.04 LTS+, Debian 12+, Fedora 38+; macOS 12 (Monterey) or later\n"
+    "• Memory (RAM): 4 GB RAM (or 2 GB minimum available system memory)\n"
+    "• Hard Disk Space: 4 GB of available space for application, Piper neural engine, and pre-bundled offline voice models\n"
+    "• Display: 1280 x 768 screen resolution\n"
+    "• Graphics Card & Drivers: DirectX 11 / OpenGL 3.3 capable GPU (Intel HD Graphics 4000+, AMD Radeon R5/HD 7000+, NVIDIA GeForce 400 series or newer with standard WDDM 1.2+ drivers; Mesa llvmpipe software rasterizer supported as fallback)\n"
+    "• Audio Output: Standard audio output device, sound card, or headphone jack (DirectSound / WASAPI on Windows, PulseAudio / PipeWire / ALSA on Linux, CoreAudio on macOS)\n\n"
+    "Recommended PC Requirements (High-Quality Voice Models & Batch Synthesis)\n\n"
+    "• Processor: 2.5 GHz or faster quad-core (4 cores / 8 threads) or higher (Intel Core i5/i7 8th Gen+, AMD Ryzen 3000+, ARM64 Snapdragon X Elite, Apple Silicon M1/M2/M3/M4) with AVX2 / FMA instruction support\n"
+    "• Operating System: Windows 11 64-bit (23H2 or newer), Windows Server 2025; Ubuntu 24.04 LTS, Fedora 40+; macOS 14 (Sonoma) or newer\n"
+    "• Memory (RAM): 8 GB RAM or higher for rapid multi-tab processing and uncompressed high-fidelity audio buffers\n"
+    "• Hard Disk Space: 8 GB of available space on a solid-state drive (NVMe SSD recommended for instant voice model loading and multi-chapter audio rendering)\n"
+    "• Display: 1920 x 1080 (Full HD) or higher resolution\n"
+    "• Graphics Card & Drivers: Dedicated or modern integrated GPU with Direct3D 12 / Vulkan / Metal support:\n"
+    "    - NVIDIA: GeForce GTX 1050 / RTX 2060 or newer (GeForce Game Ready / Studio Driver 535.xx or later)\n"
+    "    - AMD: Radeon RX 5000 / 6000 series or newer (AMD Software: Adrenalin Edition 23.x or later)\n"
+    "    - Intel: Intel Iris Xe Graphics, Arc A-Series, or UHD 630+ (Intel Graphics Driver 31.0.101.4000 or newer)\n"
+    "    - Apple: Apple Silicon Integrated GPU (M1, M2, M3, M4 with Metal 3)\n"
+    "• Audio Output: 24-bit / 48kHz or 96kHz low-latency stereo output device or USB DAC"
 )
 
 
@@ -1282,8 +1302,12 @@ class AboutReadAloudWindow(Adw.Window):
         if len(paragraphs) > 3:
             box.append(self._create_desc_card(_("Free & Open Source"), paragraphs[3]))
         if len(paragraphs) > 4:
-            rem = "\n\n".join(paragraphs[4:])
-            box.append(self._create_desc_card(_("Voice Quality & Multi-Speaker Models"), rem))
+            qual_text = "\n\n".join(paragraphs[4:7]) if len(paragraphs) > 6 else "\n\n".join(paragraphs[4:])
+            box.append(self._create_desc_card(_("Voice Quality & Multi-Speaker Models"), qual_text))
+        if len(paragraphs) > 8:
+            box.append(self._create_desc_card(_("Minimum PC Requirements"), paragraphs[8]))
+        if len(paragraphs) > 10:
+            box.append(self._create_desc_card(_("Recommended PC Requirements (High-Quality Voice Models)"), "\n\n".join(paragraphs[10:])))
 
         return scroll
 
