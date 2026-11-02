@@ -92,11 +92,13 @@ exec "${HERE}/usr/bin/readaloud" "$@"
 EOF
 chmod +x "${APPDIR}/AppRun"
 
-# Copy desktop and icon metadata to root of AppDir
+# Copy desktop metadata and generate PNG icon for AppDir
 cp "${REPO_ROOT}/data/im.zackarious.ReadAloud.desktop" "${APPDIR}/im.zackarious.ReadAloud.desktop"
 cp "${REPO_ROOT}/data/im.zackarious.ReadAloud.desktop" "${APPDIR}/readaloud.desktop"
 cp "${REPO_ROOT}/data/icons/hicolor/scalable/apps/im.zackarious.ReadAloud.svg" "${APPDIR}/im.zackarious.ReadAloud.svg"
-cp "${REPO_ROOT}/data/icons/hicolor/scalable/apps/im.zackarious.ReadAloud.svg" "${APPDIR}/.DirIcon"
+
+# Generate 256x256 PNG for .DirIcon (appimagetool requires PNG .DirIcon)
+python3 -c "import gi; gi.require_version('GdkPixbuf', '2.0'); from gi.repository import GdkPixbuf; pb = GdkPixbuf.Pixbuf.new_from_file_at_scale('${REPO_ROOT}/data/icons/hicolor/scalable/apps/im.zackarious.ReadAloud.svg', 256, 256, True); pb.savev('${APPDIR}/im.zackarious.ReadAloud.png', 'png', [], []); pb.savev('${APPDIR}/.DirIcon', 'png', [], [])" || true
 
 # 7. Package AppImage using appimagetool
 echo "[7/7] Generating AppImage..."
@@ -121,11 +123,17 @@ ARCH=x86_64 "${APPIMAGETOOL}" --no-appstream "${APPDIR}" "${DIST_DIR}/${APPIMAGE
 chmod +x "${DIST_DIR}/${APPIMAGE_NAME}"
 echo "=== Created AppImage at ${DIST_DIR}/${APPIMAGE_NAME} ==="
 
-# 8. Create Multi-Volume Split Zip (1800 MB slices to bypass GitHub release limit)
-echo "=== Creating split multi-volume zip package (${ZIP_SPLIT_NAME}) ==="
+# 8. Create Multi-Volume Split Files (1800 MB slices to bypass GitHub release limit)
+echo "=== Splitting AppImage into multi-volume parts (${APPIMAGE_NAME}.001, .002) ==="
 (
     cd "${DIST_DIR}"
-    7z a -tzip -v1800m "${ZIP_SPLIT_NAME}" "${APPIMAGE_NAME}"
+    rm -f "${APPIMAGE_NAME}."*
+    split -b 1800M -a 3 --numeric-suffixes=1 "${APPIMAGE_NAME}" "${APPIMAGE_NAME}."
+    SIZE_BYTES=$(stat -c%s "${APPIMAGE_NAME}")
+    if [ "${SIZE_BYTES}" -ge 2000000000 ]; then
+        echo "AppImage is ${SIZE_BYTES} bytes (> 2 GB limit). Retaining split volumes for GitHub Release."
+        rm -f "${APPIMAGE_NAME}"
+    fi
 )
 
 ls -lh "${DIST_DIR}/${APPIMAGE_NAME}"* || true

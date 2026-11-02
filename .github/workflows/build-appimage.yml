@@ -64,5 +64,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ls -lh dist/ReadAloud-*-linux-x86_64.AppImage.zip*
-          gh release upload "${{ github.ref_name }}" dist/ReadAloud-*-linux-x86_64.AppImage.zip* --clobber
+          ls -lh dist/ReadAloud-*-linux-x86_64.AppImage*
+          gh release upload "${{ github.ref_name }}" dist/ReadAloud-*-linux-x86_64.AppImage* --clobber
