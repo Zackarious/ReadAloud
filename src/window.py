@@ -556,6 +556,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
     _custom_pitch_chooser = None
     _override_adjustment_1 = None
     _tab_counter = 0
+    _active_tab_page = None
 
     def _get_pitch_for_voice(self, voice_id=None):
         if voice_id is None:
@@ -1697,6 +1698,10 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         page.set_tooltip(title)
         page._file = file
         page._reader = None
+        page._is_playing = False
+        page._is_paused = False
+        page._paused_offset = 0
+        page._highlight_index = None
 
         self.tab_view.set_selected_page(page)
         self._update_drop_placeholder_visibility()
@@ -1734,13 +1739,96 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         if hasattr(self, 'tab_view') and hasattr(self.tab_view, 'get_n_pages') and self.tab_view.get_n_pages() == 0:
             self.create_new_tab()
 
-    def _on_selected_page_changed(self, tab_view, _):
+    def _on_selected_page_changed(self, tab_view, pspec=None):
         """Callback when the active tab is switched."""
-        if self.is_playing:
-            self.stop_playback()
-        page = self.tab_view.get_selected_page() if hasattr(self, 'tab_view') and hasattr(self.tab_view, 'get_selected_page') else None
-        if page:
-            self.reader = getattr(page, '_reader', None)
+        prev_page = getattr(self, '_active_tab_page', None)
+        cur_page = self.tab_view.get_selected_page() if hasattr(self, 'tab_view') and hasattr(self.tab_view, 'get_selected_page') else None
+
+        # Switching away from prev_page: if audio was playing on prev_page, pause it and record state
+        if prev_page is not None and prev_page != cur_page:
+            if getattr(self, 'is_playing', False):
+                if not getattr(self, 'is_paused', False):
+                    if hasattr(self, 'reader') and self.reader and hasattr(self.reader, 'pause_audio'):
+                        try:
+                            self.reader.pause_audio()
+                        except Exception:
+                            pass
+                char_offset = self._get_current_playback_char_offset()
+                prev_page._reader = getattr(self, 'reader', None)
+                prev_page._is_playing = True
+                prev_page._is_paused = True
+                prev_page._paused_offset = char_offset
+                prev_page._highlight_index = getattr(self, '_current_highlight_index', None)
+
+                # Set pause_resume_mark on prev_page's buffer without clearing word highlight
+                prev_tv = self._get_text_view_for_page(prev_page)
+                if prev_tv:
+                    buf = prev_tv.get_buffer()
+                    total_chars = buf.get_char_count()
+                    clamped_offset = max(0, min(char_offset, total_chars))
+                    iter_at_pause = buf.get_iter_at_offset(clamped_offset)
+                    mark = buf.get_mark("pause_resume_mark")
+                    if mark:
+                        buf.move_mark(mark, iter_at_pause)
+                    else:
+                        buf.create_mark("pause_resume_mark", iter_at_pause, left_gravity=False)
+                    buf.place_cursor(iter_at_pause)
+
+                # Stop the highlight polling timer while on another tab
+                if getattr(self, '_highlight_timeout_id', None) is not None:
+                    try:
+                        GLib.source_remove(self._highlight_timeout_id)
+                    except Exception:
+                        pass
+                    self._highlight_timeout_id = None
+        elif prev_page is None and getattr(self, 'is_playing', False):
+            # Fallback if _active_tab_page was not previously tracked: pause active reader
+            if hasattr(self, 'reader') and self.reader and hasattr(self.reader, 'pause_audio'):
+                try:
+                    self.reader.pause_audio()
+                except Exception:
+                    pass
+            if getattr(self, '_highlight_timeout_id', None) is not None:
+                try:
+                    GLib.source_remove(self._highlight_timeout_id)
+                except Exception:
+                    pass
+                self._highlight_timeout_id = None
+
+        self._active_tab_page = cur_page
+
+        if cur_page:
+            page_reader = getattr(cur_page, '_reader', None)
+            page_is_playing = getattr(cur_page, '_is_playing', False)
+            page_is_paused = getattr(cur_page, '_is_paused', False)
+
+            if page_is_playing and page_is_paused:
+                self.reader = page_reader
+                self.is_playing = True
+                self.is_paused = True
+                self._current_highlight_index = getattr(cur_page, '_highlight_index', None)
+                if hasattr(self, 'pause_button') and self.pause_button:
+                    self.pause_button.set_sensitive(True)
+                    self._set_button_icon(self.pause_button, "media-playback-start-symbolic", 25)
+                    self.pause_button.set_tooltip_text(_("Resume"))
+                if hasattr(self, 'read_button') and self.read_button:
+                    self._set_button_icon(self.read_button, "media-playback-stop-symbolic", 25)
+                    self.read_button.set_tooltip_text(_("Stop"))
+                self._notify_bubble_playback_state()
+            else:
+                self.reader = page_reader
+                self.is_playing = False
+                self.is_paused = False
+                self._current_highlight_index = None
+                if hasattr(self, 'pause_button') and self.pause_button:
+                    self.pause_button.set_sensitive(False)
+                    self._set_button_icon(self.pause_button, "media-playback-pause-symbolic", 25)
+                    self.pause_button.set_tooltip_text(_("Pause"))
+                if hasattr(self, 'read_button') and self.read_button:
+                    self._set_button_icon(self.read_button, "media-playback-start-symbolic", 25)
+                    self.read_button.set_tooltip_text(_("Read Text"))
+                self._notify_bubble_playback_state()
+
         self._update_drop_placeholder_visibility()
 
     def _get_text_view_for_page(self, page):
@@ -2154,14 +2242,24 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         """Intercepts tab close and prompts user to export text or audio if tab contains content."""
         def finish_close():
             reader = getattr(page, '_reader', None)
-            if reader and getattr(reader, 'temp_path', None) and os.path.exists(reader.temp_path):
-                try:
-                    os.unlink(reader.temp_path)
-                except Exception:
-                    pass
+            if reader:
+                if hasattr(reader, 'stop_audio'):
+                    try:
+                        reader.stop_audio()
+                    except Exception:
+                        pass
+                if getattr(reader, 'temp_path', None) and os.path.exists(reader.temp_path):
+                    try:
+                        os.unlink(reader.temp_path)
+                    except Exception:
+                        pass
             if getattr(self, 'reader', None) is reader:
                 self.reader = None
+            if getattr(self, '_active_tab_page', None) is page:
+                self._active_tab_page = None
             page._reader = None
+            page._is_playing = False
+            page._is_paused = False
             tab_view.close_page_finish(page, True)
             self._ensure_at_least_one_tab()
 
@@ -3479,6 +3577,9 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             button = getattr(self, 'read_button', None)
 
         if self.is_playing:
+            if self.is_paused:
+                self.toggle_pause()
+                return
             self.stop_playback(button)
             return
 
@@ -3491,13 +3592,20 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             start_char_offset = start_iter.get_offset()
             text = buffer.get_text(start_iter, end_iter, False)
         else:
-            # Determine cursor location
+            # Determine cursor location or resume mark
+            mark = buffer.get_mark("pause_resume_mark")
             insert_mark = buffer.get_insert()
             cursor_iter = buffer.get_iter_at_mark(insert_mark)
 
             # Snap to start of word if cursor is placed inside a word
             if cursor_iter.inside_word() and not cursor_iter.starts_word():
                 cursor_iter.backward_word_start()
+
+            # If there is an active pause_resume_mark and cursor has not been moved elsewhere
+            if mark:
+                mark_iter = buffer.get_iter_at_mark(mark)
+                if cursor_iter.get_offset() == 0 or cursor_iter.get_offset() == mark_iter.get_offset():
+                    cursor_iter = mark_iter
 
             end_iter = buffer.get_end_iter()
             text_from_cursor = buffer.get_text(cursor_iter, end_iter, False)
@@ -3557,12 +3665,28 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
             if self.reader.resume_audio():
                 self.is_paused = False
+                cur_page = self.tab_view.get_selected_page() if hasattr(self, 'tab_view') and hasattr(self.tab_view, 'get_selected_page') else None
+                if cur_page:
+                    cur_page._is_paused = False
                 self._set_button_icon(self.pause_button, "media-playback-pause-symbolic", 25)
                 self.pause_button.set_tooltip_text(_("Pause"))
+                if getattr(self, '_highlight_timeout_id', None) is None:
+                    self._highlight_timeout_id = GLib.timeout_add(30, self._update_highlight)
                 self._notify_bubble_playback_state()
+            else:
+                self._resume_with_new_settings(
+                    current_voice,
+                    current_lang,
+                    current_pitch,
+                    current_speed
+                )
+                return
         else:
             if self.reader.pause_audio():
                 self.is_paused = True
+                cur_page = self.tab_view.get_selected_page() if hasattr(self, 'tab_view') and hasattr(self.tab_view, 'get_selected_page') else None
+                if cur_page:
+                    cur_page._is_paused = True
                 self._set_button_icon(self.pause_button, "media-playback-start-symbolic", 25)
                 self.pause_button.set_tooltip_text(_("Resume"))
 
@@ -3577,6 +3701,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
                     buffer.move_mark(mark, iter_at_pause)
                 else:
                     buffer.create_mark("pause_resume_mark", iter_at_pause, left_gravity=False)
+                buffer.place_cursor(iter_at_pause)
 
                 self._notify_bubble_playback_state()
 
@@ -3697,6 +3822,8 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
             if current_page:
                 current_page._reader = self.reader
+                current_page._is_playing = True
+                current_page._is_paused = False
 
             self.is_playing = True
             self.is_paused = False
@@ -3729,6 +3856,11 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             self.reader.stop_audio()
         self.is_playing = False
         self.is_paused = False
+        cur_page = self.tab_view.get_selected_page() if hasattr(self, 'tab_view') and hasattr(self.tab_view, 'get_selected_page') else None
+        if cur_page:
+            cur_page._is_playing = False
+            cur_page._is_paused = False
+            cur_page._highlight_index = None
         self._set_button_icon(button, "media-playback-start-symbolic", 25)
         button.set_tooltip_text(_("Read Text"))
         self.pause_button.set_sensitive(False)

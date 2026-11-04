@@ -269,22 +269,32 @@ class TestCachedPlayback(unittest.TestCase):
             if os.path.exists(tmp_audio_path):
                 os.unlink(tmp_audio_path)
 
-    def test_tab_switch_syncs_reader_and_stops_playback(self):
-        """Switching tabs stops active playback and updates window.reader to the active tab's cached reader."""
+    def test_tab_switch_syncs_reader_and_pauses_playback(self):
+        """Switching tabs pauses active playback and updates window.reader to the active tab's cached reader."""
         self.window.is_playing = True
-        self.window.stop_playback = MagicMock(side_effect=lambda: setattr(self.window, 'is_playing', False))
+        mock_reader = MagicMock()
+        self.window.reader = mock_reader
+        self.window._get_current_playback_char_offset = MagicMock(return_value=15)
 
-        page1_reader = MagicMock()
+        page1 = MagicMock()
+        page1._reader = mock_reader
+        page1.get_child.return_value.get_child.return_value = Gtk.TextView()
+        self.window._active_tab_page = page1
+
         page2_reader = MagicMock()
-
         page2 = MagicMock()
         page2._reader = page2_reader
+        page2._is_playing = False
+        page2._is_paused = False
         self.tab_view.get_selected_page.return_value = page2
 
         self.window._on_selected_page_changed(self.tab_view, None)
 
-        self.window.stop_playback.assert_called_once()
+        mock_reader.pause_audio.assert_called_once()
+        self.assertTrue(page1._is_paused)
+        self.assertEqual(page1._paused_offset, 15)
         self.assertIs(self.window.reader, page2_reader)
+        self.assertFalse(self.window.is_playing)
 
 if __name__ == '__main__':
     unittest.main()

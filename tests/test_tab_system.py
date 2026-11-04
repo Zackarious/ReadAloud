@@ -75,13 +75,122 @@ class TestTabSystem(unittest.TestCase):
         text1 = buf1.get_text(buf1.get_start_iter(), buf1.get_end_iter(), False)
         self.assertEqual(text1, "")
 
-    def test_tab_switch_stops_playback(self):
-        """Verify switching active tabs automatically stops audio playback."""
+    def test_tab_switch_pauses_playback(self):
+        """Verify switching active tabs automatically pauses audio playback instead of stopping."""
+        page1 = self.window.tab_view.get_nth_page(0)
+        self.window._active_tab_page = page1
         self.window.is_playing = True
-        self.window.stop_playback = MagicMock()
+        self.window.is_paused = False
 
-        self.window._on_selected_page_changed(self.window.tab_view, None)
-        self.window.stop_playback.assert_called_once()
+        mock_reader = MagicMock()
+        mock_reader.pause_audio.return_value = True
+        self.window.reader = mock_reader
+        self.window._get_current_playback_char_offset = MagicMock(return_value=12)
+
+        # Create Tab 2 (switches selected page)
+        page2 = self.window.create_new_tab(title="Second Tab", text="Hello world")
+
+        mock_reader.pause_audio.assert_called_once()
+        self.assertTrue(page1._is_playing)
+        self.assertTrue(page1._is_paused)
+        self.assertEqual(page1._paused_offset, 12)
+        self.assertFalse(self.window.is_playing)
+        self.assertFalse(self.window.is_paused)
+
+    def test_new_tab_pauses_playback_and_resume_on_return(self):
+        """Verify creating a new tab pauses playback, keeps text position, and returning resumes."""
+        page1 = self.window.tab_view.get_nth_page(0)
+        tv1 = self.window._get_text_view_for_page(page1)
+        buf1 = tv1.get_buffer()
+        buf1.set_text("First sentence to read. Second sentence to read.")
+        self.window._active_tab_page = page1
+
+        self.window.is_playing = True
+        self.window.is_paused = False
+        mock_reader = MagicMock()
+        mock_reader.pause_audio.return_value = True
+        mock_reader.resume_audio.return_value = True
+        mock_reader.word_timings = [
+            {'start_time': 0.0, 'end_time': 1.0, 'start_char': 0, 'end_char': 5},
+            {'start_time': 1.0, 'end_time': 2.0, 'start_char': 6, 'end_char': 14},
+        ]
+        mock_reader.selected_voice = self.window._get_selected_voice_name()
+        mock_reader.lang_code = self.window.lang_code
+        mock_reader.pitch = self.window._get_pitch_for_voice(mock_reader.selected_voice)
+        mock_reader.speed = self.window.speed_chooser.get_value()
+        self.window.reader = mock_reader
+        self.window._get_current_playback_char_offset = MagicMock(return_value=6)
+
+        # 1. User clicks '+' (create_new_tab)
+        page2 = self.window.create_new_tab(title="New Tab", text="")
+
+        # Verify Tab 1 was paused and pause_resume_mark created
+        mock_reader.pause_audio.assert_called_once()
+        self.assertTrue(page1._is_paused)
+        mark = buf1.get_mark("pause_resume_mark")
+        self.assertIsNotNone(mark)
+        self.assertEqual(buf1.get_iter_at_mark(mark).get_offset(), 6)
+
+        # Tab 2 is active and not playing
+        self.assertFalse(self.window.is_playing)
+        self.assertFalse(self.window.is_paused)
+
+        # 2. User returns to Tab 1
+        self.window.tab_view.set_selected_page(page1)
+
+        # Tab 1 is restored in paused state
+        self.assertTrue(self.window.is_playing)
+        self.assertTrue(self.window.is_paused)
+        self.assertIs(self.window.reader, mock_reader)
+        self.assertTrue(self.window.pause_button.get_sensitive())
+
+        # 3. User hits play again (e.g. clicks Resume or calls read_text)
+        self.window.read_text(self.window.read_button)
+
+        # Playback is resumed
+        mock_reader.resume_audio.assert_called_once()
+        self.assertFalse(self.window.is_paused)
+
+    def test_new_tab_pauses_playback_and_resume_with_new_voice_settings(self):
+        """Verify returning to a paused tab and resuming with changed settings resumes from paused mark."""
+        page1 = self.window.tab_view.get_nth_page(0)
+        tv1 = self.window._get_text_view_for_page(page1)
+        buf1 = tv1.get_buffer()
+        buf1.set_text("First sentence to read. Second sentence to read.")
+        self.window._active_tab_page = page1
+
+        self.window.is_playing = True
+        self.window.is_paused = False
+        mock_reader = MagicMock()
+        mock_reader.pause_audio.return_value = True
+        mock_reader.selected_voice = "OldVoice"
+        mock_reader.lang_code = self.window.lang_code
+        mock_reader.pitch = 1.0
+        mock_reader.speed = 1.0
+        mock_reader.original_text = "First sentence to read. Second sentence to read."
+        mock_reader.start_char_offset = 0
+        self.window.reader = mock_reader
+        self.window._get_current_playback_char_offset = MagicMock(return_value=6)
+
+        # 1. Switch to new tab (pauses Tab 1)
+        page2 = self.window.create_new_tab(title="New Tab", text="")
+        self.assertTrue(page1._is_paused)
+
+        # 2. Return to Tab 1
+        self.window.tab_view.set_selected_page(page1)
+
+        # 3. Resume with new settings mock
+        resumed_calls = []
+        self.window._resume_with_new_settings = lambda *args: resumed_calls.append(args)
+
+        # User changed voice
+        self.window._get_selected_voice_name = lambda: "NewVoice"
+
+        # Hit play
+        self.window.read_text(self.window.read_button)
+
+        self.assertEqual(len(resumed_calls), 1)
+        self.assertEqual(resumed_calls[0][0], "NewVoice")
 
     def test_close_empty_tab_closes_without_prompt(self):
         """Verify closing an empty tab does not prompt with an AlertDialog and completes immediately."""
