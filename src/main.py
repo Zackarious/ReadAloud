@@ -48,6 +48,38 @@ from .window import ReadAloudWindow
 from .bubble import ListenerBubbleWindow
 
 CHANGELOG_XML = r"""
+<p><em>Version 1.8.13 - (04 November 2026)</em></p>
+<p>Version 1.8.13 resolves a critical audio playback resumption issue where switching tabs or opening a new tab with the plus button paused audio but returning to the tab restarted playback from the beginning of the buffer; adds per-tab playback and paused state tracking, anchors pause marks and cursor positions at the paused word in the text buffer, preserves visual word highlighting across tab switches, synchronizes dynamic playback controls per tab, supports seamless resumption from both Resume and Read buttons as well as keyboard shortcuts, and expands the automated regression test suite to 270 tests.</p>
+
+<p><em>Features and Fixes Removed:</em></p>
+<ul>
+  <li><em>Abrupt Tab Playback Reset on Tab Switch:</em> Removed the unconditional stop_playback() invocation in _on_selected_page_changed() when switching active tabs. <em>Reason:</em> Abruptly stopping playback cleared the audio player pipeline, destroyed the pause anchor mark, and reset reading position to offset 0, preventing users from resuming audio where they left off when returning to the tab.</li>
+  <li><em>Default Cursor Fallback to Offset 0 in read_text():</em> Removed the unconditioned fallback that placed the cursor iterator at character offset 0 when no text was selected and pause_resume_mark was present. <em>Reason:</em> Ignored existing anchored paused positions, forcing playback synthesis to restart from the beginning of the buffer even when a tab had been cleanly paused.</li>
+</ul>
+
+<p><em>Features and Fixes Added:</em></p>
+<ul>
+  <li><em>Per-Tab Playback State Management (_active_tab_page, _is_playing, _is_paused, _paused_offset, _highlight_index):</em> Added per-page playback metadata and active tab reference tracking in window.py. <em>Reason:</em> Enables each document tab to maintain its own independent audio playback, paused state, exact character offset, and active word highlight index across tab switches and new tab creations.</li>
+  <li><em>Non-Destructive Tab Audio Pausing on Switch (_on_selected_page_changed):</em> Added automatic pausing (reader.pause_audio()) and state persistence when switching away from an active tab (such as clicking the + button to create a new tab or selecting a different tab). <em>Reason:</em> Pauses the audio stream without destroying the underlying pipeline or clearing the visual word highlight, allowing instant and sample-accurate resumption upon returning.</li>
+  <li><em>Text-Anchored Pause Mark &amp; Cursor Placement on Inactive Tab:</em> Added automated creation and positioning of pause_resume_mark (Gtk.TextMark) along with place_cursor() at the exact paused character offset in the outgoing tab's text buffer. <em>Reason:</em> Anchors the paused reading location to the text buffer even across tab switches and ensures the cursor stays synchronized with the paused word.</li>
+  <li><em>Automated Tab Playback Regression Tests (test_tab_switch_pauses_playback, test_new_tab_pauses_playback_and_resume_on_return, test_new_tab_pauses_playback_and_resume_with_new_voice_settings):</em> Added regression tests in tests/test_tab_system.py and tests/test_cached_playback.py covering tab creation during playback, paused state and highlight retention, and resumption on return. <em>Reason:</em> Prevents regressions where switching tabs or creating new documents could reset playback or discard paused positions.</li>
+</ul>
+
+<p><em>Features and Fixes Updated:</em></p>
+<ul>
+  <li><em>Play &amp; Resume Interaction in read_text():</em> Updated read_text() to detect if the current tab is in a paused state (self.is_playing and self.is_paused) and seamlessly call toggle_pause() to resume audio, and updated cursor iteration to honor pause_resume_mark if present. <em>Reason:</em> Guarantees that clicking the Play button ("Read Text"), clicking Resume, or pressing Ctrl+P resumes playback directly from where the user left off without restarting from the beginning.</li>
+  <li><em>Highlight Timer Synchronization on Tab Resume (toggle_pause):</em> Updated toggle_pause() to restart the word highlight polling timer (_highlight_timeout_id) if inactive and sync cur_page._is_paused = False when resuming audio. <em>Reason:</em> Ensures visual word highlighting resumes scrolling and tracking the spoken audio seamlessly when playback is resumed after returning to a paused tab.</li>
+  <li><em>Tab Close Resource Deallocation (_on_close_page):</em> Updated finish_close() to invoke reader.stop_audio() and clear _active_tab_page when closing a tab with an active or paused reader. <em>Reason:</em> Prevents orphaned background GStreamer pipelines or temporary audio files from lingering after a tab is closed.</li>
+  <li><em>Wikimedia-Compliant User-Agent Header:</em> Updated user-agent identification string to ReadAloud/1.8.13 (https://github.com/wbernard/parolu; contact@readaloud.app) in wikipedia_importer.py. <em>Reason:</em> Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version release.</li>
+  <li><em>Application Version Increment (1.8.13):</em> Updated application version to 1.8.13 across meson.build, src/main.py, src/error_logger.py, src/wikipedia_importer.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_windows/build_arm64_portable.py, build_linux/build_deb.sh, build_linux/build_appimage.sh, build_linux/debian/control, build_macos/build_macos.sh, tests/test_about_window.py, and CI workflows. <em>Reason:</em> Adheres to semantic versioning standards for the new release.</li>
+</ul>
+
+<p><em>Visual Changes and UI Updates:</em></p>
+<ul>
+  <li><em>Word Highlight Retention on Outgoing Tab:</em> Preserved the active word highlight (current_word_highlight tag and HighlightTextView._highlight_range) on the tab being switched away from, instead of clearing it. <em>Reason:</em> Gives the user immediate visual confirmation of where they left off reading when returning to the document tab.</li>
+  <li><em>Dynamic Playback Control Synchronization per Tab:</em> Updated _on_selected_page_changed() to synchronize toolbar button icons and tooltips dynamically when switching between tabs (showing Resume icon and enabling the pause button when selecting a paused tab, and showing idle Play button with disabled pause button when selecting an unplayed tab). <em>Reason:</em> Provides clear visual affordances so users immediately recognize whether the active tab has paused playback ready to resume or is ready for fresh reading.</li>
+</ul>
+
 <p><em>Version 1.8.12 - (02 November 2026)</em></p>
 <p>Version 1.8.12 streamlines the window header bar controls by removing the redundant burger-like unwrap button following the Save to Text File icon, preserves document unwrapping via standard shortcuts and the primary application menu, introduces automated header bar layout test verification, recompiles application resources, and updates the version across all platforms and package builders.</p>
 
@@ -1008,7 +1040,7 @@ class AboutReadAloudWindow(Adw.Window):
     application_name = GObject.Property(type=str, default='ReadAloud')
     application_icon = GObject.Property(type=str, default='im.zackarious.ReadAloud')
     developer_name = GObject.Property(type=str, default='zackarious')
-    version = GObject.Property(type=str, default='Version 1.8.12 - (02 November 2026)')
+    version = GObject.Property(type=str, default='Version 1.8.13 - (04 November 2026)')
     website = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
     issue_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud/issues')
     support_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
@@ -1116,7 +1148,7 @@ class AboutReadAloudWindow(Adw.Window):
         box.append(dev_label)
 
         # Version
-        ver_label = Gtk.Label(label="Version 1.8.12 - (02 November 2026)")
+        ver_label = Gtk.Label(label="Version 1.8.13 - (04 November 2026)")
         ver_label.add_css_class("caption")
         ver_label.add_css_class("dim-label")
         box.append(ver_label)
@@ -1540,4 +1572,4 @@ def main(version):
     return result
 
 if __name__ == "__main__":
-    main("1.8.12")
+    main("1.8.13")

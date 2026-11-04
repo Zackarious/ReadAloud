@@ -57,6 +57,36 @@
   </developer>
 
   <releases>
+    <release version="1.8.13" date="2026-11-04">
+      <description>
+        <p>Version 1.8.13 resolves a critical audio playback resumption issue where switching tabs or opening a new tab with the plus button paused audio but returning to the tab restarted playback from the beginning of the buffer; adds per-tab playback and paused state tracking, anchors pause marks and cursor positions at the paused word in the text buffer, preserves visual word highlighting across tab switches, synchronizes dynamic playback controls per tab, supports seamless resumption from both Resume and Read buttons as well as keyboard shortcuts, and expands the automated regression test suite to 270 tests.</p>
+        <p>Features and Fixes Removed:</p>
+        <ul>
+          <li>Abrupt Tab Playback Reset on Tab Switch: Removed the unconditional stop_playback() invocation in _on_selected_page_changed() when switching active tabs. Reason: Abruptly stopping playback cleared the audio player pipeline, destroyed the pause anchor mark, and reset reading position to offset 0, preventing users from resuming audio where they left off when returning to the tab.</li>
+          <li>Default Cursor Fallback to Offset 0 in read_text(): Removed the unconditioned fallback that placed the cursor iterator at character offset 0 when no text was selected and pause_resume_mark was present. Reason: Ignored existing anchored paused positions, forcing playback synthesis to restart from the beginning of the buffer even when a tab had been cleanly paused.</li>
+        </ul>
+        <p>Features and Fixes Added:</p>
+        <ul>
+          <li>Per-Tab Playback State Management (_active_tab_page, _is_playing, _is_paused, _paused_offset, _highlight_index): Added per-page playback metadata and active tab reference tracking in window.py. Reason: Enables each document tab to maintain its own independent audio playback, paused state, exact character offset, and active word highlight index across tab switches and new tab creations.</li>
+          <li>Non-Destructive Tab Audio Pausing on Switch (_on_selected_page_changed): Added automatic pausing (reader.pause_audio()) and state persistence when switching away from an active tab (such as clicking the + button to create a new tab or selecting a different tab). Reason: Pauses the audio stream without destroying the underlying pipeline or clearing the visual word highlight, allowing instant and sample-accurate resumption upon returning.</li>
+          <li>Text-Anchored Pause Mark &amp; Cursor Placement on Inactive Tab: Added automated creation and positioning of pause_resume_mark (Gtk.TextMark) along with place_cursor() at the exact paused character offset in the outgoing tab's text buffer. Reason: Anchors the paused reading location to the text buffer even across tab switches and ensures the cursor stays synchronized with the paused word.</li>
+          <li>Automated Tab Playback Regression Tests (test_tab_switch_pauses_playback, test_new_tab_pauses_playback_and_resume_on_return, test_new_tab_pauses_playback_and_resume_with_new_voice_settings): Added regression tests in tests/test_tab_system.py and tests/test_cached_playback.py covering tab creation during playback, paused state and highlight retention, and resumption on return. Reason: Prevents regressions where switching tabs or creating new documents could reset playback or discard paused positions.</li>
+        </ul>
+        <p>Features and Fixes Updated:</p>
+        <ul>
+          <li>Play &amp; Resume Interaction in read_text(): Updated read_text() to detect if the current tab is in a paused state (self.is_playing and self.is_paused) and seamlessly call toggle_pause() to resume audio, and updated cursor iteration to honor pause_resume_mark if present. Reason: Guarantees that clicking the Play button ("Read Text"), clicking Resume, or pressing Ctrl+P resumes playback directly from where the user left off without restarting from the beginning.</li>
+          <li>Highlight Timer Synchronization on Tab Resume (toggle_pause): Updated toggle_pause() to restart the word highlight polling timer (_highlight_timeout_id) if inactive and sync cur_page._is_paused = False when resuming audio. Reason: Ensures visual word highlighting resumes scrolling and tracking the spoken audio seamlessly when playback is resumed after returning to a paused tab.</li>
+          <li>Tab Close Resource Deallocation (_on_close_page): Updated finish_close() to invoke reader.stop_audio() and clear _active_tab_page when closing a tab with an active or paused reader. Reason: Prevents orphaned background GStreamer pipelines or temporary audio files from lingering after a tab is closed.</li>
+          <li>Wikimedia-Compliant User-Agent Header: Updated user-agent identification string to ReadAloud/1.8.13 format with repository origin and contact metadata in wikipedia_importer.py. Reason: Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version release.</li>
+          <li>Application Version Increment (1.8.13): Updated application version to 1.8.13 across meson.build, src/main.py, src/error_logger.py, src/wikipedia_importer.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_windows/build_arm64_portable.py, build_linux/build_deb.sh, build_linux/build_appimage.sh, build_linux/debian/control, build_macos/build_macos.sh, tests/test_about_window.py, and CI workflows. Reason: Adheres to semantic versioning standards for the new release.</li>
+        </ul>
+        <p>Visual Changes and UI Updates:</p>
+        <ul>
+          <li>Word Highlight Retention on Outgoing Tab: Preserved the active word highlight (current_word_highlight tag and HighlightTextView._highlight_range) on the tab being switched away from, instead of clearing it. Reason: Gives the user immediate visual confirmation of where they left off reading when returning to the document tab.</li>
+          <li>Dynamic Playback Control Synchronization per Tab: Updated _on_selected_page_changed() to synchronize toolbar button icons and tooltips dynamically when switching between tabs (showing Resume icon and enabling the pause button when selecting a paused tab, and showing idle Play button with disabled pause button when selecting an unplayed tab). Reason: Provides clear visual affordances so users immediately recognize whether the active tab has paused playback ready to resume or is ready for fresh reading.</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.8.12" date="2026-11-02">
       <description>
         <p>Version 1.8.12 streamlines the window header bar controls by removing the redundant burger-like unwrap button following the Save to Text File icon, preserves document unwrapping via standard shortcuts and the primary application menu, introduces automated header bar layout test verification, recompiles application resources, and updates the version across all platforms and package builders.</p>
