@@ -3208,6 +3208,10 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
     def _prompt_and_apply_bracket_tool(self, bracket_type):
         """Prompts the user whether to apply the text cleanup tool to the current tab or all tabs."""
+        if not hasattr(self, 'tab_view') or not hasattr(self.tab_view, 'get_n_pages') or self.tab_view.get_n_pages() <= 1:
+            self._apply_bracket_tool_to_current_tab(bracket_type)
+            return
+
         if bracket_type == "round":
             heading = _("Remove ( ) Brackets")
         elif bracket_type == "square":

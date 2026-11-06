@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch, MagicMock
 import os
 import gi
 gi.require_version('Gtk', '4.0')
@@ -131,6 +132,35 @@ class TestTextTools(unittest.TestCase):
         b2 = tv2.get_buffer()
         self.assertEqual(b1.get_text(b1.get_start_iter(), b1.get_end_iter(), True), "Tab 1 with here.")
         self.assertEqual(b2.get_text(b2.get_start_iter(), b2.get_end_iter(), True), "Tab 2 with here.")
+
+    def test_prompt_and_apply_bracket_tool_single_tab_bypasses_dialog(self):
+        """When only 1 tab exists, text cleanup tools apply directly without showing the scope dialog."""
+        win = ReadAloudWindow(application=self.app)
+        self.assertEqual(win.tab_view.get_n_pages(), 1)
+        buf = win.main_text_view.get_buffer()
+        buf.set_text("Single tab with (brackets to remove) here.")
+
+        with patch('src.window.Adw.AlertDialog') as mock_dialog:
+            win.on_remove_round_brackets_action()
+            # Dialog must NOT appear
+            mock_dialog.assert_not_called()
+
+        start, end = buf.get_bounds()
+        self.assertEqual(buf.get_text(start, end, True), "Single tab with here.")
+
+    def test_prompt_and_apply_bracket_tool_multi_tab_prompts_dialog(self):
+        """When multiple tabs exist, text cleanup tools present the scope dialog to choose current or all tabs."""
+        win = ReadAloudWindow(application=self.app)
+        win.create_new_tab(title="Tab 2", text="Tab 2 text")
+        self.assertGreater(win.tab_view.get_n_pages(), 1)
+
+        with patch('src.window.Adw.AlertDialog') as mock_dialog_cls:
+            mock_dialog_instance = MagicMock()
+            mock_dialog_cls.return_value = mock_dialog_instance
+
+            win.on_remove_round_brackets_action()
+            mock_dialog_cls.assert_called_once()
+            mock_dialog_instance.choose.assert_called_once()
 
     def test_clean_hash_symbols(self):
         sample = "# Heading 1\n## Heading 2\n### Subheading\nIssue #123 with #hashtag and C# code."
