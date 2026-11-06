@@ -78,7 +78,7 @@ def log_error(
     now_utc = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # App version
-    version = "1.8.13"
+    version = "1.8.14"
     try:
         from . import __version__
         version = __version__

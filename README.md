@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.8.13-blue.svg" alt="Version 1.8.13"/>
+  <img src="https://img.shields.io/badge/version-1.8.14-blue.svg" alt="Version 1.8.14"/>
   <img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg" alt="GPL-3.0 License"/>
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-0078D6.svg" alt="Platform: Windows & Linux"/>
   <img src="https://img.shields.io/badge/Desktop-GNOME%20%7C%20KDE%20Plasma%20%7C%20Windows-green.svg" alt="Desktop: GNOME, KDE Plasma & Windows"/>
@@ -193,12 +193,12 @@ Official releases are published on the **[GitHub Releases Page](https://github.c
 
 ### 🪟 Microsoft Windows (10 / 11 / Server)
 
-- 💽 **Windows Setup Installer (x64)**: Download [`ReadAloud-1.8.13-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.13-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then double-click the `.exe` to run the setup wizard.
+- 💽 **Windows Setup Installer (x64)**: Download [`ReadAloud-1.8.14-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.14-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then double-click the `.exe` to run the setup wizard.
   - Full Inno Setup installer with desktop and Start Menu integration.
   - Pre-bundles all 35 neural voices, GTK4/Libadwaita runtimes, and MSVC 2022 libraries.
-  - Supports silent enterprise installation: `ReadAloud-1.8.13-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
-- 💼 **Windows Portable Edition (x64)**: Download [`ReadAloud-1.8.13-Windows-Portable-x64.7z.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.13-Windows-Portable-x64.7z.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip or WinRAR.
-- ⚡ **Windows Portable Edition (ARM64)**: Download [`ReadAloud-1.8.13-windows-arm64-portable.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.13-windows-arm64-portable.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip, WinRAR, or Windows Explorer.
+  - Supports silent enterprise installation: `ReadAloud-1.8.14-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
+- 💼 **Windows Portable Edition (x64)**: Download [`ReadAloud-1.8.14-Windows-Portable-x64.7z.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.14-Windows-Portable-x64.7z.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip or WinRAR.
+- ⚡ **Windows Portable Edition (ARM64)**: Download [`ReadAloud-1.8.14-windows-arm64-portable.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.14-windows-arm64-portable.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip, WinRAR, or Windows Explorer.
   - Native ARM64 build for Microsoft Surface Pro, Snapdragon X Elite, and Windows on ARM devices.
 
 ---
@@ -212,7 +212,7 @@ Download the official `.deb` package from the **[Releases Page](https://github.c
 ```bash
 # Install via APT (automatically resolves system dependencies)
 sudo apt update
-sudo apt install ./readaloud_1.8.13_amd64.deb
+sudo apt install ./readaloud_1.8.14_amd64.deb
 
 # Launch ReadAloud
 readaloud
@@ -220,17 +220,17 @@ readaloud
 
 #### Standalone Linux AppImage (`.AppImage`)
 Download the multi-volume AppImage split files from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
-- [`ReadAloud-1.8.13-linux-x86_64.AppImage.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest)
-- [`ReadAloud-1.8.13-linux-x86_64.AppImage.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- [`ReadAloud-1.8.14-linux-x86_64.AppImage.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- [`ReadAloud-1.8.14-linux-x86_64.AppImage.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest)
 
 Extract and run:
 ```bash
 # Combine and extract the split archive
-7z x ReadAloud-1.8.13-linux-x86_64.AppImage.zip.001
+7z x ReadAloud-1.8.14-linux-x86_64.AppImage.zip.001
 
 # Make executable and launch
-chmod +x ReadAloud-1.8.13-linux-x86_64.AppImage
-./ReadAloud-1.8.13-linux-x86_64.AppImage
+chmod +x ReadAloud-1.8.14-linux-x86_64.AppImage
+./ReadAloud-1.8.14-linux-x86_64.AppImage
 ```
 
 ---
@@ -239,15 +239,15 @@ chmod +x ReadAloud-1.8.13-linux-x86_64.AppImage
 
 #### Standalone macOS Universal Application (`.zip`)
 Download the multi-volume macOS Universal split files from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
-- [`ReadAloud-1.8.13-macos-universal.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest)
-- [`ReadAloud-1.8.13-macos-universal.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- [`ReadAloud-1.8.14-macos-universal.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- [`ReadAloud-1.8.14-macos-universal.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest)
 
 Extract and run:
 ```bash
 # Extract multi-volume zip using 7-Zip, The Unarchiver, or Terminal:
-7z x ReadAloud-1.8.13-macos-universal.zip.001
+7z x ReadAloud-1.8.14-macos-universal.zip.001
 # Or in Terminal:
-cat ReadAloud-1.8.13-macos-universal.zip.* > ReadAloud.zip && unzip ReadAloud.zip
+cat ReadAloud-1.8.14-macos-universal.zip.* > ReadAloud.zip && unzip ReadAloud.zip
 
 # Move ReadAloud.app to Applications
 mv ReadAloud.app /Applications/

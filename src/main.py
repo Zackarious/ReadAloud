@@ -48,6 +48,31 @@ from .window import ReadAloudWindow
 from .bubble import ListenerBubbleWindow
 
 CHANGELOG_XML = r"""
+<p><em>Version 1.8.14 - (06 November 2026)</em></p>
+<p>Version 1.8.14 enhances the text cleanup tools workflow by eliminating the redundant "Apply to all tabs or just current tab?" modal dialog when only a single tab is open, applying text transformations directly to the active document with instant feedback, preserving multi-tab batch cleanup when multiple tabs are open, and adding automated regression test coverage.</p>
+
+<p><em>Features and Fixes Removed:</em></p>
+<ul>
+  <li><em>Redundant Scope Choice Dialog on Single Open Tab:</em> Removed the unconditional invocation of the Adw.AlertDialog modal asking "Do you wish to apply this tool to all tabs or just the current tab?" when triggering text cleanup operations with only one open document tab. <em>Reason:</em> Prompting the user to choose between "Current Tab" and "All Tabs" when there is only 1 tab in the workspace is unnecessary, redundant, and interrupts user workflow since no other document tabs exist.</li>
+</ul>
+
+<p><em>Features and Fixes Added:</em></p>
+<ul>
+  <li><em>Direct Single-Tab Tool Execution (_prompt_and_apply_bracket_tool):</em> Added a tab count check (self.tab_view.get_n_pages() &lt;= 1) in src/window.py to immediately execute cleanup tools (Remove ( ) Brackets, Remove [ ] Brackets, Remove | Pipes, Remove # Hashes, Remove * Stars, and Remove All) directly on the active tab's text buffer (_apply_bracket_tool_to_current_tab()) without showing a dialog. <em>Reason:</em> Streamlines single-document text cleaning workflows with instant, zero-click execution while seamlessly preserving the multi-tab prompt whenever more than one tab is open.</li>
+  <li><em>Automated Single-Tab Dialog Bypass Regression Tests:</em> Added dedicated unit tests (test_prompt_and_apply_bracket_tool_single_tab_bypasses_dialog and test_prompt_and_apply_bracket_tool_multi_tab_prompts_dialog) in tests/test_text_tools.py verifying that single-tab tool invocations never spawn an Adw.AlertDialog modal and that multi-tab sessions retain the scope selection dialog. <em>Reason:</em> Prevents regressions in modal popup handling across text manipulation actions in single-tab and multi-tab workflows.</li>
+</ul>
+
+<p><em>Features and Fixes Updated:</em></p>
+<ul>
+  <li><em>Wikimedia-Compliant User-Agent Header:</em> Updated user-agent identification string to ReadAloud/1.8.14 (https://github.com/wbernard/parolu; contact@readaloud.app) in src/wikipedia_importer.py. <em>Reason:</em> Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version release.</li>
+  <li><em>Application Version Increment (1.8.14):</em> Updated application version to 1.8.14 across meson.build, src/main.py, src/error_logger.py, src/wikipedia_importer.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_windows/build_arm64_portable.py, build_linux/build_deb.sh, build_linux/build_appimage.sh, build_linux/debian/control, build_macos/build_macos.sh, tests/test_about_window.py, and CI workflows. <em>Reason:</em> Adheres to semantic versioning standards for the new release.</li>
+</ul>
+
+<p><em>Visual Changes and UI Updates:</em></p>
+<ul>
+  <li><em>Suppression of Redundant Modal Popup on Single Tab:</em> Eliminated the centered Adw.AlertDialog popup dialog when running text cleanup actions on single-tab workspaces, keeping the editor buffer fully focused without modal dimming or extra clicks. <em>Reason:</em> Provides a cleaner, smoother, and uninterrupted user interface that adheres to desktop Human Interface Guidelines for context-appropriate dialogs.</li>
+</ul>
+
 <p><em>Version 1.8.13 - (04 November 2026)</em></p>
 <p>Version 1.8.13 resolves a critical audio playback resumption issue where switching tabs or opening a new tab with the plus button paused audio but returning to the tab restarted playback from the beginning of the buffer; adds per-tab playback and paused state tracking, anchors pause marks and cursor positions at the paused word in the text buffer, preserves visual word highlighting across tab switches, synchronizes dynamic playback controls per tab, supports seamless resumption from both Resume and Read buttons as well as keyboard shortcuts, and expands the automated regression test suite to 270 tests.</p>
 
@@ -1040,7 +1065,7 @@ class AboutReadAloudWindow(Adw.Window):
     application_name = GObject.Property(type=str, default='ReadAloud')
     application_icon = GObject.Property(type=str, default='im.zackarious.ReadAloud')
     developer_name = GObject.Property(type=str, default='zackarious')
-    version = GObject.Property(type=str, default='Version 1.8.13 - (04 November 2026)')
+    version = GObject.Property(type=str, default='Version 1.8.14 - (06 November 2026)')
     website = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
     issue_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud/issues')
     support_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
@@ -1148,7 +1173,7 @@ class AboutReadAloudWindow(Adw.Window):
         box.append(dev_label)
 
         # Version
-        ver_label = Gtk.Label(label="Version 1.8.13 - (04 November 2026)")
+        ver_label = Gtk.Label(label="Version 1.8.14 - (06 November 2026)")
         ver_label.add_css_class("caption")
         ver_label.add_css_class("dim-label")
         box.append(ver_label)
@@ -1572,4 +1597,4 @@ def main(version):
     return result
 
 if __name__ == "__main__":
-    main("1.8.13")
+    main("1.8.14")
