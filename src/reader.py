@@ -104,6 +104,75 @@ def is_abbreviation_or_initial(text: str, dot_pos: int) -> bool:
     return False
 
 
+def _split_oversized_sentence(sent_info: dict, max_chars: int = 250, max_words: int = 40) -> list[dict]:
+    """
+    Subdivides an oversized sentence into smaller sub-sentences to prevent native C buffer
+    overflows in piper_phonemize and espeak-ng during synthesis of large texts.
+    Preserves exact character coordinate spans and word weights.
+    """
+    words = sent_info.get('words', [])
+    synth_text = sent_info.get('sentence_text', '')
+    if len(synth_text) <= max_chars and len(words) <= max_words:
+        return [sent_info]
+
+    if not words:
+        return [sent_info]
+
+    sub_sentences = []
+    chunk_words = []
+    chunk_chars = 0
+
+    for w in words:
+        w_len = len(w['word']) + 1  # include space
+        should_break = False
+        if len(chunk_words) >= max_words or (chunk_chars + w_len > max_chars and len(chunk_words) > 0):
+            should_break = True
+        elif len(chunk_words) >= 15 and w['word'].endswith((',', ';', ':', '—', '--', '-', ')', ']')):
+            chunk_words.append(w)
+            chunk_chars += w_len
+            sub_start = chunk_words[0]['start_char']
+            sub_end = chunk_words[-1]['end_char']
+            sub_text = " ".join(item['word'] for item in chunk_words).strip()
+            sub_sentences.append({
+                'sentence_text': sub_text,
+                'start_char': sub_start,
+                'end_char': sub_end,
+                'words': chunk_words,
+            })
+            chunk_words = []
+            chunk_chars = 0
+            continue
+
+        if should_break:
+            sub_start = chunk_words[0]['start_char']
+            sub_end = chunk_words[-1]['end_char']
+            sub_text = " ".join(item['word'] for item in chunk_words).strip()
+            sub_sentences.append({
+                'sentence_text': sub_text,
+                'start_char': sub_start,
+                'end_char': sub_end,
+                'words': chunk_words,
+            })
+            chunk_words = []
+            chunk_chars = 0
+
+        chunk_words.append(w)
+        chunk_chars += w_len
+
+    if chunk_words:
+        sub_start = chunk_words[0]['start_char']
+        sub_end = chunk_words[-1]['end_char']
+        sub_text = " ".join(item['word'] for item in chunk_words).strip()
+        sub_sentences.append({
+            'sentence_text': sub_text,
+            'start_char': sub_start,
+            'end_char': sub_end,
+            'words': chunk_words,
+        })
+
+    return sub_sentences
+
+
 def extract_sentences_and_words(text: str, base_offset: int = 0):
     """
     Splits text into sentences and constituent words, recording exact character spans
@@ -113,6 +182,7 @@ def extract_sentences_and_words(text: str, base_offset: int = 0):
     - Distinguishes soft line wraps (PDF multi-column lines) from true paragraph breaks.
     - Normalizes soft line breaks for Piper TTS synthesis without awkward pauses.
     - Protects abbreviations, initials, decimals, and URLs from premature sentence splitting.
+    - Safely subdivides oversized sentences (<250 chars / <40 words) to prevent native C buffer overflows.
     - Accurately tracks original buffer character slices for visual word highlighting.
     """
     sentences = []
@@ -160,12 +230,13 @@ def extract_sentences_and_words(text: str, base_offset: int = 0):
 
                         words = _extract_words_from_span(stripped, cur_start)
                         if words:
-                            sentences.append({
+                            sent_item = {
                                 'sentence_text': synth_text if synth_text else stripped,
                                 'start_char': cur_start,
                                 'end_char': cur_end,
                                 'words': words
-                            })
+                            }
+                            sentences.extend(_split_oversized_sentence(sent_item))
                     s_start = end_punct
                     i = end_punct
                     continue
@@ -185,12 +256,13 @@ def extract_sentences_and_words(text: str, base_offset: int = 0):
 
                 words = _extract_words_from_span(stripped, cur_start)
                 if words:
-                    sentences.append({
+                    sent_item = {
                         'sentence_text': synth_text if synth_text else stripped,
                         'start_char': cur_start,
                         'end_char': cur_end,
                         'words': words
-                    })
+                    }
+                    sentences.extend(_split_oversized_sentence(sent_item))
 
     return sentences
 
@@ -418,22 +490,39 @@ class Reader():
             sentence_info = extract_sentences_and_words(self.original_text, base_offset=self.start_char_offset)
             if not sentence_info and text.strip():
                 # Fallback if pattern matched no sentences
-                sentence_info = [{
+                raw_words = _extract_words_from_span(text.strip(), self.start_char_offset)
+                fallback_sent = {
                     'sentence_text': text.strip(),
                     'start_char': self.start_char_offset,
                     'end_char': self.start_char_offset + len(text.strip()),
-                    'words': [{
+                    'words': raw_words or [{
                         'word': text.strip(),
                         'start_char': self.start_char_offset,
                         'end_char': self.start_char_offset + len(text.strip()),
                         'weight': 1.0
                     }]
-                }]
+                }
+                sentence_info = _split_oversized_sentence(fallback_sent)
 
             self.word_timings = []
             current_audio_time = 0.0
 
             total_sentences = len(sentence_info)
+            total_words = sum(len(s.get('words', [])) for s in sentence_info)
+            voice_id_str = getattr(self.p, 'voice_id', voice) if hasattr(self, 'p') else voice
+
+            try:
+                from .error_logger import update_session_activity
+                update_session_activity(
+                    "synthesizing",
+                    voice=str(voice_id_str),
+                    word_count=total_words,
+                    total_sentences=total_sentences,
+                    current_sentence=0,
+                )
+            except Exception:
+                pass
+
             start_time = time.time()
             if hasattr(self, 'window') and self.window and hasattr(self.window, 'update_wait_dialog'):
                 GLib.idle_add(self.window.update_wait_dialog, 0.0, _("Synthesizing audio..."))
@@ -507,8 +596,29 @@ class Reader():
                         if hasattr(self, 'window') and self.window and hasattr(self.window, 'update_wait_dialog'):
                             GLib.idle_add(self.window.update_wait_dialog, fraction, msg)
 
+                        # Update session activity heartbeat
+                        if idx % 10 == 0 or idx == total_sentences - 1:
+                            try:
+                                from .error_logger import update_session_activity
+                                update_session_activity(
+                                    "synthesizing",
+                                    voice=str(voice_id_str),
+                                    word_count=total_words,
+                                    total_sentences=total_sentences,
+                                    current_sentence=idx + 1,
+                                    snippet=sent_text[:120],
+                                )
+                            except Exception:
+                                pass
+
                     if not (getattr(self, '_cancelled', False) or getattr(self, '_stopped', False)):
                         self.temp_path = f.name
+
+            try:
+                from .error_logger import update_session_activity
+                update_session_activity("idle")
+            except Exception:
+                pass
 
             # Check if cancelled during synthesis
             if getattr(self, '_cancelled', False) or getattr(self, '_stopped', False):
@@ -543,6 +653,12 @@ class Reader():
 
         except Exception as e:
             tb_str = traceback.format_exc()
+            try:
+                from .error_logger import update_session_activity, log_error
+                update_session_activity("idle", last_error=str(e))
+                log_error(str(e), exc=e, traceback_text=tb_str, context="Speech Synthesis")
+            except Exception:
+                pass
             GLib.idle_add(self._handle_error, str(e), self.temp_path, e, tb_str)
 
     def _handle_error(self, error_msg, temp_path=None, exc=None, traceback_text=None):

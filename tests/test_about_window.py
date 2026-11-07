@@ -78,7 +78,7 @@ class TestAboutWindow(unittest.TestCase):
         self.assertEqual(about.props.website, 'https://github.com/Zackarious/ReadAloud')
         self.assertEqual(about.props.issue_url, 'https://github.com/Zackarious/ReadAloud/issues')
         self.assertEqual(about.props.comments, APP_DESCRIPTION)
-        self.assertEqual(about.props.version, 'Version 1.8.14 - (06 November 2026)')
+        self.assertEqual(about.props.version, 'Version 1.8.15 - (07 November 2026)')
         self.assertEqual(about.props.default_width, 600)
         self.assertEqual(about.props.default_height, 680)
 
@@ -152,6 +152,58 @@ class TestAboutWindow(unittest.TestCase):
         self.assertEqual(about.stack.get_visible_child_name(), "about")
         about.stack.set_visible_child_name("changelogs")
         self.assertEqual(about.stack.get_visible_child_name(), "changelogs")
+
+    def test_about_page_error_log_button(self):
+        """Verify the About page includes an Error Log button that opens ErrorLogViewerDialog."""
+        from src.main import ErrorLogViewerDialog
+        app = ReadAloudApplication()
+        about = app._create_about_window()
+
+        error_log_buttons = []
+        def find_buttons(widget):
+            if isinstance(widget, Gtk.Button) and widget.get_label() == "Error Log":
+                error_log_buttons.append(widget)
+            child = widget.get_first_child()
+            while child:
+                find_buttons(child)
+                child = child.get_next_sibling()
+
+        find_buttons(about.about_page)
+        self.assertEqual(len(error_log_buttons), 1)
+        btn = error_log_buttons[0]
+        self.assertEqual(btn.get_label(), "Error Log")
+        self.assertIn("error log", btn.get_tooltip_text().lower())
+
+    def test_error_log_viewer_dialog_initialization(self):
+        """Verify ErrorLogViewerDialog initializes properly with controls."""
+        from src.main import ErrorLogViewerDialog
+        dialog = ErrorLogViewerDialog()
+        self.assertEqual(dialog.get_title(), "Error Log")
+        self.assertIsNotNone(dialog.text_view)
+        self.assertIsNotNone(dialog.copy_btn)
+
+    def test_crash_report_dialog_presentation(self):
+        """Verify CrashReportDialog displays diagnostic report and encourages GitHub reporting."""
+        from src.main import CrashReportDialog
+        sample_crash = {
+            "pid": 123456,
+            "version": "1.8.15",
+            "start_time": "2026-11-07T10:00:00Z",
+            "state": "synthesizing",
+            "activity": {
+                "voice": "en_GB-alba-medium",
+                "word_count": 35000,
+                "current_sentence": 45,
+            },
+            "log_excerpt": "Test error log excerpt line",
+        }
+        dialog = CrashReportDialog(crash_info=sample_crash)
+        self.assertEqual(dialog.get_title(), "Unexpected Shutdown Detected")
+        report = dialog._format_full_report()
+        self.assertIn("123456", report)
+        self.assertIn("en_GB-alba-medium", report)
+        self.assertIn("35000", report)
+        self.assertIn("https://github.com/Zackarious/ReadAloud/issues", report)
 
 
 if __name__ == '__main__':

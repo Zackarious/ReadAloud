@@ -1050,6 +1050,11 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         self._force_close = True
         self._save_settings()
         self._cleanup_temp_audio()
+        try:
+            from .error_logger import mark_clean_exit
+            mark_clean_exit()
+        except Exception:
+            pass
         app = self.get_application()
         if app and hasattr(app, 'bubble') and app.bubble:
             app.bubble.close()

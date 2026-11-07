@@ -19,12 +19,13 @@
 
 import sys
 import re
+import platform
 import gi
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Gio, Adw, GObject, Gdk, GLib
+from gi.repository import Gtk, Gio, Adw, GObject, Gdk, GLib, Pango
 
 import gettext
 _ = gettext.gettext
@@ -48,6 +49,40 @@ from .window import ReadAloudWindow
 from .bubble import ListenerBubbleWindow
 
 CHANGELOG_XML = r"""
+<p><em>Version 1.8.15 - (07 November 2026)</em></p>
+<p>Version 1.8.15 prevents silent application crashes when synthesizing large text (such as 35,000 words or long run-on sentences) by subdividing oversized text blocks to stay safely within native C++ buffer boundaries, adds persistent session tracking and startup crash detection that presents an interactive diagnostic report dialog encouraging users to report issues on GitHub, introduces a dedicated Error Log button in the About section with a full-featured log viewer and clipboard copy utility, enables Python's native faulthandler to capture low-level faults to disk, and expands the automated test suite to 281 tests.</p>
+
+<p><em>Features and Fixes Removed:</em></p>
+<ul>
+  <li><em>Unbounded Sentence Synthesis in Reader:</em> Removed direct synthesis of unbounded text blocks and sentences exceeding 250 characters or 40 words in src/reader.py. <em>Reason:</em> Long blocks and run-on sentences without punctuation overflowed native C++ clause buffers in piper_phonemize and espeak-ng, causing immediate silent SIGSEGV or SIGABRT crashes without error output.</li>
+  <li><em>Uncaptured Native Crashes and Silent Exits:</em> Removed unmonitored process termination without low-level crash diagnostics in src/error_logger.py. <em>Reason:</em> Native C-level segmentation faults bypassed Python's standard sys.excepthook, leaving no error log or traceback for users or developers to inspect.</li>
+</ul>
+
+<p><em>Features and Fixes Added:</em></p>
+<ul>
+  <li><em>Safe Oversized Sentence Chunking (_split_oversized_sentence):</em> Added automatic sentence bounding in src/reader.py that subdivides oversized sentences (&lt;= 250 characters and &lt;= 40 words) at natural punctuation marks (semicolons, colons, commas, dashes, and parentheses) while preserving exact character coordinate slices and phonetic word weights. <em>Reason:</em> Guarantees that Piper TTS and espeak-ng never encounter buffer overflows on large text imports (such as 35,000-word documents) while maintaining sample-accurate word highlighting during speech playback.</li>
+  <li><em>Startup Crash Detection &amp; Diagnostic Report (check_previous_session_crash, CrashReportDialog):</em> Added persistent session marker tracking (session_marker.json) and startup detection in src/error_logger.py and src/main.py. If ReadAloud detects an unclean exit on launch, it logs an abnormal termination report to error.log and presents an interactive CrashReportDialog. <em>Reason:</em> Alerts users when the application unexpectedly closed, displays what was in-flight (voice, word count, sentence progress, error log excerpt), and provides a single-click "Copy Crash Report to Clipboard" and "Report on GitHub" button to help authors debug and improve the software.</li>
+  <li><em>Native C-Level Fault Interception (faulthandler &amp; SIGTERM):</em> Enabled Python's faulthandler in src/error_logger.py to write low-level C stack traces directly to error.log upon receiving SIGSEGV, SIGFPE, SIGABRT, SIGBUS, or SIGILL, along with SIGTERM signal interception. <em>Reason:</em> Captures native crashes and external process kills into the persistent error log even when standard Python exception handlers cannot run.</li>
+  <li><em>About Section Error Log Viewer (ErrorLogViewerDialog):</em> Added an "Error Log" button in the About dialog's links row and implemented ErrorLogViewerDialog featuring a monospace log view, "Copy Log", "Open Folder", "Report Issue", and "Clear" actions. <em>Reason:</em> Provides users with direct, easy access to inspect, copy, or purge diagnostic logs at any time without having to navigate filesystem paths manually.</li>
+  <li><em>Automated Regression Test Expansion (281 Tests):</em> Added 9 comprehensive automated tests in tests/test_error_logger.py and tests/test_about_window.py covering session marker lifecycles, crash detection, clean exit handling, error log viewing/clearing, oversized sentence splitting, 35,000-word synthesis chunking, and dialog presentation. <em>Reason:</em> Prevents regressions in large document synthesis, crash reporting, and log viewer stability.</li>
+</ul>
+
+<p><em>Features and Fixes Updated:</em></p>
+<ul>
+  <li><em>Synthesis Activity Heartbeat in Reader (_synthesize_audio):</em> Updated Reader._synthesize_audio() to record in-flight synthesis state (voice model, word count, sentence index, text snippet) to session_marker.json and cleanly reset state upon completion, cancellation, or error. <em>Reason:</em> Ensures crash reports accurately pinpoint the exact sentence and voice model that was being processed if an abrupt termination occurs.</li>
+  <li><em>Clean Shutdown Hooks across Application Lifecycle:</em> Updated ReadAloudWindow._do_close(), ReadAloudApplication._on_quit_action(), do_shutdown(), and main() to invoke mark_clean_exit(). <em>Reason:</em> Guarantees that intentional window closures and application exits are marked clean so normal shutdowns do not trigger false-positive crash dialogs on subsequent launches.</li>
+  <li><em>Centralized Synthesis Error Logging:</em> Updated Reader._synthesize_audio() exception handling to call log_error() directly to record detailed synthesis failures into error.log. <em>Reason:</em> Guarantees synthesis exceptions are persisted to disk even before UI error alerts are presented.</li>
+  <li><em>Wikimedia-Compliant User-Agent Header:</em> Updated user-agent identification string to ReadAloud/1.8.15 (https://github.com/wbernard/parolu; contact@readaloud.app) in src/wikipedia_importer.py. <em>Reason:</em> Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version release.</li>
+  <li><em>Application Version Increment (1.8.15):</em> Updated application version to 1.8.15 across meson.build, src/main.py, src/error_logger.py, src/wikipedia_importer.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_windows/build_arm64_portable.py, build_linux/build_deb.sh, build_linux/build_appimage.sh, build_linux/debian/control, build_macos/build_macos.sh, tests/test_about_window.py, tests/test_error_logger.py, and CI workflows. <em>Reason:</em> Adheres to semantic versioning standards for the new release.</li>
+</ul>
+
+<p><em>Visual Changes and UI Updates:</em></p>
+<ul>
+  <li><em>Unexpected Shutdown Detected Dialog Banner:</em> Added a warning dialog (CrashReportDialog) with a prominent warning emblem (dialog-warning-symbolic), clean title hierarchy, structured diagnostic report card, suggested-action "Copy Crash Report" button, and direct GitHub link. <em>Reason:</em> Provides clear visual cues and effortless one-click reporting when an unexpected application crash occurs.</li>
+  <li><em>About Dialog Error Log Button:</em> Integrated a pill-shaped "Error Log" button into the About tab's primary link row next to Website and Report an Issue. <em>Reason:</em> Offers a prominent, discoverable visual entry point for users to inspect diagnostic logs directly from the About dialog.</li>
+  <li><em>Interactive Copy Confirmation Feedback:</em> Added temporary "✓ Copied to Clipboard!" and "✓ Copied!" label state transitions with automatic reset on the copy buttons in CrashReportDialog and ErrorLogViewerDialog. <em>Reason:</em> Delivers clear, immediate visual confirmation that diagnostic details have been copied to the clipboard.</li>
+</ul>
+
 <p><em>Version 1.8.14 - (06 November 2026)</em></p>
 <p>Version 1.8.14 enhances the text cleanup tools workflow by eliminating the redundant "Apply to all tabs or just current tab?" modal dialog when only a single tab is open, applying text transformations directly to the active document with instant feedback, preserving multi-tab batch cleanup when multiple tabs are open, and adding automated regression test coverage.</p>
 
@@ -1059,13 +1094,306 @@ APP_DESCRIPTION = (
 )
 
 
+class ErrorLogViewerDialog(Adw.Window):
+    """Dialog window displaying the contents of error.log with options to copy, open folder, or clear."""
+
+    def __init__(self, transient_for=None, **kwargs):
+        super().__init__(**kwargs)
+        if transient_for:
+            self.set_transient_for(transient_for)
+        self.set_title(_("Error Log"))
+        self.set_default_size(680, 520)
+        self.set_modal(True)
+
+        # Close on Escape
+        esc_controller = Gtk.ShortcutController()
+        esc_controller.set_scope(Gtk.ShortcutScope.LOCAL)
+        esc_trigger = Gtk.KeyvalTrigger.new(Gdk.KEY_Escape, 0)
+        esc_action = Gtk.CallbackAction.new(lambda *_: (self.close(), True)[1])
+        esc_shortcut = Gtk.Shortcut.new(esc_trigger, esc_action)
+        esc_controller.add_shortcut(esc_shortcut)
+        self.add_controller(esc_controller)
+
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.set_content(main_box)
+
+        # HeaderBar
+        header_bar = Adw.HeaderBar(show_end_title_buttons=True)
+        title_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        title_label = Gtk.Label(label=_("Error Log"))
+        title_label.add_css_class("heading")
+        title_box.append(title_label)
+        header_bar.set_title_widget(title_box)
+
+        # Copy to clipboard button
+        self.copy_btn = Gtk.Button(label=_("Copy Log"))
+        self.copy_btn.set_tooltip_text(_("Copy full error log to clipboard"))
+        self.copy_btn.add_css_class("flat")
+        self.copy_btn.connect("clicked", self._on_copy_clicked)
+        header_bar.pack_start(self.copy_btn)
+
+        # Clear button
+        clear_btn = Gtk.Button(label=_("Clear"))
+        clear_btn.set_tooltip_text(_("Clear error log file"))
+        clear_btn.add_css_class("flat")
+        clear_btn.connect("clicked", self._on_clear_clicked)
+        header_bar.pack_start(clear_btn)
+
+        # GitHub Issue Report button
+        report_btn = Gtk.Button(label=_("Report Issue"))
+        report_btn.set_tooltip_text(_("Open GitHub Issues tracker in web browser"))
+        report_btn.add_css_class("flat")
+        report_btn.connect("clicked", lambda *_: Gtk.show_uri(self, "https://github.com/Zackarious/ReadAloud/issues", Gdk.CURRENT_TIME))
+        header_bar.pack_end(report_btn)
+
+        main_box.append(header_bar)
+
+        # Content area
+        content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        content_box.set_margin_top(8)
+        content_box.set_margin_bottom(12)
+        content_box.set_margin_start(12)
+        content_box.set_margin_end(12)
+        content_box.set_vexpand(True)
+        main_box.append(content_box)
+
+        # Scrolled monospace text view
+        scroller = Gtk.ScrolledWindow()
+        scroller.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroller.set_vexpand(True)
+        scroller.add_css_class("card")
+
+        self.text_view = Gtk.TextView()
+        self.text_view.set_editable(False)
+        self.text_view.set_cursor_visible(False)
+        self.text_view.set_monospace(True)
+        self.text_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        self.text_view.set_left_margin(12)
+        self.text_view.set_right_margin(12)
+        self.text_view.set_top_margin(10)
+        self.text_view.set_bottom_margin(10)
+        scroller.set_child(self.text_view)
+        content_box.append(scroller)
+
+        # Bottom info row
+        info_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        from .error_logger import get_error_log_path
+        log_path = get_error_log_path()
+        path_label = Gtk.Label(label=f"{_('Log file:')} {log_path}")
+        path_label.add_css_class("caption")
+        path_label.add_css_class("dim-label")
+        path_label.set_hexpand(True)
+        path_label.set_halign(Gtk.Align.START)
+        path_label.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
+        info_box.append(path_label)
+
+        open_folder_btn = Gtk.Button(label=_("Open Folder"))
+        open_folder_btn.set_tooltip_text(_("Open log folder in file manager"))
+        open_folder_btn.add_css_class("flat")
+        open_folder_btn.connect("clicked", lambda *_: self._on_open_folder(log_path))
+        info_box.append(open_folder_btn)
+        content_box.append(info_box)
+
+        self._refresh_log()
+
+    def _refresh_log(self):
+        from .error_logger import get_error_log_content
+        text = get_error_log_content()
+        buf = self.text_view.get_buffer()
+        buf.set_text(text)
+
+    def _on_copy_clicked(self, btn):
+        buf = self.text_view.get_buffer()
+        start, end = buf.get_bounds()
+        text = buf.get_text(start, end, False)
+        display = Gdk.Display.get_default()
+        if display:
+            clipboard = display.get_clipboard()
+            clipboard.set(text)
+            orig_label = btn.get_label()
+            btn.set_label(_("✓ Copied!"))
+            GLib.timeout_add(1800, lambda: (btn.set_label(orig_label), False)[1])
+
+    def _on_clear_clicked(self, btn):
+        from .error_logger import clear_error_log
+        clear_error_log()
+        self._refresh_log()
+
+    def _on_open_folder(self, log_path):
+        try:
+            folder_uri = log_path.parent.resolve().as_uri()
+            Gio.AppInfo.launch_default_for_uri(folder_uri, None)
+        except Exception:
+            pass
+
+
+class CrashReportDialog(Adw.Window):
+    """Dialog presented on startup if ReadAloud previously terminated unexpectedly."""
+
+    def __init__(self, crash_info: dict, transient_for=None, **kwargs):
+        super().__init__(**kwargs)
+        self.crash_info = crash_info
+        if transient_for:
+            self.set_transient_for(transient_for)
+        self.set_title(_("Unexpected Shutdown Detected"))
+        self.set_default_size(660, 560)
+        self.set_modal(True)
+
+        # Close on Escape
+        esc_controller = Gtk.ShortcutController()
+        esc_controller.set_scope(Gtk.ShortcutScope.LOCAL)
+        esc_trigger = Gtk.KeyvalTrigger.new(Gdk.KEY_Escape, 0)
+        esc_action = Gtk.CallbackAction.new(lambda *_: (self.close(), True)[1])
+        esc_shortcut = Gtk.Shortcut.new(esc_trigger, esc_action)
+        esc_controller.add_shortcut(esc_shortcut)
+        self.add_controller(esc_controller)
+
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.set_content(main_box)
+
+        # HeaderBar
+        header_bar = Adw.HeaderBar(show_end_title_buttons=True)
+        main_box.append(header_bar)
+
+        clamp = Adw.Clamp(maximum_size=620, tightening_threshold=520)
+        clamp.set_vexpand(True)
+        main_box.append(clamp)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        box.set_margin_top(16)
+        box.set_margin_bottom(20)
+        box.set_margin_start(20)
+        box.set_margin_end(20)
+        box.set_vexpand(True)
+        clamp.set_child(box)
+
+        # Warning icon & title banner
+        banner_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+        banner_box.set_halign(Gtk.Align.CENTER)
+        warn_icon = Gtk.Image.new_from_icon_name("dialog-warning-symbolic")
+        warn_icon.set_pixel_size(48)
+        banner_box.append(warn_icon)
+
+        title_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        title_vbox.set_valign(Gtk.Align.CENTER)
+        h1 = Gtk.Label(label=_("ReadAloud Closed Unexpectedly"))
+        h1.add_css_class("title-2")
+        h1.set_halign(Gtk.Align.START)
+        title_vbox.append(h1)
+
+        sub = Gtk.Label(label=_("A crash or abnormal exit was detected from the previous session."))
+        sub.add_css_class("dim-label")
+        sub.set_halign(Gtk.Align.START)
+        title_vbox.append(sub)
+        banner_box.append(title_vbox)
+        box.append(banner_box)
+
+        # Description / Call to Action
+        cta_label = Gtk.Label(
+            label=_(
+                "To help us resolve this issue and improve ReadAloud, please copy this crash diagnostic "
+                "report and paste it into a new issue on our GitHub issues page."
+            )
+        )
+        cta_label.set_wrap(True)
+        cta_label.set_justify(Gtk.Justification.CENTER)
+        box.append(cta_label)
+
+        # Diagnostic report text view in scrolled window
+        scroller = Gtk.ScrolledWindow()
+        scroller.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroller.set_vexpand(True)
+        scroller.add_css_class("card")
+
+        self.text_view = Gtk.TextView()
+        self.text_view.set_editable(False)
+        self.text_view.set_cursor_visible(False)
+        self.text_view.set_monospace(True)
+        self.text_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        self.text_view.set_left_margin(12)
+        self.text_view.set_right_margin(12)
+        self.text_view.set_top_margin(10)
+        self.text_view.set_bottom_margin(10)
+
+        # Compose full diagnostic report for display & copying
+        report_text = self._format_full_report()
+        buf = self.text_view.get_buffer()
+        buf.set_text(report_text)
+        scroller.set_child(self.text_view)
+        box.append(scroller)
+
+        # Buttons row
+        btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        btn_box.set_halign(Gtk.Align.END)
+        btn_box.set_margin_top(6)
+
+        # View full error log
+        full_log_btn = Gtk.Button(label=_("View Full Log"))
+        full_log_btn.connect("clicked", self._on_view_full_log)
+        btn_box.append(full_log_btn)
+
+        # GitHub issue link button
+        github_btn = Gtk.Button(label=_("Report on GitHub"))
+        github_btn.connect("clicked", lambda *_: Gtk.show_uri(self, "https://github.com/Zackarious/ReadAloud/issues", Gdk.CURRENT_TIME))
+        btn_box.append(github_btn)
+
+        # Copy report button (suggested action)
+        self.copy_btn = Gtk.Button(label=_("Copy Crash Report"))
+        self.copy_btn.add_css_class("suggested-action")
+        self.copy_btn.connect("clicked", self._on_copy_report)
+        btn_box.append(self.copy_btn)
+
+        # Dismiss / Close button
+        close_btn = Gtk.Button(label=_("Close"))
+        close_btn.connect("clicked", lambda *_: self.close())
+        btn_box.append(close_btn)
+
+        box.append(btn_box)
+
+    def _format_full_report(self) -> str:
+        lines = [
+            "### ReadAloud Crash Diagnostic Report",
+            f"Version:      {self.crash_info.get('version', 'Unknown')}",
+            f"Platform:     {sys.platform} ({platform.platform()})",
+            f"Python:       {sys.version.split()[0]}",
+            f"PID:          {self.crash_info.get('pid', 'Unknown')}",
+            f"Started At:   {self.crash_info.get('start_time', 'Unknown')}",
+            f"State:        {self.crash_info.get('state', 'Unknown')}",
+        ]
+        activity = self.crash_info.get("activity", {})
+        if activity:
+            lines.append("Activity Details:")
+            for k, v in activity.items():
+                lines.append(f"  {k}: {v}")
+        excerpt = self.crash_info.get("log_excerpt", "")
+        if excerpt:
+            lines.append("\nRecent Error Log Entries:")
+            lines.append(excerpt.strip())
+        lines.append("\nIssue Tracker: https://github.com/Zackarious/ReadAloud/issues")
+        return "\n".join(lines)
+
+    def _on_copy_report(self, btn):
+        report_text = self._format_full_report()
+        display = Gdk.Display.get_default()
+        if display:
+            clipboard = display.get_clipboard()
+            clipboard.set(report_text)
+            orig_label = btn.get_label()
+            btn.set_label(_("✓ Copied to Clipboard!"))
+            GLib.timeout_add(2200, lambda: (btn.set_label(orig_label), False)[1])
+
+    def _on_view_full_log(self, *args):
+        log_dialog = ErrorLogViewerDialog(transient_for=self)
+        log_dialog.present()
+
+
 class AboutReadAloudWindow(Adw.Window):
     """Condensed About ReadAloud window featuring sub-tabs matching GNOME HIG."""
 
     application_name = GObject.Property(type=str, default='ReadAloud')
     application_icon = GObject.Property(type=str, default='im.zackarious.ReadAloud')
     developer_name = GObject.Property(type=str, default='zackarious')
-    version = GObject.Property(type=str, default='Version 1.8.14 - (06 November 2026)')
+    version = GObject.Property(type=str, default='Version 1.8.15 - (07 November 2026)')
     website = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
     issue_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud/issues')
     support_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
@@ -1173,7 +1501,7 @@ class AboutReadAloudWindow(Adw.Window):
         box.append(dev_label)
 
         # Version
-        ver_label = Gtk.Label(label="Version 1.8.14 - (06 November 2026)")
+        ver_label = Gtk.Label(label="Version 1.8.15 - (07 November 2026)")
         ver_label.add_css_class("caption")
         ver_label.add_css_class("dim-label")
         box.append(ver_label)
@@ -1203,8 +1531,13 @@ class AboutReadAloudWindow(Adw.Window):
 
         website_btn = Gtk.LinkButton.new_with_label(self.website, _("Website"))
         issue_btn = Gtk.LinkButton.new_with_label(self.issue_url, _("Report an Issue"))
+        error_log_btn = Gtk.Button(label=_("Error Log"))
+        error_log_btn.set_tooltip_text(_("View application error log and diagnostic history"))
+        error_log_btn.add_css_class("flat")
+        error_log_btn.connect("clicked", lambda *_: ErrorLogViewerDialog(transient_for=self).present())
         links_box.append(website_btn)
         links_box.append(issue_btn)
+        links_box.append(error_log_btn)
         box.append(links_box)
 
         # Copyright & Disclaimer
@@ -1500,6 +1833,7 @@ class ReadAloudApplication(Adw.Application):
         self.create_action('quit', self._on_quit_action, ['<primary>q'])
         self.create_action('about', self.on_about_action)
         self.create_action('changelog', self.on_changelog_action)
+        self.create_action('error-log', self.on_error_log_action)
         self.create_action('toggle-bubble', self.on_toggle_bubble_action)
         self.bubble = None
         self.set_accels_for_action("win.open", ["<primary>o"])
@@ -1513,6 +1847,11 @@ class ReadAloudApplication(Adw.Application):
         self.set_accels_for_action("win.unwrap-text", ["<primary><shift>w", "<primary>j"])
 
     def _on_quit_action(self, *args):
+        try:
+            from .error_logger import mark_clean_exit
+            mark_clean_exit()
+        except Exception:
+            pass
         if hasattr(self, 'bubble') and self.bubble:
             self.bubble.close()
         win = self.props.active_window
@@ -1520,6 +1859,14 @@ class ReadAloudApplication(Adw.Application):
             win.close()
         else:
             self.quit()
+
+    def do_shutdown(self):
+        try:
+            from .error_logger import mark_clean_exit
+            mark_clean_exit()
+        except Exception:
+            pass
+        Adw.Application.do_shutdown(self)
 
     def do_activate(self):
         """Called when the application is activated.
@@ -1535,6 +1882,29 @@ class ReadAloudApplication(Adw.Application):
         if not hasattr(self, 'bubble') or not self.bubble:
             self.bubble = ListenerBubbleWindow(application=self, main_window=win)
         self.bubble.present()
+
+        # Check for previous session crash and start tracking current session
+        try:
+            from .error_logger import check_previous_session_crash, start_session_tracking
+            crash_info = check_previous_session_crash()
+            start_session_tracking()
+            if crash_info:
+                GLib.idle_add(lambda: self._show_crash_report_dialog(win, crash_info))
+        except Exception as e:
+            try:
+                sys.stderr.write(f"Crash detection initialization error: {e}\n")
+            except Exception:
+                pass
+
+    def _show_crash_report_dialog(self, parent_win, crash_info):
+        try:
+            dialog = CrashReportDialog(crash_info, transient_for=parent_win)
+            dialog.present()
+        except Exception as e:
+            try:
+                sys.stderr.write(f"Could not display crash report dialog: {e}\n")
+            except Exception:
+                pass
 
     def on_toggle_bubble_action(self, widget, _):
         """Toggle visibility of the floating listener bubble."""
@@ -1563,6 +1933,11 @@ class ReadAloudApplication(Adw.Application):
         about = self._create_about_window()
         about.stack.set_visible_child_name("changelogs")
         about.present()
+
+    def on_error_log_action(self, widget, _):
+        """Callback for the app.error-log action to present Error Log viewer directly."""
+        dialog = ErrorLogViewerDialog(transient_for=self.props.active_window)
+        dialog.present()
 
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""
@@ -1594,7 +1969,12 @@ def main(version):
     ensure_resources_loaded()
     app = ReadAloudApplication()
     result = app.run(sys.argv)
+    try:
+        from .error_logger import mark_clean_exit
+        mark_clean_exit()
+    except Exception:
+        pass
     return result
 
 if __name__ == "__main__":
-    main("1.8.14")
+    main("1.8.15")

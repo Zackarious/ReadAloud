@@ -5,13 +5,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import datetime
+import faulthandler
+import json
 import os
 import platform
+import signal
 import sys
 import tempfile
 import threading
 import traceback
 from pathlib import Path
+
+_faulthandler_file = None
+_session_tracking_active = False
 
 
 def get_error_log_path() -> Path:
@@ -62,6 +68,221 @@ def get_error_log_path() -> Path:
     return candidates[0] if candidates else Path("error.log").resolve()
 
 
+def get_crash_marker_path() -> Path:
+    """
+    Returns the path where session_marker.json is stored.
+    Stored in the writable user data directory.
+    """
+    try:
+        from .paths import get_user_data_dir
+        user_dir = get_user_data_dir()
+        return user_dir / "session_marker.json"
+    except Exception:
+        return Path(tempfile.gettempdir()) / "ReadAloud" / "session_marker.json"
+
+
+def start_session_tracking():
+    """
+    Records the startup of the current ReadAloud process into session_marker.json.
+    clean_exit is initialized to False; if the process terminates abnormally,
+    the next launch will detect this unclosed session.
+    """
+    global _session_tracking_active
+    marker_path = get_crash_marker_path()
+    try:
+        marker_path.parent.mkdir(parents=True, exist_ok=True)
+        version = "1.8.15"
+        try:
+            from . import __version__
+            version = __version__
+        except Exception:
+            pass
+
+        data = {
+            "pid": os.getpid(),
+            "version": version,
+            "start_time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "clean_exit": False,
+            "state": "idle",
+            "activity": {},
+            "platform": f"{sys.platform} ({platform.platform()})",
+            "python": sys.version.split()[0],
+        }
+        with open(marker_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+            f.flush()
+            try:
+                os.fsync(f.fileno())
+            except Exception:
+                pass
+        _session_tracking_active = True
+    except Exception as e:
+        try:
+            sys.stderr.write(f"Warning: Failed to start session tracking: {e}\n")
+        except Exception:
+            pass
+
+
+def update_session_activity(state: str, **kwargs):
+    """
+    Updates the session marker with current activity breadcrumbs (e.g. state='synthesizing',
+    voice='...', word_count=..., sentence_index=...).
+    """
+    marker_path = get_crash_marker_path()
+    try:
+        if not marker_path.is_file():
+            return
+        with open(marker_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        data["state"] = state
+        data["updated_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        if "activity" not in data or not isinstance(data["activity"], dict):
+            data["activity"] = {}
+        data["activity"].update(kwargs)
+        with open(marker_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+            f.flush()
+            try:
+                os.fsync(f.fileno())
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+def mark_clean_exit():
+    """
+    Marks the current session as having cleanly exited.
+    """
+    marker_path = get_crash_marker_path()
+    try:
+        if marker_path.is_file():
+            with open(marker_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            data["clean_exit"] = True
+            data["exit_time"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            with open(marker_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+                f.flush()
+                try:
+                    os.fsync(f.fileno())
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+
+def check_previous_session_crash() -> dict | None:
+    """
+    Inspects session_marker.json on startup.
+    If the previous session did not cleanly exit, records an abnormal termination
+    entry in error.log, marks the marker as handled, and returns crash diagnostic metadata.
+    Returns None if the previous session exited cleanly or no marker exists.
+    """
+    marker_path = get_crash_marker_path()
+    try:
+        if not marker_path.is_file():
+            return None
+        with open(marker_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # If previous exit was clean, no crash
+        if data.get("clean_exit", True):
+            return None
+
+        # If PID is current PID (e.g. same session calling again), ignore
+        if data.get("pid") == os.getpid():
+            return None
+
+        # Abnormal termination detected!
+        prev_pid = data.get("pid", "Unknown")
+        prev_start = data.get("start_time", "Unknown")
+        prev_state = data.get("state", "Unknown")
+        prev_activity = data.get("activity", {})
+        prev_version = data.get("version", "Unknown")
+
+        # Construct diagnostic summary
+        summary_lines = [
+            f"Unexpected application termination detected from previous session (PID {prev_pid}).",
+            f"Started at: {prev_start}",
+            f"State: {prev_state}",
+        ]
+        if prev_activity:
+            for k, v in prev_activity.items():
+                summary_lines.append(f"  {k}: {v}")
+
+        diag_text = "\n".join(summary_lines)
+
+        # Log into error.log
+        log_path = log_error(
+            "Abnormal Application Termination / Crash Detected",
+            context="Crash Recovery / Previous Session Heartbeat",
+            traceback_text=diag_text,
+        )
+
+        # Mark previous session as handled so we don't prompt repeatedly
+        data["clean_exit"] = True
+        data["crash_logged"] = True
+        try:
+            with open(marker_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+        except Exception:
+            pass
+
+        return {
+            "pid": prev_pid,
+            "start_time": prev_start,
+            "state": prev_state,
+            "activity": prev_activity,
+            "version": prev_version,
+            "log_path": str(log_path),
+            "log_excerpt": get_error_log_content(max_bytes=10000),
+            "diagnostic_summary": diag_text,
+        }
+    except Exception as e:
+        try:
+            sys.stderr.write(f"Warning: Failed to check crash marker: {e}\n")
+        except Exception:
+            pass
+        return None
+
+
+def get_error_log_content(max_bytes: int = 100000) -> str:
+    """
+    Reads the error log file, returning up to max_bytes (most recent lines if truncated).
+    """
+    log_path = get_error_log_path()
+    try:
+        if not log_path.is_file():
+            return "No error log file found."
+        size = log_path.stat().st_size
+        with open(log_path, "r", encoding="utf-8", errors="replace") as f:
+            if size > max_bytes:
+                f.seek(size - max_bytes)
+                content = f.read()
+                nl = content.find("\n")
+                if nl != -1:
+                    content = content[nl + 1:]
+                return f"[... earlier entries truncated ({size} bytes total) ...]\n\n" + content
+            return f.read()
+    except Exception as e:
+        return f"Unable to read error log: {e}"
+
+
+def clear_error_log() -> bool:
+    """
+    Clears the contents of the error log file.
+    """
+    log_path = get_error_log_path()
+    try:
+        if log_path.is_file():
+            with open(log_path, "w", encoding="utf-8") as f:
+                f.write("")
+        return True
+    except Exception:
+        return False
+
+
 def log_error(
     message: str,
     exc: BaseException | None = None,
@@ -78,7 +299,7 @@ def log_error(
     now_utc = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # App version
-    version = "1.8.14"
+    version = "1.8.15"
     try:
         from . import __version__
         version = __version__
@@ -159,8 +380,26 @@ def log_error(
 
 def install_exception_hooks():
     """
-    Installs global unhandled exception hooks for the main thread and background threads.
+    Installs global unhandled exception hooks for the main thread and background threads,
+    enables Python faulthandler to write C-level crash dumps (SIGSEGV, SIGABRT, SIGBUS, SIGILL, SIGFPE)
+    to error.log, and sets a clean exit handler.
     """
+    global _faulthandler_file
+
+    # 1. Enable faulthandler to catch native crashes (C++ segfaults, asserts in espeak-ng/piper)
+    try:
+        log_path = get_error_log_path()
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        # Keep open in append mode for faulthandler
+        _faulthandler_file = open(log_path, "a", encoding="utf-8")
+        faulthandler.enable(file=_faulthandler_file, all_threads=True)
+    except Exception as fh_err:
+        try:
+            sys.stderr.write(f"Warning: Could not enable faulthandler: {fh_err}\n")
+        except Exception:
+            pass
+
+    # 2. Main thread unhandled exception hook
     orig_excepthook = sys.excepthook
 
     def custom_excepthook(exc_type, exc_value, exc_tb):
@@ -174,6 +413,7 @@ def install_exception_hooks():
 
     sys.excepthook = custom_excepthook
 
+    # 3. Background thread unhandled exception hook
     if hasattr(threading, "excepthook"):
         orig_thread_hook = threading.excepthook
 
@@ -188,3 +428,16 @@ def install_exception_hooks():
                 orig_thread_hook(args)
 
         threading.excepthook = custom_thread_excepthook
+
+    # 4. Native signal handlers where appropriate (SIGTERM)
+    def _sigterm_handler(signum, frame):
+        try:
+            log_error(f"Process received signal {signum} (SIGTERM/kill)", context="Signal Handler")
+        except Exception:
+            pass
+        sys.exit(128 + signum)
+
+    try:
+        signal.signal(signal.SIGTERM, _sigterm_handler)
+    except Exception:
+        pass
