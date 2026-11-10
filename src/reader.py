@@ -870,6 +870,7 @@ class Reader():
             except Exception:
                 pass
             self._player = None
+            self._current_pipeline = None
 
         if self._current_pipeline:
             try:

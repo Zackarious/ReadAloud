@@ -542,6 +542,11 @@ class ReadAloudWindow(Adw.ApplicationWindow):
     open_button = Gtk.Template.Child()     # Opens a file
     wiki_button = Gtk.Template.Child()     # Wikipedia importer
     save_text_button = Gtk.Template.Child()     # Saves the text
+    rewind_button = Gtk.Template.Child()   # Rewinds audio playback 15 seconds
+    forward_button = Gtk.Template.Child()  # Forwards audio playback 15 seconds
+    stop_button = Gtk.Template.Child()     # Stops audio playback
+    playback_toolbar_revealer = Gtk.Template.Child() # Revealer for playback popup toolbar
+    playback_toolbar = Gtk.Template.Child()          # Popup toolbar containing playback controls
     read_button = Gtk.Template.Child()     # Plays audio file
     pause_button = Gtk.Template.Child()    # Pauses/resumes audio playback
     save_button = Gtk.Template.Child()     # Saves audio file
@@ -759,6 +764,14 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             padding: 0 14px;
             font-weight: 500;
         }
+
+        /* Playback popup toolbar appearing below bottom fixed bar */
+        .playback-popup-toolbar {
+            background-color: alpha(currentColor, 0.06);
+            border: 1px solid alpha(currentColor, 0.12);
+            border-radius: 12px;
+            padding: 2px 8px;
+        }
         """
         css_provider.load_from_string(css_data)
         Gtk.StyleContext.add_provider_for_display(
@@ -892,6 +905,16 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         speed_down_action.connect("activate", lambda *_: self.decrease_speed())
         self.add_action(speed_down_action)
 
+        # Add the action to rewind/forward 15 seconds
+        if hasattr(self, 'rewind_button') and hasattr(self.rewind_button, 'connect'):
+            self.rewind_button.connect('clicked', self.rewind_15s)
+        if hasattr(self, 'forward_button') and hasattr(self.forward_button, 'connect'):
+            self.forward_button.connect('clicked', self.forward_15s)
+
+        # Add the action to stop audio playback from popup toolbar
+        if hasattr(self, 'stop_button') and hasattr(self.stop_button, 'connect'):
+            self.stop_button.connect('clicked', lambda *_: self.stop_playback())
+
         # Add the action to listen to the text
         self.read_button.connect('clicked', self.read_text)
 
@@ -926,6 +949,15 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
         # Button styling and pixel sizes for action icons
         GLib.idle_add(self.get_style_context().add_class, "view")
+        if hasattr(self, 'rewind_button') and hasattr(self.rewind_button, 'get_style_context'):
+            GLib.idle_add(self.rewind_button.get_style_context().add_class, "action-icon-btn")
+            GLib.idle_add(self.rewind_button.get_style_context().add_class, "flat")
+        if hasattr(self, 'forward_button') and hasattr(self.forward_button, 'get_style_context'):
+            GLib.idle_add(self.forward_button.get_style_context().add_class, "action-icon-btn")
+            GLib.idle_add(self.forward_button.get_style_context().add_class, "flat")
+        if hasattr(self, 'stop_button') and hasattr(self.stop_button, 'get_style_context'):
+            GLib.idle_add(self.stop_button.get_style_context().add_class, "action-icon-btn")
+            GLib.idle_add(self.stop_button.get_style_context().add_class, "flat")
         GLib.idle_add(self.read_button.get_style_context().add_class, "action-icon-btn")
         GLib.idle_add(self.read_button.get_style_context().add_class, "flat")
         GLib.idle_add(self.pause_button.get_style_context().add_class, "action-icon-btn")
@@ -959,11 +991,14 @@ class ReadAloudWindow(Adw.ApplicationWindow):
                 (getattr(self, 'wiki_button', None), 28),
                 (self.save_text_button, 29),
                 (self.save_button, 27),
+                (getattr(self, 'rewind_button', None), 25),
+                (getattr(self, 'forward_button', None), 25),
+                (getattr(self, 'stop_button', None), 25),
                 (self.read_button, 25),
                 (self.pause_button, 25),
             ]
             for btn, sz in buttons_to_size:
-                if not btn:
+                if not btn or not hasattr(btn, 'get_child'):
                     continue
                 child = btn.get_child()
                 if isinstance(child, Gtk.Image):
@@ -974,6 +1009,12 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             self.save_text_button.set_size_request(48, 42)
             if hasattr(self, 'demos_button') and self.demos_button:
                 self.demos_button.set_size_request(-1, 42)
+            if hasattr(self, 'rewind_button') and hasattr(self.rewind_button, 'set_size_request'):
+                self.rewind_button.set_size_request(48, 42)
+            if hasattr(self, 'forward_button') and hasattr(self.forward_button, 'set_size_request'):
+                self.forward_button.set_size_request(48, 42)
+            if hasattr(self, 'stop_button') and hasattr(self.stop_button, 'set_size_request'):
+                self.stop_button.set_size_request(48, 42)
             self.read_button.set_size_request(48, 42)
             self.pause_button.set_size_request(48, 42)
             self.save_button.set_size_request(48, 42)
@@ -1022,6 +1063,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
         # Create initial default tab
         self.create_new_tab(title=_("Untitled Document"))
+        self._update_seek_buttons_visibility()
 
     def _save_settings(self):
         """Saves settings automatically when the application is closing."""
@@ -1833,6 +1875,8 @@ class ReadAloudWindow(Adw.ApplicationWindow):
                     self._set_button_icon(self.read_button, "media-playback-start-symbolic", 25)
                     self.read_button.set_tooltip_text(_("Read Text"))
                 self._notify_bubble_playback_state()
+
+            self._update_seek_buttons_visibility()
 
         self._update_drop_placeholder_visibility()
 
@@ -3845,6 +3889,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             self.pause_button.set_sensitive(True)
             self._set_button_icon(self.pause_button, "media-playback-pause-symbolic", 25)
             self.pause_button.set_tooltip_text(_("Pause"))
+            self._update_seek_buttons_visibility()
             self._notify_bubble_playback_state()
 
     def stop_playback(self, button=None):
@@ -3875,7 +3920,43 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         self.pause_button.set_sensitive(False)
         self._set_button_icon(self.pause_button, "media-playback-pause-symbolic", 25)
         self.pause_button.set_tooltip_text(_("Pause"))
+        self._update_seek_buttons_visibility()
         self._notify_bubble_playback_state()
+
+    def rewind_15s(self, button=None):
+        """Rewinds audio playback by 15 seconds."""
+        return self.seek_playback(-15)
+
+    def forward_15s(self, button=None):
+        """Forwards audio playback by 15 seconds."""
+        return self.seek_playback(15)
+
+    def _update_playback_toolbar_visibility(self):
+        """Shows popup playback toolbar and hides fixed read button during playback; reverses when stopped."""
+        is_playing = bool(getattr(self, 'is_playing', False))
+
+        if hasattr(self, 'playback_toolbar_revealer') and hasattr(self.playback_toolbar_revealer, 'set_reveal_child'):
+            self.playback_toolbar_revealer.set_reveal_child(is_playing)
+
+        # In fixed toolbar, hide read_button during playback to save space, show when idle
+        if hasattr(self, 'read_button') and hasattr(self.read_button, 'set_visible'):
+            self.read_button.set_visible(not is_playing)
+
+        # Ensure pause button sensitivity in popup toolbar
+        if hasattr(self, 'pause_button') and hasattr(self.pause_button, 'set_sensitive'):
+            self.pause_button.set_sensitive(is_playing)
+
+        # Ensure individual controls reflect playback state (for direct widget access & headless tests)
+        if hasattr(self, 'rewind_button') and hasattr(self.rewind_button, 'set_visible'):
+            self.rewind_button.set_visible(is_playing)
+        if hasattr(self, 'forward_button') and hasattr(self.forward_button, 'set_visible'):
+            self.forward_button.set_visible(is_playing)
+        if hasattr(self, 'stop_button') and hasattr(self.stop_button, 'set_visible'):
+            self.stop_button.set_visible(is_playing)
+
+    def _update_seek_buttons_visibility(self):
+        """Backward-compatible alias for _update_playback_toolbar_visibility."""
+        self._update_playback_toolbar_visibility()
 
     def seek_playback(self, seconds_delta: float) -> bool:
         """Seeks playback relatively by seconds_delta (+15s forward, -15s backward). If paused, scrolls to position and resumes."""
@@ -4175,6 +4256,14 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             elif keyval in (Gdk.KEY_Down, Gdk.KEY_KP_Down):
                 self.decrease_speed()
                 return True
+            elif keyval in (Gdk.KEY_Left, Gdk.KEY_KP_Left):
+                if self.is_playing:
+                    self.rewind_15s()
+                    return True
+            elif keyval in (Gdk.KEY_Right, Gdk.KEY_KP_Right):
+                if self.is_playing:
+                    self.forward_15s()
+                    return True
         elif keyval == Gdk.KEY_F5:
             if self.is_playing:
                 self.toggle_pause()

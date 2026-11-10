@@ -108,6 +108,8 @@ class GStreamerAudioPlayer(BaseAudioPlayer):
 
     def __init__(self):
         self._pipeline = None
+        self._bus = None
+        self._watch_added = False
         self._is_paused = False
         self._stopped = False
         self._on_eos = None
@@ -140,19 +142,23 @@ class GStreamerAudioPlayer(BaseAudioPlayer):
 
                 bus = pipeline.get_bus()
                 bus.add_signal_watch()
+                self._watch_added = True
                 bus.connect("message", self._on_bus_message)
 
                 initial_state = Gst.State.PAUSED if start_paused else Gst.State.PLAYING
                 ret = pipeline.set_state(initial_state)
                 if ret == Gst.StateChangeReturn.FAILURE:
                     try:
-                        bus.remove_signal_watch()
+                        if self._watch_added:
+                            bus.remove_signal_watch()
+                            self._watch_added = False
                     except Exception:
                         pass
                     pipeline.set_state(Gst.State.NULL)
                     continue
 
                 self._pipeline = pipeline
+                self._bus = bus
                 return True
             except Exception as e:
                 last_error = e
@@ -193,13 +199,14 @@ class GStreamerAudioPlayer(BaseAudioPlayer):
         self._is_paused = False
         if self._pipeline:
             try:
-                bus = self._pipeline.get_bus()
-                if bus:
-                    bus.remove_signal_watch()
+                if self._watch_added and self._bus:
+                    self._bus.remove_signal_watch()
+                    self._watch_added = False
             except Exception:
                 pass
             self._pipeline.set_state(Gst.State.NULL)
             self._pipeline = None
+            self._bus = None
 
     def get_position(self) -> float:
         if self._pipeline:

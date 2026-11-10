@@ -1,5 +1,5 @@
 project('readaloud', ['c', 'cpp'],
-  version: '1.8.15',
+  version: '1.8.16',
   meson_version: '>= 0.63.0',
   default_options: ['warning_level=2', 'cpp_std=c++17']
 )

@@ -11,7 +11,7 @@ import zipfile
 import subprocess
 from pathlib import Path
 
-VERSION = "1.8.15"
+VERSION = "1.8.16"
 APP_NAME = "ReadAloud"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DIST_DIR = REPO_ROOT / "dist"
@@ -98,7 +98,7 @@ def setup_arm64_runtime():
         "set PYTHONHOME=%~dp0\r\n"
         "set PYTHONPATH=%~dp0;%~dp0\\src;%PYTHONPATH%\r\n"
         "set PATH=%~dp0;%~dp0\\bin;%PATH%\r\n"
-        "python.exe -m src.main 1.8.15 %*\r\n"
+        "python.exe -m src.main 1.8.16 %*\r\n"
         "if errorlevel 1 pause\r\n",
         encoding="utf-8",
     )

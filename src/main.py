@@ -49,6 +49,39 @@ from .window import ReadAloudWindow
 from .bubble import ListenerBubbleWindow
 
 CHANGELOG_XML = r"""
+<p><em>Version 1.8.16 - (10 November 2026)</em></p>
+<p>Version 1.8.16 introduces a dynamic animated playback popup toolbar positioned directly above the bottom fixed toolbar—housing Pause, Rewind 15s, Forward 15s, and Stop controls that automatically slide into view during playback and collapse when idle to maximize document workspace—adds keyboard seek shortcuts (Ctrl+Left / Ctrl+Right), fixes redundant GStreamer bus signal watch cleanup warnings during playback termination and speed changes, and expands automated regression test coverage to 291 tests.</p>
+
+<p><em>Features and Fixes Removed:</em></p>
+<ul>
+  <li><em>Static Playback Controls on Fixed Bottom Toolbar:</em> Removed the permanent placement of the pause button on the fixed bottom navigation bar in src/window.ui and src/window.py. <em>Reason:</em> Relocating playback actions to a contextual popup toolbar frees horizontal space for language, voice, and speed controls while eliminating UI clutter when the application is idle.</li>
+  <li><em>Redundant GStreamer Bus Signal Watch Cleanup:</em> Removed duplicate calls to bus.remove_signal_watch() across src/reader.py and src/audio_backend.py. <em>Reason:</em> Calling remove_signal_watch() twice on the same GStreamer message bus during playback stops or speed changes produced unnecessary "GStreamer-CRITICAL: Bus has no signal watches attached" warnings in standard error.</li>
+</ul>
+
+<p><em>Features and Fixes Added:</em></p>
+<ul>
+  <li><em>Dedicated Playback Popup Toolbar (playback_toolbar_revealer):</em> Added a centered floating capsule toolbar above the fixed bottom bar in src/window.ui and src/window.py using a GtkRevealer with slide-up transition that smoothly animates into view during speech playback and collapses when idle. <em>Reason:</em> Provides focused, dedicated access to in-flight playback actions without taking up persistent screen estate when not in use.</li>
+  <li><em>Rewind 15 Seconds &amp; Forward 15 Seconds Seek Controls:</em> Added dedicated 15-second skip backward (media-seek-backward-symbolic) and forward (media-seek-forward-symbolic) buttons and shortcuts (Ctrl+Left / Ctrl+Right) wired to seek_playback(-15) and seek_playback(15) in src/window.py and src/window.ui. <em>Reason:</em> Enables users to quickly review misunderstood sentences or jump ahead in long documents during playback without losing text highlight synchronization.</li>
+  <li><em>Bus Watch Lifecycle Tracking in GStreamer Player (_watch_added):</em> Added boolean lifecycle state tracking for GStreamer message bus watches in src/audio_backend.py. <em>Reason:</em> Ensures remove_signal_watch() is only invoked when an active signal watch is attached to the pipeline bus, preventing GStreamer critical warnings.</li>
+  <li><em>Automated Playback Popup &amp; Seek Regression Suite (291 Tests):</em> Added 10 automated test cases in tests/test_playback_seek_buttons.py covering popup toolbar reveal/collapse animations, seek interval dispatch, keyboard accelerators, tab switching synchronization, and template widget layouts. <em>Reason:</em> Guarantees playback toolbar responsiveness and seek functionality remain stable across future releases.</li>
+</ul>
+
+<p><em>Features and Fixes Updated:</em></p>
+<ul>
+  <li><em>Stop Playback Action Integration on Popup Toolbar:</em> Updated the stop button (stop_button) to reside directly inside the popup toolbar adjacent to the forward seek button in src/window.ui and wired it to self.stop_playback() in src/window.py. <em>Reason:</em> Consolidates all playback lifecycle controls (Pause, Rewind, Forward, Stop) into a single cohesive control cluster.</li>
+  <li><em>Adaptive Read Button Visibility on Bottom Fixed Bar:</em> Updated _update_playback_toolbar_visibility() in src/window.py to hide the primary "Read Text" button during active playback and restore it when playback finishes or pauses. <em>Reason:</em> Maximizes horizontal spacing for voice model dropdowns and prevents accidental re-triggering while audio is playing.</li>
+  <li><em>Safe Pipeline Reset in Reader (stop_audio):</em> Updated Reader.stop_audio() in src/reader.py to immediately reset self._current_pipeline = None after stopping the active player backend. <em>Reason:</em> Prevents redundant secondary pipeline teardown operations from executing against already-closed audio pipelines.</li>
+  <li><em>Wikimedia-Compliant User-Agent Header:</em> Updated user-agent identification string to ReadAloud/1.8.16 (https://github.com/wbernard/parolu; contact@readaloud.app) in src/wikipedia_importer.py. <em>Reason:</em> Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version release.</li>
+  <li><em>Application Version Increment (1.8.16):</em> Updated application version to 1.8.16 across meson.build, src/main.py, src/error_logger.py, src/wikipedia_importer.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_windows/build_arm64_portable.py, build_linux/build_deb.sh, build_linux/build_appimage.sh, build_linux/debian/control, build_macos/build_macos.sh, tests/test_about_window.py, tests/test_error_logger.py, and CI workflows. <em>Reason:</em> Adheres to semantic versioning standards for the new release.</li>
+</ul>
+
+<p><em>Visual Changes and UI Updates:</em></p>
+<ul>
+  <li><em>Floating Playback Control Capsule Above Bottom Bar:</em> Designed a centered capsule toolbar with .playback-popup-toolbar CSS styling, featuring rounded borders (12px), subtle theme-aware translucent fill (alpha(currentColor, 0.06)), and fine perimeter border (alpha(currentColor, 0.12)). <em>Reason:</em> Delivers a modern, clean visual presentation that clearly delineates temporary playback controls from persistent configuration settings.</li>
+  <li><em>Slide-Up Revealer Animation:</em> Configured transition-type="slide-up" on the playback revealer directly above bottom_fixed_bar. <em>Reason:</em> Provides fluid visual motion as the playback controls emerge smoothly upward from the fixed toolbar when playback starts and neatly collapse downward when playback finishes.</li>
+  <li><em>Consistent 48x42 Touch Targets &amp; 25px Optical Icon Sizing:</em> Applied 48x42px minimum size requests and 25px optical icon sizing across all popup toolbar buttons (pause_button, rewind_button, forward_button, stop_button). <em>Reason:</em> Ensures visual symmetry and accessible, touch-friendly click targets across all playback control buttons.</li>
+</ul>
+
 <p><em>Version 1.8.15 - (07 November 2026)</em></p>
 <p>Version 1.8.15 prevents silent application crashes when synthesizing large text (such as 35,000 words or long run-on sentences) by subdividing oversized text blocks to stay safely within native C++ buffer boundaries, adds persistent session tracking and startup crash detection that presents an interactive diagnostic report dialog encouraging users to report issues on GitHub, introduces a dedicated Error Log button in the About section with a full-featured log viewer and clipboard copy utility, enables Python's native faulthandler to capture low-level faults to disk, and expands the automated test suite to 281 tests.</p>
 
@@ -1393,7 +1426,7 @@ class AboutReadAloudWindow(Adw.Window):
     application_name = GObject.Property(type=str, default='ReadAloud')
     application_icon = GObject.Property(type=str, default='im.zackarious.ReadAloud')
     developer_name = GObject.Property(type=str, default='zackarious')
-    version = GObject.Property(type=str, default='Version 1.8.15 - (07 November 2026)')
+    version = GObject.Property(type=str, default='Version 1.8.16 - (10 November 2026)')
     website = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
     issue_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud/issues')
     support_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
@@ -1501,7 +1534,7 @@ class AboutReadAloudWindow(Adw.Window):
         box.append(dev_label)
 
         # Version
-        ver_label = Gtk.Label(label="Version 1.8.15 - (07 November 2026)")
+        ver_label = Gtk.Label(label="Version 1.8.16 - (10 November 2026)")
         ver_label.add_css_class("caption")
         ver_label.add_css_class("dim-label")
         box.append(ver_label)
@@ -1977,4 +2010,4 @@ def main(version):
     return result
 
 if __name__ == "__main__":
-    main("1.8.15")
+    main("1.8.16")

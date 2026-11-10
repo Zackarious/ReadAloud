@@ -6,7 +6,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-VERSION="1.8.15"
+VERSION="1.8.16"
 APP_NAME="ReadAloud"
 BUILD_DIR="${REPO_ROOT}/build-macos"
 APP_BUNDLE="${BUILD_DIR}/${APP_NAME}.app"
@@ -107,7 +107,7 @@ else
     PY_BIN="python3"
 fi
 
-exec "${PY_BIN}" -m src.main 1.8.15 "$@"
+exec "${PY_BIN}" -m src.main 1.8.16 "$@"
 EOF
 chmod +x "${APP_BUNDLE}/Contents/MacOS/ReadAloud"
 
