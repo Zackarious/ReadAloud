@@ -981,9 +981,16 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         }
 
         .trending-import-btn {
-            padding: 4px 10px;
-            font-size: 12px;
-            font-weight: 600;
+            min-width: 32px;
+            min-height: 32px;
+            padding: 5px;
+            border-radius: 9999px;
+            transition: all 150ms ease;
+        }
+
+        .trending-import-btn:hover {
+            background-color: alpha(#f6d32d, 0.25);
+            color: #f6d32d;
         }
 
         .trending-toggle-btn {
@@ -3359,7 +3366,13 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             heading=_("Import from Wikipedia"),
             body=_("Enter a Wikipedia article topic or full URL. Each article will be imported into a tab with all tags stripped for speech synthesis:")
         )
-        dialog.set_content_width(450)
+        dialog.set_content_width(920)
+        dialog.set_prefer_wide_layout(True)
+        if hasattr(self, 'get_width') and self.get_width() < 960:
+            try:
+                self.set_default_size(max(self.get_width(), 960), max(self.get_height(), 680))
+            except Exception:
+                pass
 
         main_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
         main_hbox.set_margin_top(4)
@@ -3382,8 +3395,8 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             logo_picture.set_margin_bottom(2)
             left_col.append(logo_picture)
 
-        # Expand / Condense Trending Topics Toggle Button
-        toggle_trending_btn = Gtk.Button(label=_("Trending Topics (Top 25)  ▶"))
+        # Expand / Condense Trending Topics Toggle Button (Open by default)
+        toggle_trending_btn = Gtk.Button(label=_("Hide Trending Topics  ◀"))
         toggle_trending_btn.add_css_class("pill")
         toggle_trending_btn.add_css_class("trending-toggle-btn")
         toggle_trending_btn.set_tooltip_text(_("Explore the top 25 trending articles on Wikipedia with preview images"))
@@ -3625,7 +3638,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         # Right Pane: Top 25 Trending Topics (Expandable / Condensable)
         trending_revealer = Gtk.Revealer()
         trending_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_RIGHT)
-        trending_revealer.set_reveal_child(False)
+        trending_revealer.set_reveal_child(True)
 
         right_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
         v_sep = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
@@ -3792,11 +3805,22 @@ class ReadAloudWindow(Adw.ApplicationWindow):
                 t_title_lbl.set_ellipsize(3)
                 text_col.append(t_title_lbl)
 
-                views_lbl = Gtk.Label(label=f"👁 {topic.views} views")
+                views_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+                views_box.set_halign(Gtk.Align.START)
+                views_box.set_valign(Gtk.Align.CENTER)
+                views_box.add_css_class("dim-label")
+
+                eye_icon = Gtk.Image.new_from_icon_name("im.zackarious.ReadAloud.eye-symbolic")
+                eye_icon.set_pixel_size(14)
+                eye_icon.set_valign(Gtk.Align.CENTER)
+                views_box.append(eye_icon)
+
+                views_lbl = Gtk.Label(label=f"{topic.views} views")
                 views_lbl.set_halign(Gtk.Align.START)
                 views_lbl.add_css_class("caption")
-                views_lbl.add_css_class("dim-label")
-                text_col.append(views_lbl)
+                views_box.append(views_lbl)
+
+                text_col.append(views_box)
 
                 if topic.notes:
                     notes_lbl = Gtk.Label(label=topic.notes)
@@ -3810,13 +3834,18 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
                 row_box.append(text_col)
 
-                # Quick Direct Import Button
-                quick_import_btn = Gtk.Button(label=_("Import"))
+                # Quick Direct Import Button (📥 inbox tray icon)
+                quick_import_btn = Gtk.Button()
+                import_icon = Gtk.Image.new_from_icon_name("im.zackarious.ReadAloud.import-symbolic")
+                import_icon.set_pixel_size(18)
+                import_icon.set_valign(Gtk.Align.CENTER)
+                import_icon.set_halign(Gtk.Align.CENTER)
+                quick_import_btn.set_child(import_icon)
                 quick_import_btn.add_css_class("flat")
-                quick_import_btn.add_css_class("pill")
+                quick_import_btn.add_css_class("circular")
                 quick_import_btn.add_css_class("trending-import-btn")
                 quick_import_btn.set_valign(Gtk.Align.CENTER)
-                quick_import_btn.set_tooltip_text(_("Import this trending article directly into a new tab"))
+                quick_import_btn.set_tooltip_text(_("Import this trending article directly into a new tab (📥)"))
 
                 def on_quick_import_clicked(btn, t_name=topic.title):
                     dialog.force_close()
@@ -3856,14 +3885,14 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
         trending_listbox.connect("row-activated", on_trending_row_activated)
 
-        condensed_width = [dialog.get_content_width()]
+        condensed_width = [450]
 
         def toggle_trending(expand=None):
             current = trending_revealer.get_reveal_child()
             target = not current if expand is None else expand
             if target:
                 if not trending_revealer.get_reveal_child():
-                    condensed_width[0] = dialog.get_content_width()
+                    condensed_width[0] = 450
                 dialog.set_content_width(920)
                 dialog.set_prefer_wide_layout(True)
                 trending_revealer.set_reveal_child(True)
@@ -3884,6 +3913,9 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         collapse_btn.connect("clicked", lambda _: toggle_trending(False))
         refresh_btn.connect("clicked", lambda _: load_trending(force=True))
         retry_btn.connect("clicked", lambda _: load_trending(force=True))
+
+        # Automatically start loading trending topics on dialog launch
+        load_trending(force=False)
 
         dialog.set_extra_child(main_hbox)
         dialog.add_response("cancel", _("Cancel"))

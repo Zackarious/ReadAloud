@@ -575,19 +575,17 @@ class TestWikipediaImporter(unittest.TestCase):
         self.assertTrue(hasattr(dialog, '_toggle_trending_btn'))
         self.assertTrue(hasattr(dialog, '_trending_listbox'))
 
-        # Initially condensed
-        self.assertFalse(dialog._trending_revealer.get_reveal_child())
-        initial_width = dialog.get_content_width()
-
-        # Expand pane
-        dialog._toggle_trending(expand=True)
+        # Trending right pane is open by default
         self.assertTrue(dialog._trending_revealer.get_reveal_child())
-        self.assertEqual(dialog.get_content_width(), 920)
 
         # Condense pane
         dialog._toggle_trending(expand=False)
         self.assertFalse(dialog._trending_revealer.get_reveal_child())
-        self.assertEqual(dialog.get_content_width(), initial_width)
+
+        # Expand pane again
+        dialog._toggle_trending(expand=True)
+        self.assertTrue(dialog._trending_revealer.get_reveal_child())
+        self.assertEqual(dialog.get_content_width(), 920)
 
     def test_dialog_trending_row_activation_and_import(self):
         win = ReadAloudWindow(application=self.app)
@@ -622,8 +620,31 @@ class TestWikipediaImporter(unittest.TestCase):
         row0.emit("activate")
         self.assertEqual(dialog._entry.get_text(), "Abdul El-Sayed")
 
-        # Verify quick import button exists on row
+        # Verify eye icon vector widget exists in text column (avoiding emoji font tofu boxes)
         row_box = row0.get_child()
+        text_col = None
+        child = row_box.get_first_child()
+        while child:
+            if isinstance(child, Gtk.Box) and child.get_orientation() == Gtk.Orientation.VERTICAL:
+                text_col = child
+                break
+            child = child.get_next_sibling()
+        self.assertIsNotNone(text_col)
+
+        views_box = None
+        tc_child = text_col.get_first_child()
+        while tc_child:
+            if isinstance(tc_child, Gtk.Box) and tc_child.has_css_class("dim-label"):
+                views_box = tc_child
+                break
+            tc_child = tc_child.get_next_sibling()
+        self.assertIsNotNone(views_box)
+
+        eye_img = views_box.get_first_child()
+        self.assertIsInstance(eye_img, Gtk.Image)
+        self.assertEqual(eye_img.get_icon_name(), "im.zackarious.ReadAloud.eye-symbolic")
+
+        # Verify quick import button exists on row and contains 📥 import-symbolic icon
         import_btn = None
         child = row_box.get_first_child()
         while child:
@@ -632,6 +653,10 @@ class TestWikipediaImporter(unittest.TestCase):
                 break
             child = child.get_next_sibling()
         self.assertIsNotNone(import_btn)
+
+        import_child = import_btn.get_child()
+        self.assertIsInstance(import_child, Gtk.Image)
+        self.assertEqual(import_child.get_icon_name(), "im.zackarious.ReadAloud.import-symbolic")
 
         # Clicking import button should initiate import
         with patch.object(win, '_start_wikipedia_import') as mock_start_import:

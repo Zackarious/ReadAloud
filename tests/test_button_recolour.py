@@ -67,13 +67,15 @@ class TestButtonRecolour(unittest.TestCase):
         self.assertIn("#f6d32d", content)
 
     def test_gresource_bundle_contains_folder_open_svg(self):
-        """Verify GResource manifest includes im.zackarious.ReadAloud.folder-open.svg."""
+        """Verify GResource manifest includes action icons."""
         manifest_path = os.path.join(os.path.dirname(__file__), "..", "src", "readaloud.gresource.xml")
         self.assertTrue(os.path.isfile(manifest_path))
 
         with open(manifest_path, "r", encoding="utf-8") as f:
             content = f.read()
         self.assertIn("icons/im.zackarious.ReadAloud.folder-open.svg", content)
+        self.assertIn("icons/im.zackarious.ReadAloud.eye-symbolic.svg", content)
+        self.assertIn("icons/im.zackarious.ReadAloud.import-symbolic.svg", content)
 
     def test_playback_state_toggles_preserve_styling(self):
         """Verify switching between playback states preserves the highlight-accent-btn styling."""

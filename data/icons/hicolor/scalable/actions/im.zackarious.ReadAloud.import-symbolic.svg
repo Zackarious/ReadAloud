@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- Downward Arrow pointing into tray -->
+  <path fill="currentColor" d="M 7 1 L 7 6 L 4.5 6 L 8 9.5 L 11.5 6 L 9 6 L 9 1 L 7 1 z"/>
+  <!-- Inbox Tray with front center notch (matching 📥 emoji) -->
+  <path fill="currentColor" d="M 2 5 L 0.5 11 L 0.5 14 C 0.5 14.55 0.95 15 1.5 15 L 14.5 15 C 15.05 15 15.5 14.55 15.5 14 L 15.5 11 L 14 5 L 12 5 L 13.25 10 L 10.5 10 C 10.2 11.2 9.2 12 8 12 C 6.8 12 5.8 11.2 5.5 10 L 2.75 10 L 4 5 L 2 5 z"/>
+</svg>

@@ -12,6 +12,8 @@
     <file preprocess="xml-stripblanks" alias="im.zackarious.ReadAloud.forward-15-symbolic.svg">icons/im.zackarious.ReadAloud.forward-15-symbolic.svg</file>
     <file preprocess="xml-stripblanks" alias="im.zackarious.ReadAloud.stop-symbolic.svg">icons/im.zackarious.ReadAloud.stop-symbolic.svg</file>
     <file preprocess="xml-stripblanks" alias="im.zackarious.ReadAloud.folder-open.svg">icons/im.zackarious.ReadAloud.folder-open.svg</file>
+    <file preprocess="xml-stripblanks" alias="im.zackarious.ReadAloud.eye-symbolic.svg">icons/im.zackarious.ReadAloud.eye-symbolic.svg</file>
+    <file preprocess="xml-stripblanks" alias="im.zackarious.ReadAloud.import-symbolic.svg">icons/im.zackarious.ReadAloud.import-symbolic.svg</file>
   </gresource>
   <gresource prefix="/im/zackarious/ReadAloud/images">
     <file alias="wikipedia-logo.png">icons/wikipedia-logo.png</file>
