@@ -35,7 +35,9 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ## 📸 Screenshots & Feature Walkthrough
 
-### 1. Document Importer & Dropzone
+### Main Application Functions
+
+#### 1. Document Importer & Dropzone
 <p align="center">
   <img src="data/screenshots/01-drag-drop-importer.png" alt="Drag and Drop Document Importer" width="700"/>
 </p>
@@ -49,75 +51,7 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ---
 
-### 2. Direct Wikipedia Article Importer
-<p align="center">
-  <img src="data/screenshots/02-wikipedia-import-dialog.png" alt="Wikipedia Article Importer Dialog" width="700"/>
-</p>
-
-*This dialog allows users to search or enter any Wikipedia topic URL to scrape and convert articles into clean text tabs, enabling instant distraction-free offline audio playback.*
-
-- **One-Click Quick Access**: Open the Wikipedia Importer instantly from the headerbar globe button or the Tools menu (`win.import-wikipedia`).
-- **Topic or URL Import**: Enter any article topic or paste full Wikipedia URLs—ReadAloud scrapes and cleans the content locally for offline listening.
-- **Multi-Tab Related Article Extraction**: Automatically discovers internal related `/wiki/...` reference links and imports up to 10 related topics into separate sequential tabs.
-- **Wikimedia Foundation Support**: Features a non-intrusive donation callout card encouraging direct support for free, open global knowledge.
-
----
-
-### 3. Live Autocomplete Search with Instant Previews
-<p align="center">
-  <img src="data/screenshots/03-wikipedia-live-search.png" alt="Live Autocomplete Wikipedia Search" width="700"/>
-</p>
-
-*As the user types into the search field, real-time Wikipedia suggestions appear with thumbnail previews and summaries, helping users immediately identify and import the exact topic they want to read.*
-
-- **Official REST API Autocomplete**: Real-time debounced search backed by Wikipedia's official REST Search API, returning exact matches as you type.
-- **Rich Visual Cards**: Displays article thumbnail previews, bold headings, and descriptive captions matching Wikipedia's website design.
-- **In-Memory Thumbnail Caching**: Thread-safe in-memory image caching eliminates redundant network requests and ensures instant, flicker-free re-querying.
-- **Keyboard-First Navigation**: Smoothly navigate down into suggestion cards with `Down Arrow`, hit `Enter` to import, or press `Escape` to dismiss.
-
----
-
-### 4. Wikipedia Top 25 Trending Topics Right Pane
-<p align="center">
-  <img src="data/screenshots/06-wikipedia-trending-topics.png" alt="Wikipedia Top 25 Trending Topics Right Pane" width="700"/>
-</p>
-
-*The expandable right pane displays the week's Top 25 Trending Wikipedia articles with ranking badges, thumbnail previews, view counts, and single-click import buttons, giving users immediate access to popular world knowledge without having to search.*
-
-- **Curated Trending Discoveries**: Live scrapes Wikipedia's official weekly Top 25 Report (`Wikipedia:Top_25_Report`) complete with rank badges (`#1`, `#2`, ..., `#25`).
-- **Rich Thumbnail Previews**: Displays high-quality thumbnail preview images and weekly view counters for each trending topic.
-- **One-Click Instant Import**: Click the dedicated "Import" button on any trending row or click any row to instantly populate the search field.
-- **In-Memory Caching & Live Refresh**: Caches report data in memory for instant re-opening while offering a manual refresh button (`view-refresh-symbolic`) to fetch the latest report.
-
----
-
-### 5. Non-Blocking Asynchronous Fetching HUD
-<p align="center">
-  <img src="data/screenshots/04-wikipedia-fetching-progress.png" alt="Asynchronous Wikipedia Fetching HUD" width="700"/>
-</p>
-
-*A non-blocking modal displays live progress as Wikipedia articles and related topics are scraped and prepared in background threads, keeping the user informed while ensuring the interface never freezes.*
-
-- **Real-Time Step Updates**: Translucent progress modal providing live status updates (e.g. `Fetching related article (3/4): 'Danish language'...`).
-- **Threaded Worker Processing**: All network fetching and HTML/markdown parsing run on background worker threads, keeping the application UI fluid and responsive.
-- **Instant Safe Cancellation**: Cancel multi-article scraping at any moment without freezing the interface or discarding previously loaded tabs.
-
----
-
-### 6. Real-Time Speech Generation Progress HUD
-<p align="center">
-  <img src="data/screenshots/07-speech-generation-countdown-hud.png" alt="Real-Time Speech Generation Countdown HUD" width="700"/>
-</p>
-
-*While on-device neural speech is being synthesized, a sleek translucent progress HUD provides real-time percentage completion and an estimated seconds countdown, reassuring users with precise feedback and immediate cancellation control.*
-
-- **Live Percentage & Countdown**: Displays real-time synthesis percentage and remaining time estimation (e.g. `Generating audio: 42% (~2s remaining)`).
-- **Animated Activity Spinner**: Smooth loading spinner and progress indicator provide instant visual confirmation that audio processing is active.
-- **One-Click Cancellation**: Click "Cancel" at any time to immediately abort speech synthesis and restore the workspace.
-
----
-
-### 7. Synchronized Speech Playback & Word Highlighting
+#### 2. Synchronized Speech Playback & Word Highlighting
 <p align="center">
   <img src="data/screenshots/05-active-playback-word-highlighting.png" alt="Active Speech Playback and Real-Time Word Highlighting" width="700"/>
 </p>
@@ -131,7 +65,20 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ---
 
-### 8. High-Fidelity Neural Voice Library & Model Selector
+#### 3. Real-Time Speech Generation Progress HUD
+<p align="center">
+  <img src="data/screenshots/07-speech-generation-countdown-hud.png" alt="Real-Time Speech Generation Countdown HUD" width="700"/>
+</p>
+
+*While on-device neural speech is being synthesized, a sleek translucent progress HUD provides real-time percentage completion and an estimated seconds countdown, reassuring users with precise feedback and immediate cancellation control.*
+
+- **Live Percentage & Countdown**: Displays real-time synthesis percentage and remaining time estimation (e.g. `Generating audio: 42% (~2s remaining)`).
+- **Animated Activity Spinner**: Smooth loading spinner and progress indicator provide instant visual confirmation that audio processing is active.
+- **One-Click Cancellation**: Click "Cancel" at any time to immediately abort speech synthesis and restore the workspace.
+
+---
+
+#### 4. High-Fidelity Neural Voice Library & Model Selector
 <p align="center">
   <img src="data/screenshots/08-neural-voice-library-selector.png" alt="Neural Voice Selection Menu" width="700"/>
 </p>
@@ -144,7 +91,7 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ---
 
-### 9. Multi-Language & Regional Accent Selector
+#### 5. Multi-Language & Regional Accent Selector
 <p align="center">
   <img src="data/screenshots/09-language-accent-selector.png" alt="Language and Regional Accent Selector" width="700"/>
 </p>
@@ -156,7 +103,7 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ---
 
-### 10. Calibrated Speech Speed Controls
+#### 6. Calibrated Speech Speed Controls
 <p align="center">
   <img src="data/screenshots/10-speech-speed-selector.png" alt="Calibrated Speech Speed Controls" width="700"/>
 </p>
@@ -168,7 +115,7 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ---
 
-### 11. Multi-Tab Document Reading & Thematic Highlighting
+#### 7. Multi-Tab Document Reading & Thematic Highlighting
 <p align="center">
   <img src="data/screenshots/11-multi-tab-audio-playback.png" alt="Multi-Tab Reading and Alternate Voice Playback" width="700"/>
 </p>
@@ -177,6 +124,63 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 - **Independent Multi-Tab Reading**: Maintain multiple reading documents, Wikipedia articles, or book chapters simultaneously across tabs.
 - **Distraction-Free Visual Focus**: High-contrast active word highlighting keeps readers oriented in dense literature and long-form articles.
+
+---
+
+### Wikipedia Importer Features
+
+#### 1. Direct Wikipedia Article Importer
+<p align="center">
+  <img src="data/screenshots/02-wikipedia-import-dialog.png" alt="Wikipedia Article Importer Dialog" width="700"/>
+</p>
+
+*This dialog allows users to search or enter any Wikipedia topic URL to scrape and convert articles into clean text tabs, enabling instant distraction-free offline audio playback.*
+
+- **One-Click Quick Access**: Open the Wikipedia Importer instantly from the headerbar globe button or the Tools menu (`win.import-wikipedia`).
+- **Topic or URL Import**: Enter any article topic or paste full Wikipedia URLs—ReadAloud scrapes and cleans the content locally for offline listening.
+- **Multi-Tab Related Article Extraction**: Automatically discovers internal related `/wiki/...` reference links and imports up to 10 related topics into separate sequential tabs.
+- **Wikimedia Foundation Support**: Features a non-intrusive donation callout card encouraging direct support for free, open global knowledge.
+
+---
+
+#### 2. Live Autocomplete Search with Instant Previews
+<p align="center">
+  <img src="data/screenshots/03-wikipedia-live-search.png" alt="Live Autocomplete Wikipedia Search" width="700"/>
+</p>
+
+*As the user types into the search field, real-time Wikipedia suggestions appear with thumbnail previews and summaries, helping users immediately identify and import the exact topic they want to read.*
+
+- **Official REST API Autocomplete**: Real-time debounced search backed by Wikipedia's official REST Search API, returning exact matches as you type.
+- **Rich Visual Cards**: Displays article thumbnail previews, bold headings, and descriptive captions matching Wikipedia's website design.
+- **In-Memory Thumbnail Caching**: Thread-safe in-memory image caching eliminates redundant network requests and ensures instant, flicker-free re-querying.
+- **Keyboard-First Navigation**: Smoothly navigate down into suggestion cards with `Down Arrow`, hit `Enter` to import, or press `Escape` to dismiss.
+
+---
+
+#### 3. Wikipedia Top 25 Trending Topics Right Pane
+<p align="center">
+  <img src="data/screenshots/06-wikipedia-trending-topics.png" alt="Wikipedia Top 25 Trending Topics Right Pane" width="700"/>
+</p>
+
+*The expandable right pane displays the week's Top 25 Trending Wikipedia articles with ranking badges, thumbnail previews, view counts, and single-click import buttons, giving users immediate access to popular world knowledge without having to search.*
+
+- **Curated Trending Discoveries**: Live scrapes Wikipedia's official weekly Top 25 Report (`Wikipedia:Top_25_Report`) complete with rank badges (`#1`, `#2`, ..., `#25`).
+- **Rich Thumbnail Previews**: Displays high-quality thumbnail preview images and weekly view counters for each trending topic.
+- **One-Click Instant Import**: Click the dedicated "Import" button on any trending row or click any row to instantly populate the search field.
+- **In-Memory Caching & Live Refresh**: Caches report data in memory for instant re-opening while offering a manual refresh button (`view-refresh-symbolic`) to fetch the latest report.
+
+---
+
+#### 4. Non-Blocking Asynchronous Fetching HUD
+<p align="center">
+  <img src="data/screenshots/04-wikipedia-fetching-progress.png" alt="Asynchronous Wikipedia Fetching HUD" width="700"/>
+</p>
+
+*A non-blocking modal displays live progress as Wikipedia articles and related topics are scraped and prepared in background threads, keeping the user informed while ensuring the interface never freezes.*
+
+- **Real-Time Step Updates**: Translucent progress modal providing live status updates (e.g. `Fetching related article (3/4): 'Danish language'...`).
+- **Threaded Worker Processing**: All network fetching and HTML/markdown parsing run on background worker threads, keeping the application UI fluid and responsive.
+- **Instant Safe Cancellation**: Cancel multi-article scraping at any moment without freezing the interface or discarding previously loaded tabs.
 
 ---
 
