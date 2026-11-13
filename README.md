@@ -258,6 +258,7 @@ Official releases are published on the **[GitHub Releases Page](https://github.c
 
 - 💽 **Windows Setup Installer (x64)**: Download [`ReadAloud-1.8.18-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.18-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then double-click the `.exe` to run the setup wizard.
   - Full Inno Setup installer with desktop and Start Menu integration.
+  - **Smart Component Detection & Auto-Download**: If `ReadAloud-1.8.18-Windows-Setup-x64-1.bin` is missing, Setup automatically prompts and downloads it directly from GitHub into your setup folder.
   - Pre-bundles all 35 neural voices, GTK4/Libadwaita runtimes, and MSVC 2022 libraries.
   - Supports silent enterprise installation: `ReadAloud-1.8.18-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
 - 💼 **Windows Portable Edition (x64)**: Download [`ReadAloud-1.8.18-Windows-Portable-x64.7z.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.18-Windows-Portable-x64.7z.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip or WinRAR.
