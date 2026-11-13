@@ -129,21 +129,7 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ### Wikipedia Importer Features
 
-#### 1. Direct Wikipedia Article Importer
-<p align="center">
-  <img src="data/screenshots/02-wikipedia-import-dialog.png" alt="Wikipedia Article Importer Dialog" width="700"/>
-</p>
-
-*This dialog allows users to search or enter any Wikipedia topic URL to scrape and convert articles into clean text tabs, enabling instant distraction-free offline audio playback.*
-
-- **One-Click Quick Access**: Open the Wikipedia Importer instantly from the headerbar globe button or the Tools menu (`win.import-wikipedia`).
-- **Topic or URL Import**: Enter any article topic or paste full Wikipedia URLs—ReadAloud scrapes and cleans the content locally for offline listening.
-- **Multi-Tab Related Article Extraction**: Automatically discovers internal related `/wiki/...` reference links and imports up to 10 related topics into separate sequential tabs.
-- **Wikimedia Foundation Support**: Features a non-intrusive donation callout card encouraging direct support for free, open global knowledge.
-
----
-
-#### 2. Live Autocomplete Search with Instant Previews
+#### 1. Live Autocomplete Search with Instant Previews
 <p align="center">
   <img src="data/screenshots/03-wikipedia-live-search.png" alt="Live Autocomplete Wikipedia Search" width="700"/>
 </p>
@@ -157,7 +143,7 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ---
 
-#### 3. Wikipedia Top 25 Trending Topics Right Pane
+#### 2. Wikipedia Top 25 Trending Topics Right Pane
 <p align="center">
   <img src="data/screenshots/06-wikipedia-trending-topics.png" alt="Wikipedia Top 25 Trending Topics Right Pane" width="700"/>
 </p>
@@ -168,19 +154,6 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 - **Rich Thumbnail Previews**: Displays high-quality thumbnail preview images and weekly view counters for each trending topic.
 - **One-Click Instant Import**: Click the dedicated "Import" button on any trending row or click any row to instantly populate the search field.
 - **In-Memory Caching & Live Refresh**: Caches report data in memory for instant re-opening while offering a manual refresh button (`view-refresh-symbolic`) to fetch the latest report.
-
----
-
-#### 4. Non-Blocking Asynchronous Fetching HUD
-<p align="center">
-  <img src="data/screenshots/04-wikipedia-fetching-progress.png" alt="Asynchronous Wikipedia Fetching HUD" width="700"/>
-</p>
-
-*A non-blocking modal displays live progress as Wikipedia articles and related topics are scraped and prepared in background threads, keeping the user informed while ensuring the interface never freezes.*
-
-- **Real-Time Step Updates**: Translucent progress modal providing live status updates (e.g. `Fetching related article (3/4): 'Danish language'...`).
-- **Threaded Worker Processing**: All network fetching and HTML/markdown parsing run on background worker threads, keeping the application UI fluid and responsive.
-- **Instant Safe Cancellation**: Cancel multi-article scraping at any moment without freezing the interface or discarding previously loaded tabs.
 
 ---
 
