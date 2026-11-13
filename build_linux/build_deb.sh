@@ -7,7 +7,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/build-deb"
 DIST_DIR="${REPO_ROOT}/dist"
 STAGING_DIR="${DIST_DIR}/staging-deb"
-DEB_NAME="readaloud_1.8.18_amd64.deb"
+DEB_NAME="readaloud_1.8.19_amd64.deb"
 
 echo "=== Building ReadAloud Debian (.deb) Package ==="
 

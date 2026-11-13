@@ -33,7 +33,7 @@ except ImportError:
     BeautifulSoup = None
 
 DEFAULT_USER_AGENT = (
-    "ReadAloud/1.8.18 (https://github.com/wbernard/parolu; contact@readaloud.app)"
+    "ReadAloud/1.8.19 (https://github.com/wbernard/parolu; contact@readaloud.app)"
 )
 
 STOP_SECTIONS = {

@@ -173,7 +173,7 @@ class TestErrorLogger(unittest.TestCase):
             # Simulate an abnormal termination from PID 999999
             initial_data = {
                 "pid": 999999,
-                "version": "1.8.18",
+                "version": "1.8.19",
                 "start_time": "2026-11-13T12:00:00Z",
                 "clean_exit": False,
                 "state": "synthesizing",

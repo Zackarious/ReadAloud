@@ -91,7 +91,7 @@ def start_session_tracking():
     marker_path = get_crash_marker_path()
     try:
         marker_path.parent.mkdir(parents=True, exist_ok=True)
-        version = "1.8.18"
+        version = "1.8.19"
         try:
             from . import __version__
             version = __version__
@@ -299,7 +299,7 @@ def log_error(
     now_utc = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # App version
-    version = "1.8.18"
+    version = "1.8.19"
     try:
         from . import __version__
         version = __version__

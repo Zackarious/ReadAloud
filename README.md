@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.8.18-blue.svg" alt="Version 1.8.18"/>
+  <img src="https://img.shields.io/badge/version-1.8.19-blue.svg" alt="Version 1.8.19"/>
   <img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg" alt="GPL-3.0 License"/>
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-0078D6.svg" alt="Platform: Windows & Linux"/>
   <img src="https://img.shields.io/badge/Desktop-GNOME%20%7C%20KDE%20Plasma%20%7C%20Windows-green.svg" alt="Desktop: GNOME, KDE Plasma & Windows"/>
@@ -257,15 +257,15 @@ Official releases are published on the **[GitHub Releases Page](https://github.c
 ### 🪟 Microsoft Windows (10 / 11 / Server)
 
 - 💽 **Windows Setup Installer (x64)**: Download all 3 setup files into the same folder, then double-click the `.exe` to run the setup wizard:
-  - [`ReadAloud-1.8.18-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.18/ReadAloud-1.8.18-Windows-Setup-x64.exe) (Setup Launcher, 2.5 MB)
-  - [`ReadAloud-1.8.18-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.18/ReadAloud-1.8.18-Windows-Setup-x64-1.bin) (Part 1 Data Slice, 1.8 GB)
-  - [`ReadAloud-1.8.18-Windows-Setup-x64-2.bin`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.18/ReadAloud-1.8.18-Windows-Setup-x64-2.bin) (Part 2 Data Slice, 703 MB)
+  - [`ReadAloud-1.8.19-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-Windows-Setup-x64.exe) (Setup Launcher, 2.5 MB)
+  - [`ReadAloud-1.8.19-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-Windows-Setup-x64-1.bin) (Part 1 Data Slice, 1.8 GB)
+  - [`ReadAloud-1.8.19-Windows-Setup-x64-2.bin`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-Windows-Setup-x64-2.bin) (Part 2 Data Slice, 703 MB)
   - Full Inno Setup installer with desktop and Start Menu integration.
-  - **Smart Component Detection & Auto-Download**: If either `ReadAloud-1.8.18-Windows-Setup-x64-1.bin` or `ReadAloud-1.8.18-Windows-Setup-x64-2.bin` is missing, Setup automatically detects the missing file(s) before file extraction begins, prompts for confirmation, and automatically downloads them directly from GitHub into your setup folder.
+  - **Smart Component Detection & Auto-Download**: If either `ReadAloud-1.8.19-Windows-Setup-x64-1.bin` or `ReadAloud-1.8.19-Windows-Setup-x64-2.bin` is missing, Setup automatically detects the missing file(s) before file extraction begins, prompts for confirmation, and automatically downloads them directly from GitHub into your setup folder.
   - Pre-bundles all 35 neural voices, GTK4/Libadwaita runtimes, and MSVC 2022 libraries.
-  - Supports silent enterprise installation: `ReadAloud-1.8.18-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
-- 💼 **Windows Portable Edition (x64)**: Download [`ReadAloud-1.8.18-Windows-Portable-x64.7z.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.18-Windows-Portable-x64.7z.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip or WinRAR.
-- ⚡ **Windows Portable Edition (ARM64)**: Download [`ReadAloud-1.8.18-windows-arm64-portable.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.18-windows-arm64-portable.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip, WinRAR, or Windows Explorer.
+  - Supports silent enterprise installation: `ReadAloud-1.8.19-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
+- 💼 **Windows Portable Edition (x64)**: Download [`ReadAloud-1.8.19-Windows-Portable-x64.7z.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.19-Windows-Portable-x64.7z.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip or WinRAR.
+- ⚡ **Windows Portable Edition (ARM64)**: Download [`ReadAloud-1.8.19-windows-arm64-portable.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.19-windows-arm64-portable.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip, WinRAR, or Windows Explorer.
   - Native ARM64 build for Microsoft Surface Pro, Snapdragon X Elite, and Windows on ARM devices.
 
 ---
@@ -279,7 +279,7 @@ Download the official `.deb` package from the **[Releases Page](https://github.c
 ```bash
 # Install via APT (automatically resolves system dependencies)
 sudo apt update
-sudo apt install ./readaloud_1.8.18_amd64.deb
+sudo apt install ./readaloud_1.8.19_amd64.deb
 
 # Launch ReadAloud
 readaloud
@@ -287,17 +287,17 @@ readaloud
 
 #### Standalone Linux AppImage (`.AppImage`)
 Download the multi-volume AppImage split files from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
-- [`ReadAloud-1.8.18-linux-x86_64.AppImage.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest)
-- [`ReadAloud-1.8.18-linux-x86_64.AppImage.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- [`ReadAloud-1.8.19-linux-x86_64.AppImage.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- [`ReadAloud-1.8.19-linux-x86_64.AppImage.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest)
 
 Extract and run:
 ```bash
 # Combine and extract the split archive
-7z x ReadAloud-1.8.18-linux-x86_64.AppImage.zip.001
+7z x ReadAloud-1.8.19-linux-x86_64.AppImage.zip.001
 
 # Make executable and launch
-chmod +x ReadAloud-1.8.18-linux-x86_64.AppImage
-./ReadAloud-1.8.18-linux-x86_64.AppImage
+chmod +x ReadAloud-1.8.19-linux-x86_64.AppImage
+./ReadAloud-1.8.19-linux-x86_64.AppImage
 ```
 
 ---
@@ -306,15 +306,15 @@ chmod +x ReadAloud-1.8.18-linux-x86_64.AppImage
 
 #### Standalone macOS Universal Application (`.zip`)
 Download the multi-volume macOS Universal split files from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
-- [`ReadAloud-1.8.18-macos-universal.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest)
-- [`ReadAloud-1.8.18-macos-universal.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- [`ReadAloud-1.8.19-macos-universal.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest)
+- [`ReadAloud-1.8.19-macos-universal.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest)
 
 Extract and run:
 ```bash
 # Extract multi-volume zip using 7-Zip, The Unarchiver, or Terminal:
-7z x ReadAloud-1.8.18-macos-universal.zip.001
+7z x ReadAloud-1.8.19-macos-universal.zip.001
 # Or in Terminal:
-cat ReadAloud-1.8.18-macos-universal.zip.* > ReadAloud.zip && unzip ReadAloud.zip
+cat ReadAloud-1.8.19-macos-universal.zip.* > ReadAloud.zip && unzip ReadAloud.zip
 
 # Move ReadAloud.app to Applications
 mv ReadAloud.app /Applications/
@@ -385,12 +385,12 @@ Automated testing in ReadAloud serves as the bedrock of application stability, s
 
 ### Test Execution & Results Summary
 
-Automated testing was conducted on **13 November 2026** alongside the release of version **v1.8.18**. A total of **326 tests** were executed across the entire test suite covering 27 test modules. **326 tests passed and 0 tests failed** (0 errors), achieving a **100% pass rate** in approximately 4.9 seconds.
+Automated testing was conducted on **13 November 2026** alongside the release of version **v1.8.19**. A total of **326 tests** were executed across the entire test suite covering 27 test modules. **326 tests passed and 0 tests failed** (0 errors), achieving a **100% pass rate** in approximately 4.9 seconds.
 
 | Metric | Result |
 | :--- | :--- |
 | **Date Conducted** | 13 November 2026 |
-| **Target Version** | ReadAloud v1.8.18 |
+| **Target Version** | ReadAloud v1.8.19 |
 | **Total Tests Conducted** | **326** |
 | **Tests Passed** | **326 (100%)** |
 | **Tests Failed** | **0 (0%)** |
