@@ -40,10 +40,12 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
   <img src="data/screenshots/01-drag-drop-importer.png" alt="Drag and Drop Document Importer" width="700"/>
 </p>
 
+*The main window presents an intuitive document dropzone with quick-action buttons, allowing users to effortlessly drag and drop reading materials to start listening without manual file browsing.*
+
 - **Multi-Format Document Dropzone**: Seamlessly drag and drop `.txt`, `.md`, `.pdf`, or `.epub` files directly into ReadAloud to import them into working tabs.
 - **Smart Book Chapter Extraction**: Automatically breaks EPUB and multi-chapter documents into distinct, navigable tabs.
 - **Syntax & Symbol Cleansing**: Automatically strips distracting brackets, pipes, markdown hashes, and asterisks so the Piper neural speech engine reads pure, natural language.
-- **Adaptive Window Controls**: Features standardized `:minimize,maximize,close` window controls and dedicated headerbar buttons for instant one-click actions across all desktop environments.
+- **Adaptive Window Controls**: Features standardized `:minimize,maximize,close` window controls, dedicated headerbar buttons, and font zoom capsule for instant one-click actions across all desktop environments.
 
 ---
 
@@ -51,6 +53,8 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 <p align="center">
   <img src="data/screenshots/02-wikipedia-import-dialog.png" alt="Wikipedia Article Importer Dialog" width="700"/>
 </p>
+
+*This dialog allows users to search or enter any Wikipedia topic URL to scrape and convert articles into clean text tabs, enabling instant distraction-free offline audio playback.*
 
 - **One-Click Quick Access**: Open the Wikipedia Importer instantly from the headerbar globe button or the Tools menu (`win.import-wikipedia`).
 - **Topic or URL Import**: Enter any article topic or paste full Wikipedia URLs—ReadAloud scrapes and cleans the content locally for offline listening.
@@ -64,6 +68,8 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
   <img src="data/screenshots/03-wikipedia-live-search.png" alt="Live Autocomplete Wikipedia Search" width="700"/>
 </p>
 
+*As the user types into the search field, real-time Wikipedia suggestions appear with thumbnail previews and summaries, helping users immediately identify and import the exact topic they want to read.*
+
 - **Official REST API Autocomplete**: Real-time debounced search backed by Wikipedia's official REST Search API, returning exact matches as you type.
 - **Rich Visual Cards**: Displays article thumbnail previews, bold headings, and descriptive captions matching Wikipedia's website design.
 - **In-Memory Thumbnail Caching**: Thread-safe in-memory image caching eliminates redundant network requests and ensures instant, flicker-free re-querying.
@@ -71,10 +77,26 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ---
 
-### 4. Non-Blocking Asynchronous Fetching HUD
+### 4. Wikipedia Top 25 Trending Topics Right Pane
+<p align="center">
+  <img src="data/screenshots/06-wikipedia-trending-topics.png" alt="Wikipedia Top 25 Trending Topics Right Pane" width="700"/>
+</p>
+
+*The expandable right pane displays the week's Top 25 Trending Wikipedia articles with ranking badges, thumbnail previews, view counts, and single-click import buttons, giving users immediate access to popular world knowledge without having to search.*
+
+- **Curated Trending Discoveries**: Live scrapes Wikipedia's official weekly Top 25 Report (`Wikipedia:Top_25_Report`) complete with rank badges (`#1`, `#2`, ..., `#25`).
+- **Rich Thumbnail Previews**: Displays high-quality thumbnail preview images and weekly view counters for each trending topic.
+- **One-Click Instant Import**: Click the dedicated "Import" button on any trending row or click any row to instantly populate the search field.
+- **In-Memory Caching & Live Refresh**: Caches report data in memory for instant re-opening while offering a manual refresh button (`view-refresh-symbolic`) to fetch the latest report.
+
+---
+
+### 5. Non-Blocking Asynchronous Fetching HUD
 <p align="center">
   <img src="data/screenshots/04-wikipedia-fetching-progress.png" alt="Asynchronous Wikipedia Fetching HUD" width="700"/>
 </p>
+
+*A non-blocking modal displays live progress as Wikipedia articles and related topics are scraped and prepared in background threads, keeping the user informed while ensuring the interface never freezes.*
 
 - **Real-Time Step Updates**: Translucent progress modal providing live status updates (e.g. `Fetching related article (3/4): 'Danish language'...`).
 - **Threaded Worker Processing**: All network fetching and HTML/markdown parsing run on background worker threads, keeping the application UI fluid and responsive.
@@ -82,15 +104,79 @@ ReadAloud is proud to be free and open-source software, licensed under the GNU G
 
 ---
 
-### 5. Synchronized Speech Playback & Word Highlighting
+### 6. Real-Time Speech Generation Progress HUD
+<p align="center">
+  <img src="data/screenshots/07-speech-generation-countdown-hud.png" alt="Real-Time Speech Generation Countdown HUD" width="700"/>
+</p>
+
+*While on-device neural speech is being synthesized, a sleek translucent progress HUD provides real-time percentage completion and an estimated seconds countdown, reassuring users with precise feedback and immediate cancellation control.*
+
+- **Live Percentage & Countdown**: Displays real-time synthesis percentage and remaining time estimation (e.g. `Generating audio: 42% (~2s remaining)`).
+- **Animated Activity Spinner**: Smooth loading spinner and progress indicator provide instant visual confirmation that audio processing is active.
+- **One-Click Cancellation**: Click "Cancel" at any time to immediately abort speech synthesis and restore the workspace.
+
+---
+
+### 7. Synchronized Speech Playback & Word Highlighting
 <p align="center">
   <img src="data/screenshots/05-active-playback-word-highlighting.png" alt="Active Speech Playback and Real-Time Word Highlighting" width="700"/>
 </p>
 
+*During audio playback, each spoken word is dynamically highlighted in signature yellow while playback controls coordinate state transitions, allowing users to effortlessly follow along visually as they listen.*
+
 - **Synchronized Real-Time Word Highlighting**: High-contrast, dynamic highlighting tracks every spoken word in real-time and auto-scrolls to keep active text in view.
+- **Signature Highlight Yellow Playback Buttons**: Primary controls (`Open Text File`, `Read Text`, `Pause`, `Stop`) are recoloured in `#f6d32d` to match the reader's active text highlight aesthetic.
 - **Intelligent Sentence Segmentation**: Smooths PDF multi-column line breaks and joins hyphenated words, while guarding abbreviations (`Dr.`, `Mr.`, `e.g.`) and numerical values from premature pauses.
 - **Automatic Paragraph Gap Separation**: Enforces clean `\n\n` empty line gaps between paragraphs, providing generous vertical separation that makes long articles effortless to follow during audio synthesis.
-- **Complete Audio Control Deck**: Seamlessly switch voices (e.g. `Alba Voice - Medium quality`), adjust calibrated speech speeds (`Normal`, `Fast`, `Super Fast`), or export spoken-word audio to compressed MP3, OGG, FLAC, or uncompressed WAV.
+
+---
+
+### 8. High-Fidelity Neural Voice Library & Model Selector
+<p align="center">
+  <img src="data/screenshots/08-neural-voice-library-selector.png" alt="Neural Voice Selection Menu" width="700"/>
+</p>
+
+*The voice selector menu showcases diverse neural voices with clear speed and quality annotations, empowering users to tailor vocal timbre and generation speed to match their listening preferences.*
+
+- **Diverse Voice Models**: Seamlessly choose from a curated catalog of natural-sounding neural voices across genders and styles.
+- **Calibrated Quality Profiles**: Easily distinguish between Low, Medium, and High quality models optimized for speech generation speed versus acoustic fidelity.
+- **Instant Live Switching**: Change the active narrator voice on the fly with automatic persistence for subsequent reading sessions.
+
+---
+
+### 9. Multi-Language & Regional Accent Selector
+<p align="center">
+  <img src="data/screenshots/09-language-accent-selector.png" alt="Language and Regional Accent Selector" width="700"/>
+</p>
+
+*The regional dialect selector lets users switch between British and American English pronunciation profiles, ensuring natural and culturally familiar phonetic inflection for any document.*
+
+- **Multi-Dialect Accents**: Toggle between British English (`English (UK)`) and American English (`English (US)`) voice packs.
+- **Phonetic Naturalness**: Automatically selects region-appropriate phoneme mappings and stress patterns for smooth, natural narration.
+
+---
+
+### 10. Calibrated Speech Speed Controls
+<p align="center">
+  <img src="data/screenshots/10-speech-speed-selector.png" alt="Calibrated Speech Speed Controls" width="700"/>
+</p>
+
+*The speech speed menu allows listeners to adjust narration pacing from deliberate slower study speeds to rapid reading rates, boosting productivity and learning comprehension.*
+
+- **Five Calibrated Speeds**: Choose from `Slower`, `Slow`, `Normal`, `Fast`, and `Super Fast` speeds.
+- **Pitch-Preserving Pacing**: Maintains natural voice pitch and timbre across all playback speeds without distorted chipmunk or robotic artifacts.
+
+---
+
+### 11. Multi-Tab Document Reading & Thematic Highlighting
+<p align="center">
+  <img src="data/screenshots/11-multi-tab-audio-playback.png" alt="Multi-Tab Reading and Alternate Voice Playback" width="700"/>
+</p>
+
+*Synchronized real-time word highlighting guides the listener through rich historical documents with full multi-tab navigation, helping readers retain complex texts with combined visual and auditory immersion.*
+
+- **Independent Multi-Tab Reading**: Maintain multiple reading documents, Wikipedia articles, or book chapters simultaneously across tabs.
+- **Distraction-Free Visual Focus**: High-contrast active word highlighting keeps readers oriented in dense literature and long-form articles.
 
 ---
 

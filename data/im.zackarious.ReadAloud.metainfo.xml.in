@@ -28,11 +28,11 @@
   <screenshots>
     <screenshot type="default">
       <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/05-active-playback-word-highlighting.png</image>
-      <caption>Synchronized speech playback with real-time word highlighting across multiple document tabs</caption>
+      <caption>Synchronized speech playback with real-time word highlighting and signature yellow controls</caption>
     </screenshot>
     <screenshot>
       <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/01-drag-drop-importer.png</image>
-      <caption>Document dropzone supporting TXT, MD, PDF, and EPUB files with chapter extraction</caption>
+      <caption>Document dropzone supporting TXT, MD, PDF, and EPUB files with font zoom capsule</caption>
     </screenshot>
     <screenshot>
       <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/02-wikipedia-import-dialog.png</image>
@@ -43,8 +43,32 @@
       <caption>Interactive live Wikipedia search autocomplete with article thumbnails and descriptions</caption>
     </screenshot>
     <screenshot>
+      <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/06-wikipedia-trending-topics.png</image>
+      <caption>Wikipedia Top 25 Trending Topics right pane with article thumbnails, view counts, and 1-click import</caption>
+    </screenshot>
+    <screenshot>
       <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/04-wikipedia-fetching-progress.png</image>
       <caption>Asynchronous multi-article scraping progress HUD with real-time status updates</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/07-speech-generation-countdown-hud.png</image>
+      <caption>Real-time neural speech generation HUD with progress bar and remaining seconds countdown</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/08-neural-voice-library-selector.png</image>
+      <caption>Curated neural voice model selector menu with speed and fidelity classifications</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/09-language-accent-selector.png</image>
+      <caption>Regional accent selector toggling British and American English pronunciation models</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/10-speech-speed-selector.png</image>
+      <caption>Calibrated speech speed popup menu adjusting narration pacing without pitch distortion</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/Zackarious/ReadAloud/main/data/screenshots/11-multi-tab-audio-playback.png</image>
+      <caption>Multi-tab reading environment with synchronized word-by-word visual reading guidance</caption>
     </screenshot>
   </screenshots>
 
