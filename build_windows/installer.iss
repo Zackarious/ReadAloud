@@ -37,7 +37,10 @@ PrivilegesRequiredOverridesAllowed=dialog
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Messages]
-DiskInsert=Setup needs the next required installation component file (%1).%n%nPlease ensure 'ReadAloud-{#MyAppVersion}-Windows-Setup-x64-1.bin' is located in the same folder as this installer.%n%nIf the file is located in another folder, enter the path below or click Browse.
+SelectDiskTitle=Setup Needs the Next Installation Component
+SelectDiskLabel=Please ensure 'ReadAloud-{#MyAppVersion}-Windows-Setup-x64-%1.bin' is in the folder below and click OK.
+SelectDiskLabel2=Setup needs the next installation component file (Part %1).%n%nPlease ensure 'ReadAloud-{#MyAppVersion}-Windows-Setup-x64-%1.bin' is located in the folder displayed below, or click Browse to select it.%n%nIf you have not downloaded Part %1 yet, download 'ReadAloud-{#MyAppVersion}-Windows-Setup-x64-%1.bin' from {#MyAppURL}/releases/tag/v{#MyAppVersion} into that folder.
+FileNotInDir2=The file "%1" could not be located in "%2". Please download 'ReadAloud-{#MyAppVersion}-Windows-Setup-x64-%1.bin' from {#MyAppURL}/releases/tag/v{#MyAppVersion} into that folder.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -55,6 +58,9 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
+const
+  TotalSlices = 2;
+
 var
   DownloadPage: TDownloadWizardPage;
 
@@ -70,62 +76,97 @@ end;
 procedure InitializeWizard;
 begin
   DownloadPage := CreateDownloadPage(
-    'Downloading Missing Installation Component',
-    'Please wait while Setup downloads the required installation data file from GitHub...',
+    'Downloading Missing Installation Components',
+    'Please wait while Setup downloads the required installation data files from GitHub...',
     @OnDownloadProgress
   );
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
+  I: Integer;
   BinFileName: String;
   BinPath: String;
   TmpPath: String;
   DownloadUrl: String;
+  MissingList: String;
+  MissingCount: Integer;
+  MissingSlices: array[1..TotalSlices] of Boolean;
   Success: Boolean;
 begin
   Result := True;
   if CurPageID = wpReady then
   begin
-    BinFileName := 'ReadAloud-{#MyAppVersion}-Windows-Setup-x64-1.bin';
-    BinPath := ExpandConstant('{src}\' + BinFileName);
-    
-    if not FileExists(BinPath) then
+    MissingCount := 0;
+    MissingList := '';
+    for I := 1 to TotalSlices do
+    begin
+      BinFileName := Format('ReadAloud-{#MyAppVersion}-Windows-Setup-x64-%d.bin', [I]);
+      BinPath := ExpandConstant('{src}\' + BinFileName);
+      if not FileExists(BinPath) then
+      begin
+        MissingSlices[I] := True;
+        MissingCount := MissingCount + 1;
+        MissingList := MissingList + '  • ' + BinFileName + #13#10;
+      end
+      else
+      begin
+        MissingSlices[I] := False;
+      end;
+    end;
+
+    if MissingCount > 0 then
     begin
       if MsgBox(
-        'Setup detected that a required installation component is missing from this folder:' + #13#10#13#10 +
-        '  ' + BinFileName + #13#10#13#10 +
+        'Setup detected that ' + IntToStr(MissingCount) + ' required installation component file(s) are missing from this folder:' + #13#10#13#10 +
+        MissingList + #13#10 +
         'Because ReadAloud bundles offline neural speech models, the installer package is split across multiple files.' + #13#10#13#10 +
-        'Would you like Setup to automatically download the missing file for you from GitHub now?',
+        'Would you like Setup to automatically download the missing file(s) for you from GitHub now?',
         mbConfirmation, MB_YESNO) = IDYES then
       begin
         DownloadPage.Clear;
-        DownloadUrl := '{#MyAppURL}/releases/download/v{#MyAppVersion}/' + BinFileName;
-        DownloadPage.Add(DownloadUrl, BinFileName, '');
+        for I := 1 to TotalSlices do
+        begin
+          if MissingSlices[I] then
+          begin
+            BinFileName := Format('ReadAloud-{#MyAppVersion}-Windows-Setup-x64-%d.bin', [I]);
+            DownloadUrl := '{#MyAppURL}/releases/download/v{#MyAppVersion}/' + BinFileName;
+            DownloadPage.Add(DownloadUrl, BinFileName, '');
+          end;
+        end;
+
         DownloadPage.Show;
         try
           try
             DownloadPage.Download;
-            TmpPath := ExpandConstant('{tmp}\' + BinFileName);
-            if FileExists(TmpPath) then
+            for I := 1 to TotalSlices do
             begin
-              Success := FileCopy(TmpPath, BinPath, False);
-              if not Success then
+              if MissingSlices[I] then
               begin
-                MsgBox(
-                  'The component was downloaded to your temporary folder:' + #13#10 +
-                  TmpPath + #13#10#13#10 +
-                  'However, Setup could not write directly to the installer folder.' + #13#10 +
-                  'Please select this temporary folder if prompted during file extraction.',
-                  mbInformation, MB_OK);
+                BinFileName := Format('ReadAloud-{#MyAppVersion}-Windows-Setup-x64-%d.bin', [I]);
+                BinPath := ExpandConstant('{src}\' + BinFileName);
+                TmpPath := ExpandConstant('{tmp}\' + BinFileName);
+                if FileExists(TmpPath) then
+                begin
+                  Success := FileCopy(TmpPath, BinPath, False);
+                  if not Success then
+                  begin
+                    MsgBox(
+                      'Component ' + BinFileName + ' was downloaded to your temporary folder:' + #13#10 +
+                      TmpPath + #13#10#13#10 +
+                      'However, Setup could not write directly to the installer folder.' + #13#10 +
+                      'Please select this temporary folder if prompted during file extraction.',
+                      mbInformation, MB_OK);
+                  end;
+                end;
               end;
             end;
           except
             MsgBox(
               'Automatic download failed: ' + GetExceptionMessage + #13#10#13#10 +
-              'Please manually download ' + BinFileName + ' from:' + #13#10 +
+              'Please manually download the missing files from:' + #13#10 +
               '{#MyAppURL}/releases/tag/v{#MyAppVersion}' + #13#10#13#10 +
-              'and place it in the same folder as this installer before running it again.',
+              'and place them in the same folder as this installer before running it again.',
               mbError, MB_OK);
             Result := False;
           end;
@@ -136,7 +177,7 @@ begin
       else
       begin
         MsgBox(
-          'Installation cannot proceed without ' + BinFileName + '.' + #13#10#13#10 +
+          'Installation cannot proceed without all required component files.' + #13#10#13#10 +
           'Please download both setup parts from:' + #13#10 +
           '{#MyAppURL}/releases/tag/v{#MyAppVersion}' + #13#10#13#10 +
           'and place them in the same folder before launching Setup.',

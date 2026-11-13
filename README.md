@@ -256,9 +256,12 @@ Official releases are published on the **[GitHub Releases Page](https://github.c
 
 ### 🪟 Microsoft Windows (10 / 11 / Server)
 
-- 💽 **Windows Setup Installer (x64)**: Download [`ReadAloud-1.8.18-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.18-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then double-click the `.exe` to run the setup wizard.
+- 💽 **Windows Setup Installer (x64)**: Download all 3 setup files into the same folder, then double-click the `.exe` to run the setup wizard:
+  - [`ReadAloud-1.8.18-Windows-Setup-x64.exe`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.18/ReadAloud-1.8.18-Windows-Setup-x64.exe) (Setup Launcher, 2.5 MB)
+  - [`ReadAloud-1.8.18-Windows-Setup-x64-1.bin`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.18/ReadAloud-1.8.18-Windows-Setup-x64-1.bin) (Part 1 Data Slice, 1.8 GB)
+  - [`ReadAloud-1.8.18-Windows-Setup-x64-2.bin`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.18/ReadAloud-1.8.18-Windows-Setup-x64-2.bin) (Part 2 Data Slice, 703 MB)
   - Full Inno Setup installer with desktop and Start Menu integration.
-  - **Smart Component Detection & Auto-Download**: If `ReadAloud-1.8.18-Windows-Setup-x64-1.bin` is missing, Setup automatically prompts and downloads it directly from GitHub into your setup folder.
+  - **Smart Component Detection & Auto-Download**: If either `ReadAloud-1.8.18-Windows-Setup-x64-1.bin` or `ReadAloud-1.8.18-Windows-Setup-x64-2.bin` is missing, Setup automatically detects the missing file(s) before file extraction begins, prompts for confirmation, and automatically downloads them directly from GitHub into your setup folder.
   - Pre-bundles all 35 neural voices, GTK4/Libadwaita runtimes, and MSVC 2022 libraries.
   - Supports silent enterprise installation: `ReadAloud-1.8.18-Windows-Setup-x64.exe /VERYSILENT /SUPPRESSMSGBOXES`
 - 💼 **Windows Portable Edition (x64)**: Download [`ReadAloud-1.8.18-Windows-Portable-x64.7z.001`](https://github.com/Zackarious/ReadAloud/releases/latest) and [`ReadAloud-1.8.18-Windows-Portable-x64.7z.002`](https://github.com/Zackarious/ReadAloud/releases/latest) into the same folder, then extract with 7-Zip or WinRAR.
