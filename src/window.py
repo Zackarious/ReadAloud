@@ -410,21 +410,123 @@ def ensure_paragraph_gaps(text: str) -> str:
 class HighlightTextView(Gtk.TextView):
     """GtkTextView subclass that renders active speech word highlighting with
     2x padding and 10px rounded corners in the BELOW_TEXT layer, inserts a separate line
-    with a gap on Return key, and normalizes paragraph gaps on clipboard paste."""
+    with a gap on Return key, normalizes paragraph gaps on clipboard paste,
+    automatically removes tags while typing or pasting when auto-remove-tags is enabled,
+    and shows font zoom popup buttons when idle hovering for 1.5s."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._highlight_range = None
+        self._hover_timer_id = None
+        self._window = None
 
         # Return key controller to insert a separate line with a gap (\n\n)
+        # and keyboard listener for typing tag removal & dismissing font zoom popup
         key_ctrl = Gtk.EventControllerKey()
         key_ctrl.connect("key-pressed", self._on_key_pressed)
         self.add_controller(key_ctrl)
 
-        # Intercept clipboard paste to apply paragraph gap formatting
+        # Intercept clipboard paste to apply tag cleaning and paragraph gap formatting
         self.connect("paste-clipboard", self._on_paste_clipboard)
 
+    def is_auto_remove_tags_enabled(self):
+        win = getattr(self, '_window', None)
+        if not win and hasattr(self, 'get_root'):
+            win = self.get_root()
+        if win and hasattr(win, 'auto_remove_tags'):
+            return bool(win.auto_remove_tags)
+        return True
+
+    def dismiss_font_zoom_popup(self):
+        pass
+
+    def _clean_completed_tag_at_cursor(self, closing_char):
+        if not self.is_auto_remove_tags_enabled():
+            return False
+        buf = self.get_buffer()
+        if not buf or not self.get_editable():
+            return False
+
+        opener_map = {')': '(', ']': '[', '|': '|'}
+        opener = opener_map.get(closing_char)
+        if not opener:
+            return False
+
+        cursor_mark = buf.get_insert()
+        cursor_iter = buf.get_iter_at_mark(cursor_mark)
+
+        end_iter = cursor_iter.copy()
+        check_iter = end_iter.copy()
+        if not check_iter.backward_char():
+            return False
+
+        def _iter_char(it):
+            c = it.get_char()
+            return c if isinstance(c, str) else chr(c)
+
+        if _iter_char(check_iter) != closing_char:
+            return False
+
+        start_iter = check_iter.copy()
+        found_opener = False
+        max_scan = 2000
+        steps = 0
+
+        while steps < max_scan and start_iter.backward_char():
+            steps += 1
+            c = _iter_char(start_iter)
+            if c == opener:
+                found_opener = True
+                break
+            if closing_char != '|' and (c == closing_char or c == '\n'):
+                break
+            elif closing_char == '|' and c == '\n':
+                break
+
+        if found_opener:
+            buf.begin_user_action()
+
+            has_space_before = False
+            space_before_iter = start_iter.copy()
+            if space_before_iter.backward_char() and _iter_char(space_before_iter) == ' ':
+                has_space_before = True
+
+            has_space_after = False
+            is_followed_by_punct = False
+            if not end_iter.is_end():
+                next_c = _iter_char(end_iter)
+                if next_c == ' ':
+                    has_space_after = True
+                elif next_c in ',.;:?!':
+                    is_followed_by_punct = True
+
+            if has_space_before and (has_space_after or end_iter.is_end() or is_followed_by_punct):
+                start_iter.backward_char()
+            elif not has_space_before and has_space_after:
+                end_iter.forward_char()
+
+            buf.delete(start_iter, end_iter)
+            buf.end_user_action()
+            self.scroll_mark_onscreen(buf.get_insert())
+
+        return False
+
     def _on_key_pressed(self, controller, keyval, keycode, state):
+        self.dismiss_font_zoom_popup()
+
+        if self.is_auto_remove_tags_enabled() and self.get_editable():
+            modifiers = state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK | Gdk.ModifierType.META_MASK)
+            unicode_val = Gdk.keyval_to_unicode(keyval)
+            ch = chr(unicode_val) if unicode_val > 0 else ""
+
+            # Standalone hash and asterisk symbols: consume to prevent insertion
+            if not modifiers and (ch in ('#', '*') or keyval in (Gdk.KEY_numbersign, Gdk.KEY_asterisk, Gdk.KEY_KP_Multiply)):
+                return True
+
+            # Closing brackets or pipes: schedule real-time tag cleanup upon insertion
+            if not modifiers and ch in (')', ']', '|'):
+                GLib.idle_add(self._clean_completed_tag_at_cursor, ch)
+
         if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
             # Ignore if Ctrl, Alt, or Super/Meta are pressed
             modifiers = state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK | Gdk.ModifierType.META_MASK)
@@ -447,6 +549,7 @@ class HighlightTextView(Gtk.TextView):
 
     def _on_paste_clipboard(self, textview):
         self.stop_emission_by_name("paste-clipboard")
+        self.dismiss_font_zoom_popup()
         clipboard = self.get_clipboard()
         if not clipboard:
             return
@@ -457,6 +560,8 @@ class HighlightTextView(Gtk.TextView):
             except Exception:
                 raw_text = None
             if raw_text:
+                if self.is_auto_remove_tags_enabled():
+                    raw_text = clean_all_tags(raw_text)
                 formatted_text = ensure_paragraph_gaps(raw_text)
                 buf = self.get_buffer()
                 if buf and self.get_editable():
@@ -538,6 +643,12 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
     header_bar = Gtk.Template.Child()      # Header bar containing window controls
     tab_bar = Gtk.Template.Child()         # Tab bar for document tabs
+    tab_bar_overlay = Gtk.Template.Child() # Overlay wrapping tab_bar for nav buttons
+    tab_bar_end_box = Gtk.Template.Child() # End action container in tab bar
+    tab_nav_prev_revealer = Gtk.Template.Child() # Revealer for previous tab navigation button
+    tab_nav_prev_btn = Gtk.Template.Child()      # Previous tab navigation button
+    tab_nav_next_revealer = Gtk.Template.Child() # Revealer for next tab navigation button
+    tab_nav_next_btn = Gtk.Template.Child()      # Next tab navigation button
     tab_view = Gtk.Template.Child()        # Tab view holding document pages
     open_button = Gtk.Template.Child()     # Opens a file
     wiki_button = Gtk.Template.Child()     # Wikipedia importer
@@ -547,6 +658,12 @@ class ReadAloudWindow(Adw.ApplicationWindow):
     stop_button = Gtk.Template.Child()     # Stops audio playback
     playback_toolbar_revealer = Gtk.Template.Child() # Revealer for playback popup toolbar
     playback_toolbar = Gtk.Template.Child()          # Popup toolbar containing playback controls
+    font_zoom_revealer = None                        # Backward compatibility (controls now in tab bar)
+    font_zoom_popup = Gtk.Template.Child()           # Box containing font zoom controls
+    font_decrease_btn = Gtk.Template.Child()         # Button to decrease font size
+    font_zoom_label = Gtk.Template.Child()           # Label displaying font zoom level
+    font_increase_btn = Gtk.Template.Child()         # Button to increase font size
+    new_tab_button = Gtk.Template.Child()            # Button to open new tab
     read_button = Gtk.Template.Child()     # Plays audio file
     pause_button = Gtk.Template.Child()    # Pauses/resumes audio playback
     save_button = Gtk.Template.Child()     # Saves audio file
@@ -772,6 +889,74 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             border-radius: 12px;
             padding: 2px 8px;
         }
+
+        /* Font Zoom Controls in Tab Bar (Before New Tab Button) */
+        .font-zoom-tab-bar,
+        .font-zoom-popup {
+            background-color: alpha(currentColor, 0.06);
+            border: 1px solid alpha(currentColor, 0.12);
+            border-radius: 9999px;
+            padding: 2px 4px;
+        }
+        .font-zoom-tab-bar button,
+        .font-zoom-tab-bar button.circular,
+        .font-zoom-popup button,
+        .font-zoom-popup button.circular {
+            min-width: 28px;
+            min-height: 28px;
+            border-radius: 9999px;
+            padding: 0;
+            margin: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            transition: all 150ms ease-in-out;
+        }
+        .font-zoom-tab-bar button:hover,
+        .font-zoom-tab-bar button.circular:hover,
+        .font-zoom-popup button:hover,
+        .font-zoom-popup button.circular:hover {
+            background-color: alpha(currentColor, 0.14);
+        }
+        .font-zoom-tab-bar button:active,
+        .font-zoom-tab-bar button.circular:active,
+        .font-zoom-popup button:active,
+        .font-zoom-popup button.circular:active {
+            background-color: alpha(currentColor, 0.22);
+        }
+        .font-zoom-tab-bar label,
+        .font-zoom-popup label {
+            font-weight: 600;
+            padding: 0 4px;
+            min-width: 42px;
+        }
+
+        /* Semi-transparent Tab Navigation Left/Right Buttons */
+        .tab-nav-btn {
+            background-color: alpha(@window_bg_color, 0.76);
+            color: @window_fg_color;
+            border: 1px solid alpha(currentColor, 0.16);
+            border-radius: 9999px;
+            min-width: 28px;
+            min-height: 28px;
+            padding: 0;
+            margin: 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+            transition: all 150ms ease-in-out;
+            opacity: 0.85;
+        }
+        .tab-nav-btn:hover {
+            background-color: alpha(currentColor, 0.20);
+            border-color: alpha(currentColor, 0.32);
+            opacity: 1.0;
+        }
+        .tab-nav-btn:active {
+            background-color: alpha(currentColor, 0.30);
+            opacity: 1.0;
+        }
+        .tab-nav-btn:disabled {
+            opacity: 0.35;
+        }
         """
         css_provider.load_from_string(css_data)
         Gtk.StyleContext.add_provider_for_display(
@@ -853,6 +1038,17 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         remove_all_tags_action = Gio.SimpleAction(name="remove-all-tags")
         remove_all_tags_action.connect("activate", self.on_remove_all_tags_action)
         self.add_action(remove_all_tags_action)
+
+        # Stateful toggle action for automatically removing tags on typing/pasting/importing
+        auto_remove_tags_default = self.default_settings.get("auto_remove_tags", True)
+        self._auto_remove_tags = bool(auto_remove_tags_default)
+        self._auto_remove_tags_action = Gio.SimpleAction.new_stateful(
+            "auto-remove-tags",
+            None,
+            GLib.Variant.new_boolean(self._auto_remove_tags)
+        )
+        self._auto_remove_tags_action.connect("change-state", self._on_auto_remove_tags_change_state)
+        self.add_action(self._auto_remove_tags_action)
 
         import_wikipedia_action = Gio.SimpleAction(name="import-wikipedia")
         import_wikipedia_action.connect("activate", self.on_import_wikipedia_action)
@@ -1037,6 +1233,41 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         saved_zoom = self.default_settings.get("text_zoom", 130)
         self.set_text_zoom(saved_zoom)
 
+        # Wire font zoom controls in tab bar (always visible)
+        if hasattr(self, 'font_zoom_popup') and self.font_zoom_popup:
+            self.font_zoom_popup.add_css_class("font-zoom-tab-bar")
+        if hasattr(self, 'font_increase_btn') and self.font_increase_btn:
+            self.font_increase_btn.add_css_class("flat")
+            self.font_increase_btn.add_css_class("circular")
+            self.font_increase_btn.connect("clicked", lambda *_: self.zoom_in())
+        if hasattr(self, 'font_decrease_btn') and self.font_decrease_btn:
+            self.font_decrease_btn.add_css_class("flat")
+            self.font_decrease_btn.add_css_class("circular")
+            self.font_decrease_btn.connect("clicked", lambda *_: self.zoom_out())
+        if hasattr(self, 'font_zoom_label') and self.font_zoom_label:
+            self.font_zoom_label.add_css_class("caption")
+            self.font_zoom_label.add_css_class("dim-label")
+
+        # Tab navigation buttons setup (overlay over tab bar)
+        self._tab_bar_is_hovered = False
+        if hasattr(self, 'tab_nav_prev_btn') and self.tab_nav_prev_btn:
+            self.tab_nav_prev_btn.add_css_class("flat")
+            self.tab_nav_prev_btn.add_css_class("circular")
+            self.tab_nav_prev_btn.add_css_class("tab-nav-btn")
+            self.tab_nav_prev_btn.connect("clicked", lambda *_: self.navigate_previous_tab())
+        if hasattr(self, 'tab_nav_next_btn') and self.tab_nav_next_btn:
+            self.tab_nav_next_btn.add_css_class("flat")
+            self.tab_nav_next_btn.add_css_class("circular")
+            self.tab_nav_next_btn.add_css_class("tab-nav-btn")
+            self.tab_nav_next_btn.connect("clicked", lambda *_: self.navigate_next_tab())
+
+        if hasattr(self, 'tab_bar_overlay') and self.tab_bar_overlay:
+            tab_motion = Gtk.EventControllerMotion.new()
+            tab_motion.connect("enter", self._on_tab_bar_enter)
+            tab_motion.connect("motion", self._on_tab_bar_enter)
+            tab_motion.connect("leave", self._on_tab_bar_leave)
+            self.tab_bar_overlay.add_controller(tab_motion)
+
         # Keyboard controller for shortcuts (Ctrl +, -, 0, Ctrl+T, Ctrl+W, Ctrl+P, Ctrl+E, Ctrl+Up, Ctrl+Down, F5, Esc)
         key_controller = Gtk.EventControllerKey.new()
         key_controller.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
@@ -1060,6 +1291,9 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         # Connect tab view signals
         self.tab_view.connect("notify::selected-page", self._on_selected_page_changed)
         self.tab_view.connect("close-page", self._on_close_page)
+        self.tab_view.connect("page-attached", lambda *_: self._update_tab_nav_buttons())
+        self.tab_view.connect("page-detached", lambda *_: self._update_tab_nav_buttons())
+        self.tab_view.connect("page-reordered", lambda *_: self._update_tab_nav_buttons())
 
         # Create initial default tab
         self.create_new_tab(title=_("Untitled Document"))
@@ -1076,7 +1310,8 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             "voice": voice_item.get_string() if voice_item else "",
             "pitch": self.adjustment_1.get_value() if hasattr(self, 'adjustment_1') and self.adjustment_1 else 1.0,
             "speed": self.speed_chooser.get_selected() if hasattr(self, 'speed_chooser') and hasattr(self.speed_chooser, 'get_selected') else (self.adjustment_2.get_value() if hasattr(self, 'adjustment_2') and self.adjustment_2 else 0),
-            "text_zoom": getattr(self, "text_zoom_level", 130)
+            "text_zoom": getattr(self, "text_zoom_level", 130),
+            "auto_remove_tags": self.auto_remove_tags
         }
 
         config_path = os.path.join(GLib.get_user_data_dir(), "settings.json")
@@ -1614,6 +1849,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
     ## ================================================================##
     # Dialog for opening a file is defined
     def open_file_dialog(self, action=None, param=None):
+        self.set_auto_remove_tags(True)
         # Create a new file selection dialog, using the "open" mode
         native = Gtk.FileDialog()
 
@@ -1720,6 +1956,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             right_margin=12,
             wrap_mode=Gtk.WrapMode.WORD_CHAR
         )
+        text_view._window = self
         text_view.add_css_class("zoomable-text")
 
         # Mouse scroll controller for Ctrl + Mouse Wheel zoom on text box
@@ -1736,7 +1973,8 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         )
         buffer.connect("changed", self._on_buffer_changed_for_drop_placeholder)
         if text:
-            buffer.set_text(ensure_paragraph_gaps(text))
+            initial_text = clean_all_tags(text) if self.auto_remove_tags else text
+            buffer.set_text(ensure_paragraph_gaps(initial_text))
 
         scrolled_window.set_child(text_view)
 
@@ -1752,6 +1990,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
         self.tab_view.set_selected_page(page)
         self._update_drop_placeholder_visibility()
+        self._update_tab_nav_buttons()
         text_view.grab_focus()
         return page
 
@@ -1785,6 +2024,154 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         """Ensures that there is always at least one open tab in the window."""
         if hasattr(self, 'tab_view') and hasattr(self.tab_view, 'get_n_pages') and self.tab_view.get_n_pages() == 0:
             self.create_new_tab()
+
+    def _on_tab_bar_enter(self, controller=None, x=0, y=0):
+        """Reveals tab navigation buttons when hovering over the tab bar."""
+        self._tab_bar_is_hovered = True
+        self._update_tab_nav_buttons(is_hovered=True)
+
+    def _on_tab_bar_leave(self, controller=None):
+        """Hides tab navigation buttons when the cursor leaves the tab bar."""
+        self._tab_bar_is_hovered = False
+        self._update_tab_nav_buttons(is_hovered=False)
+
+    def _find_tab_bar_scrolled_window(self):
+        """Recursively finds the main non-pinned GtkScrolledWindow inside AdwTabBar."""
+        if not hasattr(self, 'tab_bar') or not self.tab_bar:
+            return None
+        queue = [self.tab_bar]
+        main_sw = None
+        while queue:
+            curr = queue.pop(0)
+            if isinstance(curr, Gtk.ScrolledWindow):
+                if "pinned" not in curr.get_css_classes():
+                    return curr
+                main_sw = curr
+            child = curr.get_first_child() if hasattr(curr, 'get_first_child') else None
+            while child:
+                queue.append(child)
+                child = child.get_next_sibling() if hasattr(child, 'get_next_sibling') else None
+        return main_sw
+
+    def _scroll_tab_bar_to_selected_tab(self):
+        """Smoothly adjusts the tab bar scrolled window so the selected tab is in view."""
+        if not hasattr(self, 'tab_view') or not self.tab_view:
+            return
+        if not hasattr(self.tab_view, 'get_selected_page'):
+            return
+        page = self.tab_view.get_selected_page()
+        if not page or not hasattr(self.tab_view, 'get_page_position'):
+            return
+        try:
+            idx = int(self.tab_view.get_page_position(page))
+            n_pages = int(self.tab_view.get_n_pages())
+        except (TypeError, ValueError):
+            return
+        sw = self._find_tab_bar_scrolled_window()
+        if not sw or not hasattr(sw, 'get_hadjustment'):
+            return
+        hadj = sw.get_hadjustment()
+        if not hadj or not hasattr(hadj, 'get_value'):
+            return
+
+        # Try to find the exact tab widget corresponding to idx
+        tab_box = sw.get_child() if hasattr(sw, 'get_child') else None
+        if tab_box:
+            tabs = []
+            child = tab_box.get_first_child() if hasattr(tab_box, 'get_first_child') else None
+            while child:
+                if hasattr(child, 'get_css_name') and child.get_css_name() == 'tabboxchild':
+                    tabs.append(child)
+                child = child.get_next_sibling() if hasattr(child, 'get_next_sibling') else None
+
+            if 0 <= idx < len(tabs):
+                target_tab = tabs[idx]
+                if hasattr(target_tab, 'compute_bounds'):
+                    ok, rect = target_tab.compute_bounds(tab_box)
+                    if ok:
+                        val = hadj.get_value()
+                        ps = hadj.get_page_size()
+                        tx = rect.get_x()
+                        tw = rect.get_width()
+                        if tx < 0:
+                            hadj.set_value(max(hadj.get_lower(), val + tx - 12))
+                            return
+                        elif tx + tw > ps:
+                            hadj.set_value(min(hadj.get_upper() - ps, val + (tx + tw - ps) + 12))
+                            return
+                        else:
+                            return
+
+        # Fallback proportional scroll if compute_bounds is not yet available or bounds check fell through
+        try:
+            ps = hadj.get_page_size()
+            upper = hadj.get_upper()
+            if upper > ps and n_pages > 1:
+                target_val = (idx / (n_pages - 1)) * (upper - ps)
+                hadj.set_value(target_val)
+        except Exception:
+            pass
+
+    def _update_tab_nav_buttons(self, is_hovered=None):
+        """Updates visibility, sensitivity, and positioning of tab navigation buttons."""
+        if is_hovered is not None:
+            self._tab_bar_is_hovered = is_hovered
+
+        if not hasattr(self, 'tab_view') or not self.tab_view:
+            return
+
+        try:
+            n_pages = int(self.tab_view.get_n_pages())
+        except (TypeError, ValueError):
+            n_pages = 0
+
+        should_reveal = bool(n_pages >= 2 and getattr(self, '_tab_bar_is_hovered', False))
+
+        if hasattr(self, 'tab_nav_prev_revealer') and self.tab_nav_prev_revealer:
+            if hasattr(self.tab_nav_prev_revealer, 'set_reveal_child'):
+                self.tab_nav_prev_revealer.set_reveal_child(should_reveal)
+            if hasattr(self.tab_nav_prev_revealer, 'set_can_target'):
+                self.tab_nav_prev_revealer.set_can_target(should_reveal)
+        if hasattr(self, 'tab_nav_next_revealer') and self.tab_nav_next_revealer:
+            if hasattr(self.tab_nav_next_revealer, 'set_reveal_child'):
+                self.tab_nav_next_revealer.set_reveal_child(should_reveal)
+            if hasattr(self.tab_nav_next_revealer, 'set_can_target'):
+                self.tab_nav_next_revealer.set_can_target(should_reveal)
+            if hasattr(self, 'tab_bar_end_box') and self.tab_bar_end_box and hasattr(self.tab_bar_end_box, 'get_width'):
+                end_w = self.tab_bar_end_box.get_width()
+                if isinstance(end_w, (int, float)) and end_w > 0:
+                    if hasattr(self.tab_nav_next_revealer, 'set_margin_end'):
+                        self.tab_nav_next_revealer.set_margin_end(int(end_w) + 4)
+
+        cur_page = self.tab_view.get_selected_page() if hasattr(self.tab_view, 'get_selected_page') else None
+        if cur_page and hasattr(self.tab_view, 'get_page_position'):
+            try:
+                cur_idx = int(self.tab_view.get_page_position(cur_page))
+            except (TypeError, ValueError):
+                cur_idx = 0
+        else:
+            cur_idx = 0
+
+        if hasattr(self, 'tab_nav_prev_btn') and self.tab_nav_prev_btn and hasattr(self.tab_nav_prev_btn, 'set_sensitive'):
+            self.tab_nav_prev_btn.set_sensitive(cur_idx > 0)
+        if hasattr(self, 'tab_nav_next_btn') and self.tab_nav_next_btn and hasattr(self.tab_nav_next_btn, 'set_sensitive'):
+            self.tab_nav_next_btn.set_sensitive(cur_idx < n_pages - 1)
+
+    def navigate_previous_tab(self):
+        """Switches to the previous tab and smoothly scrolls the tab bar to make it visible."""
+        if not hasattr(self, 'tab_view') or not self.tab_view:
+            return
+        if self.tab_view.select_previous_page():
+            self._scroll_tab_bar_to_selected_tab()
+            self._update_tab_nav_buttons()
+
+    def navigate_next_tab(self):
+        """Switches to the next tab and smoothly scrolls the tab bar to make it visible."""
+        if not hasattr(self, 'tab_view') or not self.tab_view:
+            return
+        if self.tab_view.select_next_page():
+            self._scroll_tab_bar_to_selected_tab()
+            self._update_tab_nav_buttons()
 
     def _on_selected_page_changed(self, tab_view, pspec=None):
         """Callback when the active tab is switched."""
@@ -1879,6 +2266,8 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             self._update_seek_buttons_visibility()
 
         self._update_drop_placeholder_visibility()
+        self._scroll_tab_bar_to_selected_tab()
+        self._update_tab_nav_buttons()
 
     def _get_text_view_for_page(self, page):
         """Helper to get GtkTextView from an AdwTabPage."""
@@ -1969,6 +2358,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
     def _on_files_dropped(self, drop_target, value, x, y):
         """Handle drag and drop of files into the application."""
+        self.set_auto_remove_tags(True)
         placeholder = getattr(self, 'drop_placeholder', None)
         if isinstance(placeholder, Gtk.Widget):
             placeholder.remove_css_class("drag-hover")
@@ -2844,6 +3234,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
     def on_import_wikipedia_action(self, *args):
         """Action handler to prompt for Wikipedia article topic or URL and import as tabs."""
+        self.set_auto_remove_tags(True)
         dialog = Adw.AlertDialog(
             heading=_("Import from Wikipedia"),
             body=_("Enter a Wikipedia article topic or full URL. Each article will be imported into a tab with all tags stripped for speech synthesis:")
@@ -3531,8 +3922,9 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
             if cur_page and not cur_text.strip() and (cur_page.get_title() == _("Untitled Document") or cur_page.get_title().startswith(_("Untitled"))):
                 first_title, first_text = chapters[0]
+                first_clean = clean_all_tags(first_text) if self.auto_remove_tags else first_text
                 buffer = self.main_text_view.get_buffer()
-                buffer.set_text(ensure_paragraph_gaps(first_text))
+                buffer.set_text(ensure_paragraph_gaps(first_clean))
                 start = buffer.get_start_iter()
                 buffer.place_cursor(start)
                 cur_page.set_title(first_title)
@@ -3566,8 +3958,9 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
         # If current tab is empty and untitled, load into it; otherwise open in a new tab
         if cur_page and not cur_text.strip() and (cur_page.get_title() == _("Untitled Document") or cur_page.get_title().startswith(_("Untitled"))):
+            clean_loaded_text = clean_all_tags(text) if self.auto_remove_tags else text
             buffer = self.main_text_view.get_buffer()
-            buffer.set_text(ensure_paragraph_gaps(text))
+            buffer.set_text(ensure_paragraph_gaps(clean_loaded_text))
             start = buffer.get_start_iter()
             buffer.place_cursor(start)
             cur_page.set_title(filename)
@@ -4128,19 +4521,64 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             GLib.source_remove(self._highlight_timeout_id)
             self._highlight_timeout_id = None
 
+    @property
+    def auto_remove_tags(self) -> bool:
+        if hasattr(self, '_auto_remove_tags_action') and self._auto_remove_tags_action:
+            state = self._auto_remove_tags_action.get_state()
+            if state:
+                return state.get_boolean()
+        return getattr(self, '_auto_remove_tags', True)
+
+    @auto_remove_tags.setter
+    def auto_remove_tags(self, value: bool):
+        self.set_auto_remove_tags(value)
+
+    def set_auto_remove_tags(self, active: bool):
+        self._auto_remove_tags = bool(active)
+        if hasattr(self, '_auto_remove_tags_action') and self._auto_remove_tags_action:
+            self._auto_remove_tags_action.set_state(GLib.Variant.new_boolean(bool(active)))
+
+    def _on_auto_remove_tags_change_state(self, action, value):
+        action.set_state(value)
+        self._auto_remove_tags = value.get_boolean()
+        if self._auto_remove_tags and self.main_text_view:
+            buf = self.main_text_view.get_buffer()
+            if buf and self.main_text_view.get_editable():
+                start, end = buf.get_bounds()
+                current_text = buf.get_text(start, end, True)
+                clean_text = clean_all_tags(current_text)
+                if clean_text != current_text:
+                    buf.begin_user_action()
+                    buf.set_text(clean_text)
+                    buf.end_user_action()
+
+    def show_font_zoom_popup(self):
+        pass
+
+    def hide_font_zoom_popup(self, *args, **kwargs):
+        pass
+
+    def dismiss_font_zoom_popup(self):
+        pass
+
+    def is_font_zoom_popup_showing(self):
+        return True
+
     def set_text_zoom(self, percentage: int):
         """Applies dynamic font scale to the text view only (between 70% and 1000%)"""
         self.text_zoom_level = max(70, min(int(percentage), 1000))
         css = f".zoomable-text text, .zoomable-text {{ font-size: {self.text_zoom_level}%; }}".encode("utf-8")
         self.text_zoom_provider.load_from_data(css)
+        if hasattr(self, 'font_zoom_label') and self.font_zoom_label:
+            self.font_zoom_label.set_label(f"{self.text_zoom_level}%")
 
     def zoom_in(self):
-        """Increases text font size by 10%"""
-        self.set_text_zoom(self.text_zoom_level + 10)
+        """Increases text font size by 20%"""
+        self.set_text_zoom(self.text_zoom_level + 20)
 
     def zoom_out(self):
-        """Decreases text font size by 10%"""
-        self.set_text_zoom(self.text_zoom_level - 10)
+        """Decreases text font size by 20%"""
+        self.set_text_zoom(self.text_zoom_level - 20)
 
     def zoom_reset(self):
         """Resets text font size to default 130%"""

@@ -223,11 +223,11 @@ class TestKeyboardShortcuts(unittest.TestCase):
         window.zoom_reset()
         self.assertEqual(window.text_zoom_level, 130)
 
-        # Zoom in increases by 10
+        # Zoom in increases by 20
         window.zoom_in()
-        self.assertEqual(window.text_zoom_level, 140)
+        self.assertEqual(window.text_zoom_level, 150)
 
-        # Zoom out decreases by 10
+        # Zoom out decreases by 20
         window.zoom_out()
         self.assertEqual(window.text_zoom_level, 130)
 
@@ -247,7 +247,7 @@ class TestKeyboardShortcuts(unittest.TestCase):
         window.zoom_reset()
         handled_plus = window._on_key_pressed(None, Gdk.KEY_plus, 0, Gdk.ModifierType.CONTROL_MASK)
         self.assertTrue(handled_plus)
-        self.assertEqual(window.text_zoom_level, 140)
+        self.assertEqual(window.text_zoom_level, 150)
 
         handled_minus = window._on_key_pressed(None, Gdk.KEY_minus, 0, Gdk.ModifierType.CONTROL_MASK)
         self.assertTrue(handled_minus)

@@ -57,6 +57,40 @@
   </developer>
 
   <releases>
+    <release version="1.8.17" date="2026-11-13">
+      <description>
+        <p>Version 1.8.17 introduces an automatic tag removal system with a persistent toggle under Tools that sanitizes documents on import and strips bracketed notes, citations, markdown pipes, hashes, and stars in real time as the user types or pastes, integrates a permanent, fully circular font zoom control capsule with 20% zoom increments directly into the tab bar preceding the New Tab button, adds hover-activated tab navigation buttons for effortless multi-tab cycling, and expands automated regression test coverage to 316 tests.</p>
+        <p>Features and Fixes Removed:</p>
+        <ul>
+          <li>Ephemeral Editor Hover Font Zoom Overlay: Removed the hover revealer overlay over the main text editor (font_zoom_revealer) that required 1.5 seconds of stationary cursor hover. Reason: The overlay was prone to accidentally disappearing when moving the cursor across widget boundaries towards the zoom buttons, hindering usability.</li>
+          <li>10% Font Zoom Granularity: Removed 10% incremental steps for font resizing in zoom_in() and zoom_out(). Reason: Scaled font sizes too slowly across larger reading displays; replaced with a more efficient and noticeable 20% step.</li>
+        </ul>
+        <p>Features and Fixes Added:</p>
+        <ul>
+          <li>Automatic All-Tag Removal Toggle (win.auto-remove-tags): Added a stateful menu action under Tools &gt; "Automatically Remove All Tags", default-enabled, and persisted in settings.json. Reason: Enables users to automatically strip parenthetical notes ( ), bracketed citations [ ], markdown pipes | |, heading hashes #, and emphasis stars * without manually triggering individual cleaning tools.</li>
+          <li>Auto-Enable on Import Workflows: Added automatic activation of win.auto-remove-tags whenever a user opens a file via File Open dialog, drags and drops documents onto the window, or triggers Wikipedia import. Reason: Guarantees imported text is immediately sanitized for speech synthesis without requiring manual pre-processing.</li>
+          <li>Real-Time Typing &amp; Pasting Tag Sanitization: Added real-time keypress interception and cursor tag completion (# and * blocked; closing ), ], | strips tag and whitespace; clipboard paste sanitizes all tags). Reason: Keeps document text clean for speech synthesis as the user writes or copies text into the editor.</li>
+          <li>Tab Bar Font Zoom Capsule (font_zoom_popup): Added a permanent zoom pill control ([-], percentage readout, [+]) inside AdwTabBar.end-action-widget immediately preceding the New Tab button (new_tab_button). Reason: Provides permanent, logical, and ergonomic access to document text sizing at all times without cluttering the text editor canvas.</li>
+          <li>Hover-Activated Tab Navigation Buttons: Added semi-transparent circular left and right navigation buttons (tab_nav_prev_btn, tab_nav_next_btn) housed within crossfade revealers overlaid on the tab bar. They smoothly appear when multiple tabs are open and the user hovers over the tab bar, allowing quick cycling between adjacent tabs and automatically scrolling overflowing tabs into view. Reason: Dramatically simplifies horizontal navigation when working with numerous overflowing tabs.</li>
+          <li>20% Font Zoom Increment: Updated zoom_in() and zoom_out() in src/window.py to increase or decrease text font size by 20% per action (buttons, Ctrl + / Ctrl -, and Ctrl + Mouse Scroll Wheel). Reason: Delivers faster, more noticeable font size changes per click while respecting 70% to 1000% bounds.</li>
+          <li>Automated Regression Tests (316 Tests): Added 19 unit tests in tests/test_auto_remove_tags_and_font_popup.py and 6 unit tests in tests/test_tab_navigation_buttons.py covering toggle persistence, import triggers, real-time typing/pasting tag stripping, tab bar zoom positioning, permanent visibility, circular styling, 20% zoom steps, and hover tab navigation. Reason: Prevents future regressions and validates all new accessibility features.</li>
+        </ul>
+        <p>Features and Fixes Updated:</p>
+        <ul>
+          <li>Document Loading Flow: Updated open_file_complete(), _on_files_dropped(), on_import_wikipedia_action(), and create_new_tab() to pass incoming text through clean_all_tags() when auto_remove_tags is active. Reason: Ensures all document loading pathways produce clean speech-ready text.</li>
+          <li>Clean Symbols for Zoom Buttons: Updated decrease and increase icons to list-remove-symbolic and list-add-symbolic in src/window.ui. Reason: Replaces boxed zoom icons with clean plus and minus symbols that match modern GNOME HIG design.</li>
+          <li>Wikimedia-Compliant User-Agent Header: Updated user-agent string to ReadAloud/1.8.17 (https://github.com/wbernard/parolu; contact@readaloud.app) in src/wikipedia_importer.py. Reason: Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version release.</li>
+          <li>Application Version Increment (1.8.17): Updated application version to 1.8.17 across meson.build, src/main.py, src/error_logger.py, src/wikipedia_importer.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_windows/build_arm64_portable.py, build_linux/build_deb.sh, build_linux/build_appimage.sh, build_linux/debian/control, build_macos/build_macos.sh, tests/test_about_window.py, tests/test_error_logger.py, and CI workflows. Reason: Adheres to semantic versioning standards for the new release.</li>
+        </ul>
+        <p>Visual Changes and UI Updates:</p>
+        <ul>
+          <li>Permanent Tab Bar Zoom Capsule (.font-zoom-tab-bar): Implemented a sleek capsule styling (border-radius: 9999px; background: alpha(currentColor, 0.06); border: 1px solid alpha(currentColor, 0.12)) integrated directly into the document tab bar. Reason: Blends naturally with AdwTabBar aesthetics while keeping zoom controls immediately accessible.</li>
+          <li>Semi-Transparent Hover Tab Navigation Chevrons (.tab-nav-btn): Added smooth 28x28px circular buttons styled with alpha(@window_bg_color, 0.76) and drop shadows that fade in at the left and right edges of the tab bar upon hover. Reason: Provides elegant, non-intrusive tab navigation controls without displacing the document tab strip.</li>
+          <li>Fully Circular Zoom Buttons (.circular): Styled font_decrease_btn and font_increase_btn with .circular and min-width: 28px; min-height: 28px; border-radius: 9999px. Reason: Replaces rectangular button targets with perfectly circular buttons with smooth hover feedback.</li>
+          <li>Bold Percentage Readout in Tab Bar: Styled font_zoom_label with font-weight: 600; min-width: 42px; text-align: center. Reason: Provides clear, high-contrast feedback of the current zoom level at a glance.</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.8.16" date="2026-11-10">
       <description>
         <p>Version 1.8.16 introduces a dynamic animated playback popup toolbar positioned directly above the bottom fixed toolbar—housing Pause, Rewind 15s, Forward 15s, and Stop controls that automatically slide into view during playback and collapse when idle to maximize document workspace—adds keyboard seek shortcuts (Ctrl+Left / Ctrl+Right), fixes redundant GStreamer bus signal watch cleanup warnings during playback termination and speed changes, and expands automated regression test coverage to 291 tests.</p>

@@ -49,17 +49,110 @@
         </child>
 
         <child type="top">
-          <object class="AdwTabBar" id="tab_bar">
-            <property name="view">tab_view</property>
-            <property name="autohide">false</property>
-            <property name="expand-tabs">false</property>
-            <property name="end-action-widget">
-              <object class="GtkButton" id="new_tab_button">
-                <property name="icon-name">list-add-symbolic</property>
-                <property name="tooltip-text" translatable="yes">New Tab (Ctrl+T)</property>
-                <property name="action-name">win.new-tab</property>
+          <object class="GtkOverlay" id="tab_bar_overlay">
+            <property name="child">
+              <object class="AdwTabBar" id="tab_bar">
+                <property name="view">tab_view</property>
+                <property name="autohide">false</property>
+                <property name="expand-tabs">false</property>
+                <property name="end-action-widget">
+                  <object class="GtkBox" id="tab_bar_end_box">
+                    <property name="orientation">horizontal</property>
+                    <property name="spacing">4</property>
+                    <property name="margin-end">2</property>
+                    <child>
+                      <object class="GtkBox" id="font_zoom_popup">
+                        <property name="orientation">horizontal</property>
+                        <property name="spacing">2</property>
+                        <property name="valign">center</property>
+                        <style>
+                          <class name="font-zoom-tab-bar"/>
+                        </style>
+                        <child>
+                          <object class="GtkButton" id="font_decrease_btn">
+                            <property name="icon-name">list-remove-symbolic</property>
+                            <property name="tooltip-text" translatable="yes">Decrease Font Size (Ctrl -)</property>
+                            <style>
+                              <class name="flat"/>
+                              <class name="circular"/>
+                            </style>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="font_zoom_label">
+                            <property name="label">130%</property>
+                            <property name="tooltip-text" translatable="yes">Current Font Size</property>
+                            <style>
+                              <class name="caption"/>
+                              <class name="dim-label"/>
+                            </style>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="font_increase_btn">
+                            <property name="icon-name">list-add-symbolic</property>
+                            <property name="tooltip-text" translatable="yes">Increase Font Size (Ctrl +)</property>
+                            <style>
+                              <class name="flat"/>
+                              <class name="circular"/>
+                            </style>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="new_tab_button">
+                        <property name="icon-name">list-add-symbolic</property>
+                        <property name="tooltip-text" translatable="yes">New Tab (Ctrl+T)</property>
+                        <property name="action-name">win.new-tab</property>
+                      </object>
+                    </child>
+                  </object>
+                </property>
               </object>
             </property>
+            <child type="overlay">
+              <object class="GtkRevealer" id="tab_nav_prev_revealer">
+                <property name="reveal-child">false</property>
+                <property name="transition-type">crossfade</property>
+                <property name="transition-duration">200</property>
+                <property name="halign">start</property>
+                <property name="valign">center</property>
+                <property name="margin-start">6</property>
+                <property name="child">
+                  <object class="GtkButton" id="tab_nav_prev_btn">
+                    <property name="icon-name">go-previous-symbolic</property>
+                    <property name="tooltip-text" translatable="yes">Previous Tab</property>
+                    <style>
+                      <class name="flat"/>
+                      <class name="circular"/>
+                      <class name="tab-nav-btn"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child type="overlay">
+              <object class="GtkRevealer" id="tab_nav_next_revealer">
+                <property name="reveal-child">false</property>
+                <property name="transition-type">crossfade</property>
+                <property name="transition-duration">200</property>
+                <property name="halign">end</property>
+                <property name="valign">center</property>
+                <property name="margin-end">152</property>
+                <property name="child">
+                  <object class="GtkButton" id="tab_nav_next_btn">
+                    <property name="icon-name">go-next-symbolic</property>
+                    <property name="tooltip-text" translatable="yes">Next Tab</property>
+                    <style>
+                      <class name="flat"/>
+                      <class name="circular"/>
+                      <class name="tab-nav-btn"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
           </object>
         </child>
 
@@ -327,6 +420,12 @@
     <section>
       <submenu>
         <attribute name="label" translatable="yes">Tools</attribute>
+        <section>
+          <item>
+            <attribute name="label" translatable="yes">Automatically Remove All Tags</attribute>
+            <attribute name="action">win.auto-remove-tags</attribute>
+          </item>
+        </section>
         <section>
           <item>
             <attribute name="label" translatable="yes">Remove ( ) Brackets</attribute>

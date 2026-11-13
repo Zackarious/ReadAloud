@@ -49,6 +49,40 @@ from .window import ReadAloudWindow
 from .bubble import ListenerBubbleWindow
 
 CHANGELOG_XML = r"""
+<p><em>Version 1.8.17 - (13 November 2026)</em></p>
+<p>Version 1.8.17 introduces an automatic tag removal system with a persistent toggle under Tools that sanitizes documents on import and strips bracketed notes, citations, markdown pipes, hashes, and stars in real time as the user types or pastes, integrates a permanent, fully circular font zoom control capsule with 20% zoom increments directly into the tab bar preceding the New Tab button, and expands automated regression test coverage to 310 tests.</p>
+
+<p><em>Features and Fixes Removed:</em></p>
+<ul>
+  <li><em>Ephemeral Editor Hover Font Zoom Overlay:</em> Removed the hover revealer overlay over the main text editor (font_zoom_revealer) that required 1.5 seconds of stationary cursor hover. <em>Reason:</em> The overlay was prone to accidentally disappearing when moving the cursor across widget boundaries towards the zoom buttons, hindering usability.</li>
+  <li><em>10% Font Zoom Granularity:</em> Removed 10% incremental steps for font resizing in zoom_in() and zoom_out(). <em>Reason:</em> Scaled font sizes too slowly across larger reading displays; replaced with a more efficient and noticeable 20% step.</li>
+</ul>
+
+<p><em>Features and Fixes Added:</em></p>
+<ul>
+  <li><em>Automatic All-Tag Removal Toggle (win.auto-remove-tags):</em> Added a stateful menu action under Tools &gt; "Automatically Remove All Tags", default-enabled, and persisted in settings.json. <em>Reason:</em> Enables users to automatically strip parenthetical notes ( ), bracketed citations [ ], markdown pipes | |, heading hashes #, and emphasis stars * without manually triggering individual cleaning tools.</li>
+  <li><em>Auto-Enable on Import Workflows:</em> Added automatic activation of win.auto-remove-tags whenever a user opens a file via File Open dialog, drags and drops documents onto the window, or triggers Wikipedia import. <em>Reason:</em> Guarantees imported text is immediately sanitized for speech synthesis without requiring manual pre-processing.</li>
+  <li><em>Real-Time Typing &amp; Pasting Tag Sanitization:</em> Added real-time keypress interception and cursor tag completion (# and * blocked; closing ), ], | strips tag and whitespace; clipboard paste sanitizes all tags). <em>Reason:</em> Keeps document text clean for speech synthesis as the user writes or copies text into the editor.</li>
+  <li><em>Tab Bar Font Zoom Capsule (font_zoom_popup):</em> Added a permanent zoom pill control ([-], percentage readout, [+]) inside AdwTabBar.end-action-widget immediately preceding the New Tab button (new_tab_button). <em>Reason:</em> Provides permanent, logical, and ergonomic access to document text sizing at all times without cluttering the text editor canvas.</li>
+  <li><em>20% Font Zoom Increment:</em> Updated zoom_in() and zoom_out() in src/window.py to increase or decrease text font size by 20% per action (buttons, Ctrl + / Ctrl -, and Ctrl + Mouse Scroll Wheel). <em>Reason:</em> Delivers faster, more noticeable font size changes per click while respecting 70% to 1000% bounds.</li>
+  <li><em>Automated Regression Tests (310 Tests):</em> Added 19 comprehensive unit tests in tests/test_auto_remove_tags_and_font_popup.py and updated tests/test_shortcuts.py covering toggle persistence, import triggers, real-time typing/pasting tag stripping, tab bar zoom positioning, permanent visibility, circular styling, and 20% zoom steps. <em>Reason:</em> Prevents future regressions and validates all new accessibility features.</li>
+</ul>
+
+<p><em>Features and Fixes Updated:</em></p>
+<ul>
+  <li><em>Document Loading Flow:</em> Updated open_file_complete(), _on_files_dropped(), on_import_wikipedia_action(), and create_new_tab() to pass incoming text through clean_all_tags() when auto_remove_tags is active. <em>Reason:</em> Ensures all document loading pathways produce clean speech-ready text.</li>
+  <li><em>Clean Symbols for Zoom Buttons:</em> Updated decrease and increase icons to list-remove-symbolic and list-add-symbolic in src/window.ui. <em>Reason:</em> Replaces boxed zoom icons with clean plus and minus symbols that match modern GNOME HIG design.</li>
+  <li><em>Wikimedia-Compliant User-Agent Header:</em> Updated user-agent string to ReadAloud/1.8.17 (https://github.com/wbernard/parolu; contact@readaloud.app) in src/wikipedia_importer.py. <em>Reason:</em> Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version release.</li>
+  <li><em>Application Version Increment (1.8.17):</em> Updated application version to 1.8.17 across meson.build, src/main.py, src/error_logger.py, src/wikipedia_importer.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_windows/build_arm64_portable.py, build_linux/build_deb.sh, build_linux/build_appimage.sh, build_linux/debian/control, build_macos/build_macos.sh, tests/test_about_window.py, tests/test_error_logger.py, and CI workflows. <em>Reason:</em> Adheres to semantic versioning standards for the new release.</li>
+</ul>
+
+<p><em>Visual Changes and UI Updates:</em></p>
+<ul>
+  <li><em>Permanent Tab Bar Zoom Capsule (.font-zoom-tab-bar):</em> Implemented a sleek capsule styling (border-radius: 9999px; background: alpha(currentColor, 0.06); border: 1px solid alpha(currentColor, 0.12)) integrated directly into the document tab bar. <em>Reason:</em> Blends naturally with AdwTabBar aesthetics while keeping zoom controls immediately accessible.</li>
+  <li><em>Fully Circular Zoom Buttons (.circular):</em> Styled font_decrease_btn and font_increase_btn with .circular and min-width: 28px; min-height: 28px; border-radius: 9999px. <em>Reason:</em> Replaces rectangular button targets with perfectly circular buttons with smooth hover feedback.</li>
+  <li><em>Bold Percentage Readout in Tab Bar:</em> Styled font_zoom_label with font-weight: 600; min-width: 42px; text-align: center. <em>Reason:</em> Provides clear, high-contrast feedback of the current zoom level at a glance.</li>
+</ul>
+
 <p><em>Version 1.8.16 - (10 November 2026)</em></p>
 <p>Version 1.8.16 introduces a dynamic animated playback popup toolbar positioned directly above the bottom fixed toolbar—housing Pause, Rewind 15s, Forward 15s, and Stop controls that automatically slide into view during playback and collapse when idle to maximize document workspace—adds keyboard seek shortcuts (Ctrl+Left / Ctrl+Right), fixes redundant GStreamer bus signal watch cleanup warnings during playback termination and speed changes, and expands automated regression test coverage to 291 tests.</p>
 
@@ -1426,7 +1460,7 @@ class AboutReadAloudWindow(Adw.Window):
     application_name = GObject.Property(type=str, default='ReadAloud')
     application_icon = GObject.Property(type=str, default='im.zackarious.ReadAloud')
     developer_name = GObject.Property(type=str, default='zackarious')
-    version = GObject.Property(type=str, default='Version 1.8.16 - (10 November 2026)')
+    version = GObject.Property(type=str, default='Version 1.8.17 - (13 November 2026)')
     website = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
     issue_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud/issues')
     support_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
@@ -1534,7 +1568,7 @@ class AboutReadAloudWindow(Adw.Window):
         box.append(dev_label)
 
         # Version
-        ver_label = Gtk.Label(label="Version 1.8.16 - (10 November 2026)")
+        ver_label = Gtk.Label(label="Version 1.8.17 - (13 November 2026)")
         ver_label.add_css_class("caption")
         ver_label.add_css_class("dim-label")
         box.append(ver_label)
@@ -2010,4 +2044,4 @@ def main(version):
     return result
 
 if __name__ == "__main__":
-    main("1.8.16")
+    main("1.8.17")

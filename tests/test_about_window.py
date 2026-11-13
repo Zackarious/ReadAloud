@@ -78,7 +78,7 @@ class TestAboutWindow(unittest.TestCase):
         self.assertEqual(about.props.website, 'https://github.com/Zackarious/ReadAloud')
         self.assertEqual(about.props.issue_url, 'https://github.com/Zackarious/ReadAloud/issues')
         self.assertEqual(about.props.comments, APP_DESCRIPTION)
-        self.assertEqual(about.props.version, 'Version 1.8.16 - (10 November 2026)')
+        self.assertEqual(about.props.version, 'Version 1.8.17 - (13 November 2026)')
         self.assertEqual(about.props.default_width, 600)
         self.assertEqual(about.props.default_height, 680)
 
@@ -187,8 +187,8 @@ class TestAboutWindow(unittest.TestCase):
         from src.main import CrashReportDialog
         sample_crash = {
             "pid": 123456,
-            "version": "1.8.16",
-            "start_time": "2026-11-10T10:00:00Z",
+            "version": "1.8.17",
+            "start_time": "2026-11-13T10:00:00Z",
             "state": "synthesizing",
             "activity": {
                 "voice": "en_GB-alba-medium",
