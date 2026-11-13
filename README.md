@@ -374,6 +374,61 @@ sudo ninja -C build install
 
 ---
 
+## 🧪 Automated Testing & Quality Assurance Suite
+
+### Purpose of Testing
+Automated testing in ReadAloud serves as the bedrock of application stability, security, and performance across diverse desktop operating systems. Because ReadAloud unites real-time on-device neural text-to-speech synthesis with a reactive GTK 4 and Libadwaita user interface, comprehensive test coverage is essential to guarantee that every subsystem performs predictably under intensive workloads. The test suite thoroughly validates the entire audio synthesis pipeline, from local ONNX model discovery, voice inference, and calibrated playback speeds to pitch preservation and multi-format audio encoding in MP3, WAV, OGG, and FLAC. It rigorously exercises document parsing across plain text, Markdown, PDF, and EPUB files, ensuring that chapter extraction, symbol cleansing, and intelligent sentence segmentation function flawlessly without dropping text or creating unnatural pauses. Furthermore, the tests verify thread-safe coordination between background audio generation workers and the main GTK application loop, confirming that progress HUDs, cancellation signals, and dynamic word highlighting remain synchronized without race conditions or memory leaks. Integration tests also simulate network resilience, validating Wikimedia REST API autocomplete suggestions, weekly Top 25 Report scraping, in-memory thumbnail caching, and graceful offline fallbacks. By maintaining regression resistance across every core subsystem, automated testing guarantees an ethical, completely offline, and dependable reading companion for every user.
+
+### Test Execution & Results Summary
+
+Automated testing was conducted on **13 November 2026** alongside the release of version **v1.8.18**. A total of **326 tests** were executed across the entire test suite covering 27 test modules. **326 tests passed and 0 tests failed** (0 errors), achieving a **100% pass rate** in approximately 4.9 seconds.
+
+| Metric | Result |
+| :--- | :--- |
+| **Date Conducted** | 13 November 2026 |
+| **Target Version** | ReadAloud v1.8.18 |
+| **Total Tests Conducted** | **326** |
+| **Tests Passed** | **326 (100%)** |
+| **Tests Failed** | **0 (0%)** |
+| **Errors** | **0** |
+| **Execution Duration** | 4.91 seconds |
+| **Test Runner** | Python `unittest` (`python3 -m unittest discover -s tests`) |
+
+### Test Suite Module Breakdown
+
+| Test Module | Focus Area / Subsystem | Tests Conducted | Passed | Failed |
+| :--- | :--- | :---: | :---: | :---: |
+| `tests/test_about_window.py` | About dialog metadata, version parity, and GPLv3 attribution | 7 | 7 | 0 |
+| `tests/test_audio_playback_fallback.py` | Audio pipeline fallbacks across GStreamer and SoundDevice drivers | 8 | 8 | 0 |
+| `tests/test_auto_remove_tags_and_font_popup.py` | XML/HTML tag stripping, cleanup regexes, and font zoom capsule | 19 | 19 | 0 |
+| `tests/test_bubble.py` | Word tracking bubble geometry, layout coordinates, and highlight tags | 37 | 37 | 0 |
+| `tests/test_button_recolour.py` | Signature highlight yellow `#f6d32d` button styling and states | 5 | 5 | 0 |
+| `tests/test_cached_playback.py` | Audio chunk caching, buffer memory reuse, and repeat playback | 7 | 7 | 0 |
+| `tests/test_demos.py` | Preset voice demo scripts, speed/pitch configurations, and overwrite guards | 6 | 6 | 0 |
+| `tests/test_document_importer.py` | Multi-format file ingestion, EPUB chapter extraction, and text decoding | 6 | 6 | 0 |
+| `tests/test_drag_and_drop.py` | File dropzone signaling, multi-file queuing, and drag hover feedback | 18 | 18 | 0 |
+| `tests/test_dropdown_full_text.py` | Dropdown text label overflow protection and ellipsis handling | 2 | 2 | 0 |
+| `tests/test_editable_during_playback.py` | Document editor read-only locking and post-playback restoration | 1 | 1 | 0 |
+| `tests/test_error_logger.py` | Structured crash logging, diagnostics formatting, and log rotation | 11 | 11 | 0 |
+| `tests/test_export_filename.py` | Audio export path sanitization and multi-format filename generation | 5 | 5 | 0 |
+| `tests/test_fixed_pitch_and_dropdown_tick.py` | Pitch preservation across speed changes and active menu checkmarks | 4 | 4 | 0 |
+| `tests/test_generation_cancellation.py` | Instant worker cancellation, background thread termination, and HUD reset | 6 | 6 | 0 |
+| `tests/test_highlight_and_language_tick.py` | Dynamic word highlight tag lifecycle and language radio checkmarks | 8 | 8 | 0 |
+| `tests/test_paths.py` | Cross-platform model paths, user directories, and GResource locations | 6 | 6 | 0 |
+| `tests/test_pause_voice_switch.py` | Playback pause/resume cycles, voice hot-swapping, and position markers | 10 | 10 | 0 |
+| `tests/test_playback_seek_buttons.py` | Backward and forward 15-second skip buttons and seek boundaries | 10 | 10 | 0 |
+| `tests/test_shortcuts.py` | Keyboard accelerators (`Space`, `Escape`, `Ctrl+O`, `Ctrl+S`, `Ctrl+T`) | 16 | 16 | 0 |
+| `tests/test_speed_dropdown.py` | Speech speed menu items (`Slower` through `Super Fast`) and model rates | 6 | 6 | 0 |
+| `tests/test_system_integrity.py` | Model discovery, metadata validation, and ONNX Runtime environment checks | 12 | 12 | 0 |
+| `tests/test_tab_navigation_buttons.py` | Tab bar hover chevrons, auto-scroll positioning, and crossfade signals | 6 | 6 | 0 |
+| `tests/test_tab_system.py` | Multi-tab document management, tab reordering, and close confirmation | 19 | 19 | 0 |
+| `tests/test_text_tools.py` | Sentence segmentation, symbol cleansing, paragraph gaps, and hyphenation | 56 | 56 | 0 |
+| `tests/test_wikipedia_importer.py` | REST API autocomplete, Top 25 table scraping, and thumbnail caching | 25 | 25 | 0 |
+| `tests/test_word_wrap.py` | TextView margin calculations, word wrapping, and window resize adaptability | 10 | 10 | 0 |
+| **Total Test Suite** | **Comprehensive Full System & Regression Validation** | **326** | **326** | **0** |
+
+---
+
 ## 📁 Repository Structure
 
 ```
