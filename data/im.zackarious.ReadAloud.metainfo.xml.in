@@ -57,6 +57,41 @@
   </developer>
 
   <releases>
+    <release version="1.8.18" date="2026-11-13">
+      <description>
+        <p>Version 1.8.18 introduces an expandable and condensable right pane on the Wikipedia Importer that scrapes the weekly Top 25 Trending topics on Wikipedia complete with rich article thumbnail preview images and one-click import, adds semi-transparent hover-activated tab navigation buttons with auto-scrolling for multi-tab document cycling, recolours primary action buttons (Open Text File, Play/Read Text, Pause, and Stop) to the signature reading highlight yellow (#f6d32d) with a crisp new scalable vector folder icon, and expands automated regression test coverage to 326 tests.</p>
+        <p>Features and Fixes Removed:</p>
+        <ul>
+          <li>Legacy Raster PNG Open File Icon: Removed the embedded base64 raster PNG icon for im.zackarious.ReadAloud.folder-open in data/icons and src/icons. Reason: The fixed-pixel raster image could not be styled with dynamic CSS colors and exhibited blurring at high DPI scaling; replaced with a crisp, scalable vector SVG icon matching the exact Adwaita highlight yellow (#f6d32d).</li>
+          <li>Fixed Dialog Width on Wikipedia Importer: Removed fixed width constraints from the Wikipedia Importer dialog. Reason: Prevented side-by-side presentation of rich preview content; replaced with dynamic dialog resizing (450px compact, 920px wide layout) allowing seamless exploration of trending topics alongside the search interface.</li>
+        </ul>
+        <p>Features and Fixes Added:</p>
+        <ul>
+          <li>Wikipedia Top 25 Trending Topics Right Pane: Added an expandable sliding right pane (trending_revealer) in on_import_wikipedia_action() in src/window.py that scrapes and displays Wikipedia's official weekly Top 25 Report (Wikipedia:Top_25_Report). Reason: Gives users immediate access to popular and trending knowledge topics to read aloud without needing to brainstorm search queries.</li>
+          <li>Asynchronous Article Thumbnail Image Loading: Integrated asynchronous thumbnail image fetching (fetch_thumbnail_bytes) with in-memory caching and 60x48 rounded picture displays for each trending article. Reason: Delivers rich visual context for trending topics while keeping the UI responsive and thread-safe.</li>
+          <li>One-Click Trending Article Import &amp; Search Sync: Added quick "Import" action buttons on each trending row and wired row activation to populate the main search entry. Reason: Streamlines document import so users can start listening to any trending article with a single click.</li>
+          <li>Live Trending Refresh &amp; Caching (fetch_wikipedia_top_25): Added 1-hour in-memory report caching and a manual refresh button (view-refresh-symbolic) in the trending pane header. Reason: Ensures instant pane re-expansion while providing on-demand live scraping of current Wikipedia reports.</li>
+          <li>Hover-Activated Tab Navigation Buttons: Added semi-transparent circular navigation buttons (tab_nav_prev_btn, tab_nav_next_btn) overlaid on the tab bar that smoothly crossfade into view when 2 or more tabs are open and the user hovers over the tab bar. Reason: Enables quick, effortless cycling across multiple open tabs with automatic horizontal scroll positioning.</li>
+          <li>Highlight Yellow Action Button Recolouring (#f6d32d): Recoloured the Open Text File button (open_button), Read Text button (read_button), Pause button (pause_button), and Stop button (stop_button) to match the exact yellow highlight color (#f6d32d — GNOME Adwaita Yellow 3) used during text playback. Reason: Establishes clear visual hierarchy and binds key document loading and playback action controls to the reader's active highlighting aesthetic.</li>
+          <li>Scalable Vector Open Folder Icon (im.zackarious.ReadAloud.folder-open.svg): Designed and bundled a modern 64x64 scalable SVG icon with #f6d32d front flap and #e5a50a back tab into the GResource bundle. Reason: Guarantees high-DPI sharpness and visual consistency across all desktop scaling factors.</li>
+          <li>Automated Regression Test Suite Expansion (326 Tests): Added comprehensive automated tests in tests/test_button_recolour.py, tests/test_tab_navigation_buttons.py, and tests/test_wikipedia_importer.py covering Top 25 table scraping, fallback parsing, right pane expansion/collapse, row activation, quick import dispatch, button recolouring CSS, and hover navigation behavior. Reason: Guarantees long-term stability and regression resistance across all new features.</li>
+        </ul>
+        <p>Features and Fixes Updated:</p>
+        <ul>
+          <li>Wikipedia Importer Responsive Layout: Updated on_import_wikipedia_action() in src/window.py to dynamically adapt dialog width between 450px condensed and 920px expanded layouts, smoothly adjusting parent window dimensions when needed. Reason: Provides an unconstrained, comfortable dual-pane reading and search experience across various display resolutions.</li>
+          <li>Action Button State Styling (.highlight-accent-btn): Added hover (#f8e45c with 14% yellow tint), active (#e5a50a with 24% yellow tint), and disabled (38% opacity) CSS states in src/window.py. Reason: Provides smooth, accessible tactile feedback during user interaction across all primary buttons.</li>
+          <li>Tab Navigation Signal Synchronization: Connected page-attached, page-detached, and page-reordered signals on the AdwTabView to automatically update navigation button sensitivity and visibility. Reason: Keeps tab navigation state strictly synchronized whenever tabs are opened, closed, or moved.</li>
+          <li>Wikimedia-Compliant User-Agent Header: Updated user-agent string to ReadAloud/1.8.18 (https://github.com/wbernard/parolu; contact@readaloud.app) in src/wikipedia_importer.py. Reason: Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version release.</li>
+          <li>Application Version Increment (1.8.18): Updated application version to 1.8.18 across meson.build, src/main.py, src/error_logger.py, src/wikipedia_importer.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_windows/build_arm64_portable.py, build_linux/build_deb.sh, build_linux/build_appimage.sh, build_linux/debian/control, build_macos/build_macos.sh, tests/test_about_window.py, tests/test_error_logger.py, and CI workflows. Reason: Adheres to semantic versioning standards for the new release.</li>
+        </ul>
+        <p>Visual Changes and UI Updates:</p>
+        <ul>
+          <li>Signature Highlight Yellow Theme Accent: Applied #f6d32d to open_button, read_button, pause_button, and stop_button, paired with the newly designed vector folder icon. Reason: Unifies the visual language of the application by echoing the editor's text reading highlight across primary control buttons.</li>
+          <li>Expandable Two-Column Wikipedia Dialog: Styled the Top 25 Trending right pane with .trending-pane-card, .trending-rank-badge (#f6d32d pill), .trending-thumb (rounded image frame), and smooth slide-right revealer animation. Reason: Presents trending knowledge in a clean, organized, magazine-style overview.</li>
+          <li>Hover Tab Bar Chevrons (.tab-nav-btn): Styled semi-transparent circular buttons with translucent backdrop blur (alpha(@window_bg_color, 0.76)), subtle drop shadow, and smooth hover scale feedback. Reason: Delivers non-intrusive, floating navigation controls that appear only when hovering over multiple open tabs.</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.8.17" date="2026-11-13">
       <description>
         <p>Version 1.8.17 introduces an automatic tag removal system with a persistent toggle under Tools that sanitizes documents on import and strips bracketed notes, citations, markdown pipes, hashes, and stars in real time as the user types or pastes, integrates a permanent, fully circular font zoom control capsule with 20% zoom increments directly into the tab bar preceding the New Tab button, adds hover-activated tab navigation buttons for effortless multi-tab cycling, and expands automated regression test coverage to 316 tests.</p>

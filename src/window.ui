@@ -18,6 +18,9 @@
                 <property name="icon-name">im.zackarious.ReadAloud.folder-open</property>
                 <property name="tooltip-text" translatable="yes">Open Text File</property>
                 <property name="action-name">win.open</property>
+                <style>
+                  <class name="highlight-accent-btn"/>
+                </style>
               </object>
             </child>
             <child type="start">
@@ -188,6 +191,9 @@
                         <property name="tooltip-text" translatable="yes">Pause</property>
                         <property name="sensitive">false</property>
                         <property name="valign">GTK_ALIGN_CENTER</property>
+                        <style>
+                          <class name="highlight-accent-btn"/>
+                        </style>
                       </object>
                     </child>
 
@@ -220,6 +226,9 @@
                         <property name="icon-name">media-playback-stop-symbolic</property>
                         <property name="tooltip-text" translatable="yes">Stop</property>
                         <property name="valign">GTK_ALIGN_CENTER</property>
+                        <style>
+                          <class name="highlight-accent-btn"/>
+                        </style>
                       </object>
                     </child>
 
@@ -325,6 +334,9 @@
                         <property name="tooltip-text" translatable="yes">Read Text</property>
                         <property name="valign">GTK_ALIGN_CENTER</property>
                         <signal name="clicked" handler="read_text" swapped="no"/>
+                        <style>
+                          <class name="highlight-accent-btn"/>
+                        </style>
                       </object>
                     </child>
 

@@ -179,15 +179,15 @@ jobs:
       - name: Create Portable Package
         shell: cmd
         run: |
-          7z a -t7z -m0=lzma2 -mx=9 -mfb=64 -md=64m -ms=on -v1800m dist\ReadAloud-1.8.17-Windows-Portable-x64.7z .\dist\ReadAloud
+          7z a -t7z -m0=lzma2 -mx=9 -mfb=64 -md=64m -ms=on -v1800m dist\ReadAloud-1.8.18-Windows-Portable-x64.7z .\dist\ReadAloud
 
       - name: Upload Standalone Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ReadAloud-Windows-x64
           path: |
-            dist/ReadAloud-1.8.17-Windows-Portable-x64.7z*
-            dist/ReadAloud-1.8.17-Windows-Setup-x64*
+            dist/ReadAloud-1.8.18-Windows-Portable-x64.7z*
+            dist/ReadAloud-1.8.18-Windows-Setup-x64*
 
       - name: Publish Windows Assets to GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -195,6 +195,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ls -lh dist/ReadAloud-1.8.17-Windows-Setup-x64*
-          ls -lh dist/ReadAloud-1.8.17-Windows-Portable-x64.7z*
-          gh release upload "${{ github.ref_name }}" dist/ReadAloud-1.8.17-Windows-Setup-x64* dist/ReadAloud-1.8.17-Windows-Portable-x64.7z* --clobber
+          ls -lh dist/ReadAloud-1.8.18-Windows-Setup-x64*
+          ls -lh dist/ReadAloud-1.8.18-Windows-Portable-x64.7z*
+          gh release upload "${{ github.ref_name }}" dist/ReadAloud-1.8.18-Windows-Setup-x64* dist/ReadAloud-1.8.18-Windows-Portable-x64.7z* --clobber

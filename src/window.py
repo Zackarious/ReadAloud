@@ -41,6 +41,8 @@ from .wikipedia_importer import (
     fetch_wikipedia_suggestions,
     fetch_thumbnail_bytes,
     WikipediaSuggestion,
+    WikipediaTrendingTopic,
+    fetch_wikipedia_top_25,
 )
 
 def _ensure_resources_loaded():
@@ -876,6 +878,120 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             -gtk-icon-size: 27px;
         }
 
+        /* Highlight-accent buttons (Open, Play, Pause, Stop) in signature yellow #f6d32d */
+        #open_button,
+        #read_button,
+        #pause_button,
+        #stop_button,
+        .highlight-accent-btn,
+        headerbar button#open_button {
+            color: #f6d32d;
+        }
+
+        #open_button image,
+        #read_button image,
+        #pause_button image,
+        #stop_button image,
+        .highlight-accent-btn image {
+            color: #f6d32d;
+        }
+
+        #open_button:hover:not(:disabled),
+        #read_button:hover:not(:disabled),
+        #pause_button:hover:not(:disabled),
+        #stop_button:hover:not(:disabled),
+        .highlight-accent-btn:hover:not(:disabled),
+        headerbar button#open_button:hover:not(:disabled) {
+            color: #f8e45c;
+            background-color: alpha(#f6d32d, 0.14);
+        }
+
+        #open_button:hover:not(:disabled) image,
+        #read_button:hover:not(:disabled) image,
+        #pause_button:hover:not(:disabled) image,
+        #stop_button:hover:not(:disabled) image,
+        .highlight-accent-btn:hover:not(:disabled) image {
+            color: #f8e45c;
+        }
+
+        #open_button:active:not(:disabled),
+        #read_button:active:not(:disabled),
+        #pause_button:active:not(:disabled),
+        #stop_button:active:not(:disabled),
+        .highlight-accent-btn:active:not(:disabled),
+        headerbar button#open_button:active:not(:disabled) {
+            color: #e5a50a;
+            background-color: alpha(#f6d32d, 0.24);
+        }
+
+        #open_button:active:not(:disabled) image,
+        #read_button:active:not(:disabled) image,
+        #pause_button:active:not(:disabled) image,
+        #stop_button:active:not(:disabled) image,
+        .highlight-accent-btn:active:not(:disabled) image {
+            color: #e5a50a;
+        }
+
+        #read_button:disabled,
+        #pause_button:disabled,
+        #stop_button:disabled,
+        .highlight-accent-btn:disabled {
+            color: alpha(#f6d32d, 0.38);
+            opacity: 0.50;
+        }
+
+        #read_button:disabled image,
+        #pause_button:disabled image,
+        #stop_button:disabled image,
+        .highlight-accent-btn:disabled image {
+            color: alpha(#f6d32d, 0.38);
+        }
+
+        /* Wikipedia Top 25 Trending Topics Right Pane */
+        .trending-pane-card {
+            background-color: alpha(currentColor, 0.03);
+            border: 1px solid alpha(currentColor, 0.08);
+            border-radius: 12px;
+        }
+
+        .trending-rank-badge {
+            font-weight: 700;
+            font-size: 11px;
+            color: #f6d32d;
+            background-color: alpha(#f6d32d, 0.16);
+            border-radius: 6px;
+            padding: 2px 6px;
+            min-width: 24px;
+        }
+
+        .trending-thumb {
+            border-radius: 8px;
+            border: 1px solid alpha(currentColor, 0.08);
+            background-color: alpha(currentColor, 0.04);
+        }
+
+        .trending-row {
+            padding: 6px 8px;
+            border-radius: 8px;
+            transition: background-color 120ms ease;
+        }
+
+        .trending-row:hover {
+            background-color: alpha(currentColor, 0.05);
+        }
+
+        .trending-import-btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .trending-toggle-btn {
+            font-weight: 600;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
         .header-demos-btn {
             min-height: 42px;
             padding: 0 14px;
@@ -1154,13 +1270,17 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         if hasattr(self, 'stop_button') and hasattr(self.stop_button, 'get_style_context'):
             GLib.idle_add(self.stop_button.get_style_context().add_class, "action-icon-btn")
             GLib.idle_add(self.stop_button.get_style_context().add_class, "flat")
+            GLib.idle_add(self.stop_button.get_style_context().add_class, "highlight-accent-btn")
         GLib.idle_add(self.read_button.get_style_context().add_class, "action-icon-btn")
         GLib.idle_add(self.read_button.get_style_context().add_class, "flat")
+        GLib.idle_add(self.read_button.get_style_context().add_class, "highlight-accent-btn")
         GLib.idle_add(self.pause_button.get_style_context().add_class, "action-icon-btn")
         GLib.idle_add(self.pause_button.get_style_context().add_class, "flat")
+        GLib.idle_add(self.pause_button.get_style_context().add_class, "highlight-accent-btn")
         GLib.idle_add(self.save_button.get_style_context().add_class, "action-icon-btn")
         GLib.idle_add(self.save_button.get_style_context().add_class, "flat")
         GLib.idle_add(self.open_button.get_style_context().add_class, "header-icon-btn")
+        GLib.idle_add(self.open_button.get_style_context().add_class, "highlight-accent-btn")
         if hasattr(self, 'wiki_button') and self.wiki_button:
             wiki_paintable = self._get_wikipedia_logo_paintable()
             if wiki_paintable:
@@ -3239,12 +3359,17 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             heading=_("Import from Wikipedia"),
             body=_("Enter a Wikipedia article topic or full URL. Each article will be imported into a tab with all tags stripped for speech synthesis:")
         )
+        dialog.set_content_width(450)
 
-        content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        content_box.set_margin_top(4)
-        content_box.set_margin_bottom(4)
-        content_box.set_margin_start(16)
-        content_box.set_margin_end(16)
+        main_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        main_hbox.set_margin_top(4)
+        main_hbox.set_margin_bottom(4)
+        main_hbox.set_margin_start(16)
+        main_hbox.set_margin_end(16)
+
+        left_col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        left_col.set_size_request(390, -1)
+        left_col.set_hexpand(False)
 
         # Wikipedia Globe Logo
         logo_texture = self._get_wikipedia_logo_paintable()
@@ -3254,8 +3379,16 @@ class ReadAloudWindow(Adw.ApplicationWindow):
             logo_picture.set_can_shrink(True)
             logo_picture.set_size_request(72, 72)
             logo_picture.set_halign(Gtk.Align.CENTER)
-            logo_picture.set_margin_bottom(4)
-            content_box.append(logo_picture)
+            logo_picture.set_margin_bottom(2)
+            left_col.append(logo_picture)
+
+        # Expand / Condense Trending Topics Toggle Button
+        toggle_trending_btn = Gtk.Button(label=_("Trending Topics (Top 25)  ▶"))
+        toggle_trending_btn.add_css_class("pill")
+        toggle_trending_btn.add_css_class("trending-toggle-btn")
+        toggle_trending_btn.set_tooltip_text(_("Explore the top 25 trending articles on Wikipedia with preview images"))
+        toggle_trending_btn.set_halign(Gtk.Align.CENTER)
+        left_col.append(toggle_trending_btn)
 
         # Search Entry with Autocomplete Dropdown
         search_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -3289,7 +3422,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         sugg_revealer.set_child(sugg_frame)
         search_vbox.append(sugg_revealer)
 
-        content_box.append(search_vbox)
+        left_col.append(search_vbox)
 
         # Debounced suggestions fetching
         search_timer_id = [None]
@@ -3444,7 +3577,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
 
         chk_related = Gtk.CheckButton(label=_("Import related internal articles as separate tabs"))
         chk_related.set_active(False)
-        content_box.append(chk_related)
+        left_col.append(chk_related)
 
         limit_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         limit_box.set_margin_start(24)
@@ -3454,7 +3587,7 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         limit_box.append(limit_label)
         limit_box.append(limit_spin)
         limit_box.set_sensitive(False)
-        content_box.append(limit_box)
+        left_col.append(limit_box)
 
         def on_related_toggled(chk):
             limit_box.set_sensitive(chk.get_active())
@@ -3486,9 +3619,273 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         link_btn.set_halign(Gtk.Align.CENTER)
         donate_card.append(link_btn)
 
-        content_box.append(donate_card)
+        left_col.append(donate_card)
+        main_hbox.append(left_col)
 
-        dialog.set_extra_child(content_box)
+        # Right Pane: Top 25 Trending Topics (Expandable / Condensable)
+        trending_revealer = Gtk.Revealer()
+        trending_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_RIGHT)
+        trending_revealer.set_reveal_child(False)
+
+        right_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+        v_sep = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        right_container.append(v_sep)
+
+        trending_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        trending_vbox.set_size_request(450, -1)
+        right_container.append(trending_vbox)
+        trending_revealer.set_child(right_container)
+        main_hbox.append(trending_revealer)
+
+        # Trending Header (Title, Subtitle, Refresh, Collapse)
+        trending_header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        trending_title_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        trending_title_box.set_hexpand(True)
+
+        trending_title_lbl = Gtk.Label(label=_("Trending on Wikipedia (Top 25)"))
+        trending_title_lbl.add_css_class("heading")
+        trending_title_lbl.set_halign(Gtk.Align.START)
+
+        trending_sub_lbl = Gtk.Label(label=_("Most Popular Articles of the Week"))
+        trending_sub_lbl.add_css_class("caption")
+        trending_sub_lbl.add_css_class("dim-label")
+        trending_sub_lbl.set_halign(Gtk.Align.START)
+        trending_sub_lbl.set_ellipsize(3)
+
+        trending_title_box.append(trending_title_lbl)
+        trending_title_box.append(trending_sub_lbl)
+        trending_header.append(trending_title_box)
+
+        refresh_btn = Gtk.Button.new_from_icon_name("view-refresh-symbolic")
+        refresh_btn.add_css_class("flat")
+        refresh_btn.add_css_class("circular")
+        refresh_btn.set_tooltip_text(_("Refresh Trending Topics"))
+        trending_header.append(refresh_btn)
+
+        collapse_btn = Gtk.Button.new_from_icon_name("pan-end-symbolic")
+        collapse_btn.add_css_class("flat")
+        collapse_btn.add_css_class("circular")
+        collapse_btn.set_tooltip_text(_("Condense Right Pane"))
+        trending_header.append(collapse_btn)
+
+        trending_vbox.append(trending_header)
+
+        # Content Stack: Loading, Error, List
+        trending_stack = Gtk.Stack()
+        trending_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+
+        # View 1: Loading View
+        loading_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        loading_box.set_valign(Gtk.Align.CENTER)
+        loading_box.set_size_request(-1, 380)
+        spinner = Gtk.Spinner()
+        spinner.set_size_request(32, 32)
+        spinner.start()
+        loading_lbl = Gtk.Label(label=_("Scraping Top 25 Trending Topics from Wikipedia…"))
+        loading_lbl.add_css_class("dim-label")
+        loading_box.append(spinner)
+        loading_box.append(loading_lbl)
+        trending_stack.add_named(loading_box, "loading")
+
+        # View 2: Error View
+        error_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        error_box.set_valign(Gtk.Align.CENTER)
+        error_box.set_size_request(-1, 380)
+        error_lbl = Gtk.Label(label=_("Could not load Top 25 Report."))
+        error_lbl.add_css_class("dim-label")
+        retry_btn = Gtk.Button(label=_("Retry"))
+        retry_btn.add_css_class("pill")
+        retry_btn.set_halign(Gtk.Align.CENTER)
+        error_box.append(error_lbl)
+        error_box.append(retry_btn)
+        trending_stack.add_named(error_box, "error")
+
+        # View 3: List View
+        trending_scrolled = Gtk.ScrolledWindow()
+        trending_scrolled.set_propagate_natural_height(True)
+        trending_scrolled.set_min_content_height(380)
+        trending_scrolled.set_max_content_height(460)
+        trending_scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+
+        trending_listbox = Gtk.ListBox()
+        trending_listbox.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        trending_listbox.add_css_class("rich-list")
+        trending_listbox.add_css_class("trending-pane-card")
+        trending_scrolled.set_child(trending_listbox)
+        trending_stack.add_named(trending_scrolled, "list")
+
+        trending_vbox.append(trending_stack)
+
+        def clear_trending_list():
+            child = trending_listbox.get_first_child()
+            while child:
+                nxt = child.get_next_sibling()
+                trending_listbox.remove(child)
+                child = nxt
+
+        def populate_trending(report_title, items):
+            if report_title:
+                trending_sub_lbl.set_text(report_title)
+            clear_trending_list()
+            if not items:
+                error_lbl.set_text(_("No trending topics found in Top 25 Report."))
+                trending_stack.set_visible_child_name("error")
+                return
+
+            for topic in items:
+                row = Gtk.ListBoxRow()
+                row._wiki_topic = topic
+                row._wiki_title = topic.title
+
+                row_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+                row_box.add_css_class("trending-row")
+
+                # Rank Badge
+                rank_lbl = Gtk.Label(label=f"#{topic.rank}")
+                rank_lbl.add_css_class("trending-rank-badge")
+                rank_lbl.set_valign(Gtk.Align.CENTER)
+                row_box.append(rank_lbl)
+
+                # Thumbnail Image Container
+                thumb_box = Gtk.Box()
+                thumb_box.set_size_request(60, 48)
+                thumb_box.set_valign(Gtk.Align.CENTER)
+                thumb_box.set_halign(Gtk.Align.CENTER)
+                thumb_box.add_css_class("trending-thumb")
+
+                fallback_icon = Gtk.Image.new_from_icon_name("text-x-generic-symbolic")
+                fallback_icon.set_pixel_size(24)
+                fallback_icon.set_valign(Gtk.Align.CENTER)
+                fallback_icon.set_halign(Gtk.Align.CENTER)
+                thumb_box.append(fallback_icon)
+                row_box.append(thumb_box)
+
+                if topic.image_url:
+                    def load_trending_thumb(t_url, container, fallback):
+                        def thumb_worker():
+                            t_bytes = fetch_thumbnail_bytes(t_url)
+                            if t_bytes:
+                                def apply_thumb():
+                                    try:
+                                        glib_b = GLib.Bytes.new(t_bytes)
+                                        tex = Gdk.Texture.new_from_bytes(glib_b)
+                                        pic = Gtk.Picture.new_for_paintable(tex)
+                                        pic.set_content_fit(Gtk.ContentFit.COVER)
+                                        pic.set_can_shrink(True)
+                                        pic.set_size_request(60, 48)
+                                        container.remove(fallback)
+                                        container.append(pic)
+                                    except Exception:
+                                        pass
+                                GLib.idle_add(apply_thumb)
+                        threading.Thread(target=thumb_worker, daemon=True).start()
+                    load_trending_thumb(topic.image_url, thumb_box, fallback_icon)
+
+                # Text Column: Title, Views, Notes
+                text_col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+                text_col.set_hexpand(True)
+                text_col.set_valign(Gtk.Align.CENTER)
+
+                t_title_lbl = Gtk.Label(label=topic.title)
+                t_title_lbl.set_halign(Gtk.Align.START)
+                t_title_lbl.add_css_class("heading")
+                t_title_lbl.set_ellipsize(3)
+                text_col.append(t_title_lbl)
+
+                views_lbl = Gtk.Label(label=f"👁 {topic.views} views")
+                views_lbl.set_halign(Gtk.Align.START)
+                views_lbl.add_css_class("caption")
+                views_lbl.add_css_class("dim-label")
+                text_col.append(views_lbl)
+
+                if topic.notes:
+                    notes_lbl = Gtk.Label(label=topic.notes)
+                    notes_lbl.set_halign(Gtk.Align.START)
+                    notes_lbl.add_css_class("caption")
+                    notes_lbl.set_max_width_chars(32)
+                    notes_lbl.set_wrap(True)
+                    notes_lbl.set_lines(2)
+                    notes_lbl.set_ellipsize(3)
+                    text_col.append(notes_lbl)
+
+                row_box.append(text_col)
+
+                # Quick Direct Import Button
+                quick_import_btn = Gtk.Button(label=_("Import"))
+                quick_import_btn.add_css_class("flat")
+                quick_import_btn.add_css_class("pill")
+                quick_import_btn.add_css_class("trending-import-btn")
+                quick_import_btn.set_valign(Gtk.Align.CENTER)
+                quick_import_btn.set_tooltip_text(_("Import this trending article directly into a new tab"))
+
+                def on_quick_import_clicked(btn, t_name=topic.title):
+                    dialog.force_close()
+                    fetch_rel = chk_related.get_active()
+                    max_rel = int(limit_spin.get_value()) if fetch_rel else 0
+                    self._start_wikipedia_import(t_name, fetch_rel, max_rel)
+
+                quick_import_btn.connect("clicked", on_quick_import_clicked)
+                row_box.append(quick_import_btn)
+
+                row.set_child(row_box)
+                trending_listbox.append(row)
+
+            trending_stack.set_visible_child_name("list")
+            GLib.idle_add(lambda: trending_scrolled.get_vadjustment().set_value(0))
+
+        is_trending_loaded = [False]
+
+        def load_trending(force=False):
+            trending_stack.set_visible_child_name("loading")
+            def worker():
+                try:
+                    rep_title, items = fetch_wikipedia_top_25(force_refresh=force)
+                    is_trending_loaded[0] = True
+                    GLib.idle_add(populate_trending, rep_title, items)
+                except Exception as e:
+                    def show_err():
+                        error_lbl.set_text(str(e))
+                        trending_stack.set_visible_child_name("error")
+                    GLib.idle_add(show_err)
+            threading.Thread(target=worker, daemon=True).start()
+
+        def on_trending_row_activated(lbox, row):
+            if hasattr(row, '_wiki_title') and row._wiki_title:
+                entry.set_text(row._wiki_title)
+                entry.grab_focus()
+
+        trending_listbox.connect("row-activated", on_trending_row_activated)
+
+        condensed_width = [dialog.get_content_width()]
+
+        def toggle_trending(expand=None):
+            current = trending_revealer.get_reveal_child()
+            target = not current if expand is None else expand
+            if target:
+                if not trending_revealer.get_reveal_child():
+                    condensed_width[0] = dialog.get_content_width()
+                dialog.set_content_width(920)
+                dialog.set_prefer_wide_layout(True)
+                trending_revealer.set_reveal_child(True)
+                toggle_trending_btn.set_label(_("Hide Trending Topics  ◀"))
+                if hasattr(self, 'get_width') and self.get_width() < 960:
+                    try:
+                        self.set_default_size(max(self.get_width(), 960), max(self.get_height(), 680))
+                    except Exception:
+                        pass
+                if not is_trending_loaded[0]:
+                    load_trending(force=False)
+            else:
+                trending_revealer.set_reveal_child(False)
+                dialog.set_content_width(condensed_width[0])
+                toggle_trending_btn.set_label(_("Trending Topics (Top 25)  ▶"))
+
+        toggle_trending_btn.connect("clicked", lambda _: toggle_trending())
+        collapse_btn.connect("clicked", lambda _: toggle_trending(False))
+        refresh_btn.connect("clicked", lambda _: load_trending(force=True))
+        retry_btn.connect("clicked", lambda _: load_trending(force=True))
+
+        dialog.set_extra_child(main_hbox)
         dialog.add_response("cancel", _("Cancel"))
         dialog.add_response("import", _("Import"))
         dialog.set_response_appearance("import", Adw.ResponseAppearance.SUGGESTED)
@@ -3499,6 +3896,13 @@ class ReadAloudWindow(Adw.ApplicationWindow):
         dialog._sugg_revealer = sugg_revealer
         dialog._sugg_listbox = sugg_listbox
         dialog._apply_suggestions = apply_suggestions
+        dialog._trending_revealer = trending_revealer
+        dialog._toggle_trending_btn = toggle_trending_btn
+        dialog._trending_listbox = trending_listbox
+        dialog._trending_stack = trending_stack
+        dialog._load_trending = load_trending
+        dialog._toggle_trending = toggle_trending
+        dialog._populate_trending = populate_trending
 
         # When enter is pressed in entry, trigger the import response
         def on_entry_activate(*_):

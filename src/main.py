@@ -49,6 +49,43 @@ from .window import ReadAloudWindow
 from .bubble import ListenerBubbleWindow
 
 CHANGELOG_XML = r"""
+<p><em>Version 1.8.18 - (13 November 2026)</em></p>
+<p>Version 1.8.18 introduces an expandable and condensable right pane on the Wikipedia Importer that scrapes the weekly Top 25 Trending topics on Wikipedia complete with rich article thumbnail preview images and one-click import, adds semi-transparent hover-activated tab navigation buttons with auto-scrolling for multi-tab document cycling, recolours primary action buttons (Open Text File, Play/Read Text, Pause, and Stop) to the signature reading highlight yellow (#f6d32d) with a crisp new scalable vector folder icon, and expands automated regression test coverage to 326 tests.</p>
+
+<p><em>Features and Fixes Removed:</em></p>
+<ul>
+  <li><em>Legacy Raster PNG Open File Icon:</em> Removed the embedded base64 raster PNG icon for im.zackarious.ReadAloud.folder-open in data/icons and src/icons. <em>Reason:</em> The fixed-pixel raster image could not be styled with dynamic CSS colors and exhibited blurring at high DPI scaling; replaced with a crisp, scalable vector SVG icon matching the exact Adwaita highlight yellow (#f6d32d).</li>
+  <li><em>Fixed Dialog Width on Wikipedia Importer:</em> Removed fixed width constraints from the Wikipedia Importer dialog. <em>Reason:</em> Prevented side-by-side presentation of rich preview content; replaced with dynamic dialog resizing (450px compact, 920px wide layout) allowing seamless exploration of trending topics alongside the search interface.</li>
+</ul>
+
+<p><em>Features and Fixes Added:</em></p>
+<ul>
+  <li><em>Wikipedia Top 25 Trending Topics Right Pane:</em> Added an expandable sliding right pane (trending_revealer) in on_import_wikipedia_action() in src/window.py that scrapes and displays Wikipedia's official weekly Top 25 Report (Wikipedia:Top_25_Report). <em>Reason:</em> Gives users immediate access to popular and trending knowledge topics to read aloud without needing to brainstorm search queries.</li>
+  <li><em>Asynchronous Article Thumbnail Image Loading:</em> Integrated asynchronous thumbnail image fetching (fetch_thumbnail_bytes) with in-memory caching and 60x48 rounded picture displays for each trending article. <em>Reason:</em> Delivers rich visual context for trending topics while keeping the UI responsive and thread-safe.</li>
+  <li><em>One-Click Trending Article Import &amp; Search Sync:</em> Added quick "Import" action buttons on each trending row and wired row activation to populate the main search entry. <em>Reason:</em> Streamlines document import so users can start listening to any trending article with a single click.</li>
+  <li><em>Live Trending Refresh &amp; Caching (fetch_wikipedia_top_25):</em> Added 1-hour in-memory report caching and a manual refresh button (view-refresh-symbolic) in the trending pane header. <em>Reason:</em> Ensures instant pane re-expansion while providing on-demand live scraping of current Wikipedia reports.</li>
+  <li><em>Hover-Activated Tab Navigation Buttons:</em> Added semi-transparent circular navigation buttons (tab_nav_prev_btn, tab_nav_next_btn) overlaid on the tab bar that smoothly crossfade into view when 2 or more tabs are open and the user hovers over the tab bar. <em>Reason:</em> Enables quick, effortless cycling across multiple open tabs with automatic horizontal scroll positioning.</li>
+  <li><em>Highlight Yellow Action Button Recolouring (#f6d32d):</em> Recoloured the Open Text File button (open_button), Read Text button (read_button), Pause button (pause_button), and Stop button (stop_button) to match the exact yellow highlight color (#f6d32d — GNOME Adwaita Yellow 3) used during text playback. <em>Reason:</em> Establishes clear visual hierarchy and binds key document loading and playback action controls to the reader's active highlighting aesthetic.</li>
+  <li><em>Scalable Vector Open Folder Icon (im.zackarious.ReadAloud.folder-open.svg):</em> Designed and bundled a modern 64x64 scalable SVG icon with #f6d32d front flap and #e5a50a back tab into the GResource bundle. <em>Reason:</em> Guarantees high-DPI sharpness and visual consistency across all desktop scaling factors.</li>
+  <li><em>Automated Regression Test Suite Expansion (326 Tests):</em> Added comprehensive automated tests in tests/test_button_recolour.py, tests/test_tab_navigation_buttons.py, and tests/test_wikipedia_importer.py covering Top 25 table scraping, fallback parsing, right pane expansion/collapse, row activation, quick import dispatch, button recolouring CSS, and hover navigation behavior. <em>Reason:</em> Guarantees long-term stability and regression resistance across all new features.</li>
+</ul>
+
+<p><em>Features and Fixes Updated:</em></p>
+<ul>
+  <li><em>Wikipedia Importer Responsive Layout:</em> Updated on_import_wikipedia_action() in src/window.py to dynamically adapt dialog width between 450px condensed and 920px expanded layouts, smoothly adjusting parent window dimensions when needed. <em>Reason:</em> Provides an unconstrained, comfortable dual-pane reading and search experience across various display resolutions.</li>
+  <li><em>Action Button State Styling (.highlight-accent-btn):</em> Added hover (#f8e45c with 14% yellow tint), active (#e5a50a with 24% yellow tint), and disabled (38% opacity) CSS states in src/window.py. <em>Reason:</em> Provides smooth, accessible tactile feedback during user interaction across all primary buttons.</li>
+  <li><em>Tab Navigation Signal Synchronization:</em> Connected page-attached, page-detached, and page-reordered signals on the AdwTabView to automatically update navigation button sensitivity and visibility. <em>Reason:</em> Keeps tab navigation state strictly synchronized whenever tabs are opened, closed, or moved.</li>
+  <li><em>Wikimedia-Compliant User-Agent Header:</em> Updated user-agent string to ReadAloud/1.8.18 (https://github.com/wbernard/parolu; contact@readaloud.app) in src/wikipedia_importer.py. <em>Reason:</em> Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version release.</li>
+  <li><em>Application Version Increment (1.8.18):</em> Updated application version to 1.8.18 across meson.build, src/main.py, src/error_logger.py, src/wikipedia_importer.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_windows/build_arm64_portable.py, build_linux/build_deb.sh, build_linux/build_appimage.sh, build_linux/debian/control, build_macos/build_macos.sh, tests/test_about_window.py, tests/test_error_logger.py, and CI workflows. <em>Reason:</em> Adheres to semantic versioning standards for the new release.</li>
+</ul>
+
+<p><em>Visual Changes and UI Updates:</em></p>
+<ul>
+  <li><em>Signature Highlight Yellow Theme Accent:</em> Applied #f6d32d to open_button, read_button, pause_button, and stop_button, paired with the newly designed vector folder icon. <em>Reason:</em> Unifies the visual language of the application by echoing the editor's text reading highlight across primary control buttons.</li>
+  <li><em>Expandable Two-Column Wikipedia Dialog:</em> Styled the Top 25 Trending right pane with .trending-pane-card, .trending-rank-badge (#f6d32d pill), .trending-thumb (rounded image frame), and smooth slide-right revealer animation. <em>Reason:</em> Presents trending knowledge in a clean, organized, magazine-style overview.</li>
+  <li><em>Hover Tab Bar Chevrons (.tab-nav-btn):</em> Styled semi-transparent circular buttons with translucent backdrop blur (alpha(@window_bg_color, 0.76)), subtle drop shadow, and smooth hover scale feedback. <em>Reason:</em> Delivers non-intrusive, floating navigation controls that appear only when hovering over multiple open tabs.</li>
+</ul>
+
 <p><em>Version 1.8.17 - (13 November 2026)</em></p>
 <p>Version 1.8.17 introduces an automatic tag removal system with a persistent toggle under Tools that sanitizes documents on import and strips bracketed notes, citations, markdown pipes, hashes, and stars in real time as the user types or pastes, integrates a permanent, fully circular font zoom control capsule with 20% zoom increments directly into the tab bar preceding the New Tab button, and expands automated regression test coverage to 310 tests.</p>
 
@@ -1460,7 +1497,7 @@ class AboutReadAloudWindow(Adw.Window):
     application_name = GObject.Property(type=str, default='ReadAloud')
     application_icon = GObject.Property(type=str, default='im.zackarious.ReadAloud')
     developer_name = GObject.Property(type=str, default='zackarious')
-    version = GObject.Property(type=str, default='Version 1.8.17 - (13 November 2026)')
+    version = GObject.Property(type=str, default='Version 1.8.18 - (13 November 2026)')
     website = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
     issue_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud/issues')
     support_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
@@ -1568,7 +1605,7 @@ class AboutReadAloudWindow(Adw.Window):
         box.append(dev_label)
 
         # Version
-        ver_label = Gtk.Label(label="Version 1.8.17 - (13 November 2026)")
+        ver_label = Gtk.Label(label="Version 1.8.18 - (13 November 2026)")
         ver_label.add_css_class("caption")
         ver_label.add_css_class("dim-label")
         box.append(ver_label)
@@ -2044,4 +2081,4 @@ def main(version):
     return result
 
 if __name__ == "__main__":
-    main("1.8.17")
+    main("1.8.18")

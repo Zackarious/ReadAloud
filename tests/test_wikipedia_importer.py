@@ -19,6 +19,9 @@ from src.wikipedia_importer import (
     fetch_wikipedia_suggestions,
     fetch_thumbnail_bytes,
     WikipediaSuggestion,
+    WikipediaTrendingTopic,
+    scrape_wikipedia_top_25_report,
+    fetch_wikipedia_top_25,
 )
 from src.window import ReadAloudWindow, clean_all_tags
 
@@ -469,6 +472,171 @@ class TestWikipediaImporter(unittest.TestCase):
         row0.emit("activate")
         self.assertEqual(dialog._entry.get_text(), "England")
         self.assertFalse(dialog._sugg_revealer.get_reveal_child())
+
+    def test_scrape_wikipedia_top_25_report(self):
+        sample_html = """
+        <html>
+        <body>
+            <h2>Most Popular Wikipedia Articles of the Week (November 1 to 7, 2026)</h2>
+            <table class="wikitable">
+                <tr><th>Rank</th><th>Article</th><th>Class</th><th>Views</th><th>Image</th><th>Notes/about</th></tr>
+                <tr>
+                    <td>1</td>
+                    <td><a href="/wiki/Abdul_El-Sayed">Abdul El-Sayed</a></td>
+                    <td><img src="//thumb.wikimedia.org/class_b.png" alt="B-class"/></td>
+                    <td>3,687,537</td>
+                    <td><img src="//thumb.wikimedia.org/abdul.jpg" alt="Abdul photo"/></td>
+                    <td>First of a list filled with new Democratic Senators.</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><a href="https://en.wikipedia.org/wiki/2026_United_States_elections">2026 United States elections</a></td>
+                    <td><img src="//thumb.wikimedia.org/class_b.png" alt="B-class"/></td>
+                    <td>2,639,943</td>
+                    <td><img src="https://thumb.wikimedia.org/map.png" alt="Map"/></td>
+                    <td>Midterm election results discussion.</td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        """
+        title, items = scrape_wikipedia_top_25_report(sample_html)
+        self.assertIn("Most Popular Wikipedia Articles of the Week", title)
+        self.assertEqual(len(items), 2)
+
+        it1 = items[0]
+        self.assertEqual(it1.rank, 1)
+        self.assertEqual(it1.title, "Abdul El-Sayed")
+        self.assertEqual(it1.url, "https://en.wikipedia.org/wiki/Abdul_El-Sayed")
+        self.assertEqual(it1.views, "3,687,537")
+        self.assertEqual(it1.image_url, "https://thumb.wikimedia.org/abdul.jpg")
+        self.assertIn("First of a list", it1.notes)
+
+        it2 = items[1]
+        self.assertEqual(it2.rank, 2)
+        self.assertEqual(it2.title, "2026 United States elections")
+        self.assertEqual(it2.url, "https://en.wikipedia.org/wiki/2026_United_States_elections")
+        self.assertEqual(it2.views, "2,639,943")
+        self.assertEqual(it2.image_url, "https://thumb.wikimedia.org/map.png")
+
+    def test_scrape_wikipedia_top_25_report_fallback_parser(self):
+        sample_html = """
+        <table class="wikitable">
+            <tr><th>Rank</th><th>Article</th><th>Class</th><th>Views</th><th>Image</th><th>Notes/about</th></tr>
+            <tr>
+                <td>3</td>
+                <td><a href="/wiki/Ramayana">Ramayana</a></td>
+                <td>C</td>
+                <td>2,415,033</td>
+                <td><img src="//thumb.wikimedia.org/rama.jpg"/></td>
+                <td>Indian cinema epic adaptation.</td>
+            </tr>
+        </table>
+        """
+        with patch('src.wikipedia_importer.BS4_AVAILABLE', False):
+            title, items = scrape_wikipedia_top_25_report(sample_html)
+            self.assertEqual(len(items), 1)
+            self.assertEqual(items[0].rank, 3)
+            self.assertEqual(items[0].title, "Ramayana")
+            self.assertEqual(items[0].views, "2,415,033")
+            self.assertEqual(items[0].image_url, "https://thumb.wikimedia.org/rama.jpg")
+
+    @patch('src.wikipedia_importer.urllib.request.urlopen')
+    def test_fetch_wikipedia_top_25_mocked(self, mock_urlopen):
+        mock_response = MagicMock()
+        mock_response.read.return_value = b"""
+        <h2>Most Popular Articles (Weekly)</h2>
+        <table class="wikitable">
+            <tr><th>Rank</th><th>Article</th><th>Class</th><th>Views</th><th>Image</th><th>Notes/about</th></tr>
+            <tr>
+                <td>1</td>
+                <td><a href="/wiki/Topic_One">Topic One</a></td>
+                <td>A</td>
+                <td>1,000,000</td>
+                <td><img src="//thumb.wikimedia.org/t1.jpg"/></td>
+                <td>Commentary text.</td>
+            </tr>
+        </table>
+        """
+        mock_response.headers.get_content_charset.return_value = "utf-8"
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        with patch('src.wikipedia_importer.REQUESTS_AVAILABLE', False):
+            title, items = fetch_wikipedia_top_25(force_refresh=True)
+            self.assertIn("Most Popular Articles", title)
+            self.assertEqual(len(items), 1)
+            self.assertEqual(items[0].title, "Topic One")
+
+    def test_dialog_trending_right_pane_expand_condense(self):
+        win = ReadAloudWindow(application=self.app)
+        dialog = win.on_import_wikipedia_action()
+
+        self.assertTrue(hasattr(dialog, '_trending_revealer'))
+        self.assertTrue(hasattr(dialog, '_toggle_trending_btn'))
+        self.assertTrue(hasattr(dialog, '_trending_listbox'))
+
+        # Initially condensed
+        self.assertFalse(dialog._trending_revealer.get_reveal_child())
+        initial_width = dialog.get_content_width()
+
+        # Expand pane
+        dialog._toggle_trending(expand=True)
+        self.assertTrue(dialog._trending_revealer.get_reveal_child())
+        self.assertEqual(dialog.get_content_width(), 920)
+
+        # Condense pane
+        dialog._toggle_trending(expand=False)
+        self.assertFalse(dialog._trending_revealer.get_reveal_child())
+        self.assertEqual(dialog.get_content_width(), initial_width)
+
+    def test_dialog_trending_row_activation_and_import(self):
+        win = ReadAloudWindow(application=self.app)
+        dialog = win.on_import_wikipedia_action()
+
+        mock_topics = [
+            WikipediaTrendingTopic(
+                rank=1,
+                title="Abdul El-Sayed",
+                url="https://en.wikipedia.org/wiki/Abdul_El-Sayed",
+                views="3,687,537",
+                image_url="https://example.com/thumb1.jpg",
+                notes="Senator-elect commentary"
+            ),
+            WikipediaTrendingTopic(
+                rank=2,
+                title="2026 United States elections",
+                url="https://en.wikipedia.org/wiki/2026_United_States_elections",
+                views="2,639,943",
+                image_url=None,
+                notes="Midterm commentary"
+            )
+        ]
+        dialog._populate_trending("Report Nov 2026", mock_topics)
+
+        # Check rows populated
+        row0 = dialog._trending_listbox.get_row_at_index(0)
+        self.assertIsNotNone(row0)
+        self.assertEqual(getattr(row0, '_wiki_title', None), "Abdul El-Sayed")
+
+        # Activating row should set text in entry
+        row0.emit("activate")
+        self.assertEqual(dialog._entry.get_text(), "Abdul El-Sayed")
+
+        # Verify quick import button exists on row
+        row_box = row0.get_child()
+        import_btn = None
+        child = row_box.get_first_child()
+        while child:
+            if isinstance(child, Gtk.Button) and child.has_css_class("trending-import-btn"):
+                import_btn = child
+                break
+            child = child.get_next_sibling()
+        self.assertIsNotNone(import_btn)
+
+        # Clicking import button should initiate import
+        with patch.object(win, '_start_wikipedia_import') as mock_start_import:
+            import_btn.emit("clicked")
+            mock_start_import.assert_called_once_with("Abdul El-Sayed", False, 0)
 
 
 if __name__ == '__main__':

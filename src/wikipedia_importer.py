@@ -33,7 +33,7 @@ except ImportError:
     BeautifulSoup = None
 
 DEFAULT_USER_AGENT = (
-    "ReadAloud/1.8.17 (https://github.com/wbernard/parolu; contact@readaloud.app)"
+    "ReadAloud/1.8.18 (https://github.com/wbernard/parolu; contact@readaloud.app)"
 )
 
 STOP_SECTIONS = {
@@ -590,4 +590,218 @@ def fetch_wikipedia_suggestions(
         suggestions.append(WikipediaSuggestion(title=title, description=description, thumbnail_url=thumb_url))
 
     return suggestions
+
+
+class WikipediaTrendingTopic:
+    """Represents a trending topic from Wikipedia's Top 25 Report."""
+
+    def __init__(
+        self,
+        rank: int,
+        title: str,
+        url: str = "",
+        views: str = "",
+        image_url: Optional[str] = None,
+        notes: str = ""
+    ):
+        self.rank = rank
+        self.title = title
+        self.url = url
+        self.views = views
+        self.image_url = image_url
+        self.notes = notes
+
+    def __repr__(self):
+        return f"<WikipediaTrendingTopic rank={self.rank} title={self.title!r} views={self.views!r}>"
+
+
+WIKIPEDIA_TOP_25_URL = "https://en.wikipedia.org/wiki/Wikipedia:Top_25_Report"
+_TOP_25_CACHE: Dict[str, Any] = {}
+
+
+def scrape_wikipedia_top_25_report(html_content: str) -> Tuple[str, List[WikipediaTrendingTopic]]:
+    """Scrapes Wikipedia:Top_25_Report HTML and extracts report title and top 25 topics."""
+    report_title = "Wikipedia Top 25 Trending Topics"
+    items: List[WikipediaTrendingTopic] = []
+
+    if BS4_AVAILABLE and BeautifulSoup is not None:
+        soup = BeautifulSoup(html_content, "html.parser")
+        table = soup.find("table", class_="wikitable")
+        if table:
+            prev_h = table.find_previous(["h2", "h1"])
+            if prev_h and prev_h.text.strip():
+                clean_h = prev_h.text.strip()
+                clean_h = re.sub(r'\[edit[^\]]*\]', '', clean_h).strip()
+                if clean_h:
+                    report_title = clean_h
+
+            rows = table.find_all("tr")
+            for r in rows:
+                cells = r.find_all(["td", "th"])
+                if len(cells) < 6:
+                    continue
+                rank_str = cells[0].text.strip()
+                if not rank_str.isdigit():
+                    continue
+                rank = int(rank_str)
+
+                # Column 1: Article title & URL
+                art_cell = cells[1]
+                title = art_cell.text.strip()
+                art_a = art_cell.find("a")
+                article_url = ""
+                if art_a and art_a.get("href"):
+                    href = art_a["href"]
+                    if href.startswith("/wiki/"):
+                        article_url = "https://en.wikipedia.org" + href
+                    elif href.startswith("http://") or href.startswith("https://"):
+                        article_url = href
+
+                # Column 3: Views count
+                views = cells[3].text.strip()
+
+                # Column 4: Image thumbnail
+                img_cell = cells[4]
+                img_tag = img_cell.find("img")
+                img_url = None
+                if img_tag and img_tag.get("src"):
+                    raw_src = img_tag["src"]
+                    if raw_src.startswith("//"):
+                        img_url = "https:" + raw_src
+                    elif raw_src.startswith("http://") or raw_src.startswith("https://"):
+                        img_url = raw_src
+
+                # Column 5: Notes/about commentary
+                notes_cell = cells[5]
+                notes = notes_cell.text.strip().replace("\n", " ")
+                notes = re.sub(r"\s+", " ", notes).strip()
+
+                items.append(WikipediaTrendingTopic(
+                    rank=rank,
+                    title=title,
+                    url=article_url,
+                    views=views,
+                    image_url=img_url,
+                    notes=notes
+                ))
+    else:
+        class _Top25FallbackParser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.in_wikitable = False
+                self.table_depth = 0
+                self.in_row = False
+                self.cells = []
+                self.current_cell = []
+                self.current_a = None
+                self.current_img = None
+                self.rows_data = []
+
+            def handle_starttag(self, tag, attrs):
+                attrs_dict = dict(attrs)
+                classes = attrs_dict.get('class', '').split()
+                if tag == 'table' and 'wikitable' in classes:
+                    self.in_wikitable = True
+                    self.table_depth = 1
+                    return
+                if self.in_wikitable:
+                    if tag == 'table':
+                        self.table_depth += 1
+                    elif tag == 'tr':
+                        self.in_row = True
+                        self.cells = []
+                    elif tag in ('td', 'th') and self.in_row:
+                        self.current_cell = []
+                        self.current_a = None
+                        self.current_img = None
+                    elif tag == 'a' and 'href' in attrs_dict and not self.current_a:
+                        self.current_a = attrs_dict['href']
+                    elif tag == 'img' and 'src' in attrs_dict and not self.current_img:
+                        self.current_img = attrs_dict['src']
+
+            def handle_endtag(self, tag):
+                if self.in_wikitable:
+                    if tag == 'table':
+                        self.table_depth -= 1
+                        if self.table_depth == 0:
+                            self.in_wikitable = False
+                    elif tag == 'tr' and self.in_row:
+                        self.in_row = False
+                        if len(self.cells) >= 6:
+                            self.rows_data.append(self.cells)
+                    elif tag in ('td', 'th') and self.in_row:
+                        text = ''.join(self.current_cell).strip()
+                        self.cells.append({'text': text, 'a': self.current_a, 'img': self.current_img})
+
+            def handle_data(self, data):
+                if self.in_wikitable and self.in_row:
+                    self.current_cell.append(data)
+
+        parser = _Top25FallbackParser()
+        parser.feed(html_content)
+        for r in parser.rows_data:
+            if not r[0]['text'].isdigit():
+                continue
+            rank = int(r[0]['text'])
+            title = r[1]['text']
+            href = r[1]['a'] or ""
+            if href.startswith("/wiki/"):
+                href = "https://en.wikipedia.org" + href
+            views = r[3]['text']
+            img_src = r[4]['img']
+            if img_src and img_src.startswith("//"):
+                img_src = "https:" + img_src
+            notes = re.sub(r"\s+", " ", r[5]['text']).strip()
+            items.append(WikipediaTrendingTopic(
+                rank=rank,
+                title=title,
+                url=href,
+                views=views,
+                image_url=img_src,
+                notes=notes
+            ))
+
+    return report_title, items
+
+
+def fetch_wikipedia_top_25(
+    user_agent: str = DEFAULT_USER_AGENT,
+    timeout: int = 15,
+    force_refresh: bool = False
+) -> Tuple[str, List[WikipediaTrendingTopic]]:
+    """Fetches and parses the Wikipedia:Top_25_Report page."""
+    global _TOP_25_CACHE
+    now = time.time()
+    if not force_refresh and "data" in _TOP_25_CACHE and (now - _TOP_25_CACHE.get("timestamp", 0) < 3600):
+        return _TOP_25_CACHE["title"], _TOP_25_CACHE["data"]
+
+    headers = {"User-Agent": user_agent}
+    html_text = None
+    last_err = None
+
+    if REQUESTS_AVAILABLE and requests is not None:
+        try:
+            resp = requests.get(WIKIPEDIA_TOP_25_URL, headers=headers, timeout=timeout)
+            resp.raise_for_status()
+            html_text = resp.text
+        except Exception as e:
+            last_err = e
+
+    if html_text is None:
+        try:
+            req = urllib.request.Request(WIKIPEDIA_TOP_25_URL, headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                charset = resp.headers.get_content_charset() or "utf-8"
+                html_text = resp.read().decode(charset, errors="replace")
+        except Exception as e:
+            if last_err:
+                raise ConnectionError(f"Failed to fetch Wikipedia Top 25 Report: {last_err}") from last_err
+            raise ConnectionError(f"Failed to fetch Wikipedia Top 25 Report: {e}") from e
+
+    title, items = scrape_wikipedia_top_25_report(html_text)
+    if items:
+        _TOP_25_CACHE["timestamp"] = now
+        _TOP_25_CACHE["title"] = title
+        _TOP_25_CACHE["data"] = items
+    return title, items
 
