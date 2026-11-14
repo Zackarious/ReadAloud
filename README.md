@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-Windows-Setup-x64.exe"><img src="https://img.shields.io/badge/Windows-Download%20Installer%20(.exe)-blue?logo=windows&logoColor=white" alt="Windows Download" height="32"></a>
-  <a href="https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-linux-x86_64.AppImage"><img src="https://img.shields.io/badge/Linux-Download%20AppImage%20(.AppImage)-26A269?logo=linux&logoColor=white" alt="Linux AppImage Download" height="32"></a>
-  <a href="https://flathub.org/apps/im.zackarious.ReadAloud"><img src="https://dl.flathub.org/assets/badges/flathub-badge-en.svg" alt="Download on Flathub" height="32"></a>
+  <a href="https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-Windows-Setup-x64.exe"><img src="data/badges/download-windows.svg" alt="Download for Windows (.exe)" height="56"/></a>
+  <a href="https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-linux-x86_64.AppImage"><img src="data/badges/download-appimage.svg" alt="Download for Linux (.AppImage)" height="56"/></a>
+  <a href="https://flathub.org/apps/im.zackarious.ReadAloud"><img src="data/badges/download-flathub.svg" alt="Download on Flathub" height="56"/></a>
 </p>
 
 <p align="center">
