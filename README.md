@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Zackarious/ReadAloud/releases/latest"><img src="https://img.shields.io/badge/Windows-Download%20Installer%20(.exe)-blue?logo=windows&logoColor=white" alt="Windows Download" height="32"></a>
+  <a href="https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-Windows-Setup-x64.exe"><img src="https://img.shields.io/badge/Windows-Download%20Installer%20(.exe)-blue?logo=windows&logoColor=white" alt="Windows Download" height="32"></a>
   <a href="https://flathub.org/apps/im.zackarious.ReadAloud"><img src="https://dl.flathub.org/assets/badges/flathub-badge-en.svg" alt="Download on Flathub" height="32"></a>
 </p>
 
