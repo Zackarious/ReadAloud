@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-Windows-Setup-x64.exe"><img src="https://img.shields.io/badge/Windows-Download%20Installer%20(.exe)-blue?logo=windows&logoColor=white" alt="Windows Download" height="32"></a>
+  <a href="https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-linux-x86_64.AppImage"><img src="https://img.shields.io/badge/Linux-Download%20AppImage%20(.AppImage)-26A269?logo=linux&logoColor=white" alt="Linux AppImage Download" height="32"></a>
   <a href="https://flathub.org/apps/im.zackarious.ReadAloud"><img src="https://dl.flathub.org/assets/badges/flathub-badge-en.svg" alt="Download on Flathub" height="32"></a>
 </p>
 
@@ -286,19 +287,20 @@ readaloud
 ```
 
 #### Standalone Linux AppImage (`.AppImage`)
-Download the multi-volume AppImage split files from the **[Releases Page](https://github.com/Zackarious/ReadAloud/releases/latest)**:
-- [`ReadAloud-1.8.19-linux-x86_64.AppImage.zip.001`](https://github.com/Zackarious/ReadAloud/releases/latest)
-- [`ReadAloud-1.8.19-linux-x86_64.AppImage.zip.002`](https://github.com/Zackarious/ReadAloud/releases/latest)
+Download the standalone AppImage launcher directly:
+- [`ReadAloud-1.8.19-linux-x86_64.AppImage`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-linux-x86_64.AppImage) (Standalone Launcher, ~1 MB)
 
-Extract and run:
+Launch directly:
 ```bash
-# Combine and extract the split archive
-7z x ReadAloud-1.8.19-linux-x86_64.AppImage.zip.001
-
 # Make executable and launch
 chmod +x ReadAloud-1.8.19-linux-x86_64.AppImage
 ./ReadAloud-1.8.19-linux-x86_64.AppImage
 ```
+
+- **Smart Component Detection & Auto-Download**: If either data slice (`ReadAloud-1.8.19-linux-x86_64.AppImage.001` or `ReadAloud-1.8.19-linux-x86_64.AppImage.002`) is missing, ReadAloud automatically detects the missing components on launch, prompts with an interactive GUI dialog (or terminal prompt), and automatically downloads them directly from GitHub into your folder with visual progress reporting before assembling the offline runtime.
+- **Manual Download (Alternative)**: Download both data slices into the same folder alongside the AppImage before running:
+  - [`ReadAloud-1.8.19-linux-x86_64.AppImage.001`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-linux-x86_64.AppImage.001) (Part 1 Data Slice, 1.8 GB)
+  - [`ReadAloud-1.8.19-linux-x86_64.AppImage.002`](https://github.com/Zackarious/ReadAloud/releases/download/v1.8.19/ReadAloud-1.8.19-linux-x86_64.AppImage.002) (Part 2 Data Slice, 535 MB)
 
 ---
 
@@ -385,17 +387,17 @@ Automated testing in ReadAloud serves as the bedrock of application stability, s
 
 ### Test Execution & Results Summary
 
-Automated testing was conducted on **13 November 2026** alongside the release of version **v1.8.19**. A total of **326 tests** were executed across the entire test suite covering 27 test modules. **326 tests passed and 0 tests failed** (0 errors), achieving a **100% pass rate** in approximately 4.9 seconds.
+Automated testing was conducted on **14 November 2026** alongside the release of version **v1.8.19**. A total of **333 tests** were executed across the entire test suite covering 28 test modules. **333 tests passed and 0 tests failed** (0 errors), achieving a **100% pass rate** in approximately 5.7 seconds.
 
 | Metric | Result |
 | :--- | :--- |
-| **Date Conducted** | 13 November 2026 |
+| **Date Conducted** | 14 November 2026 |
 | **Target Version** | ReadAloud v1.8.19 |
-| **Total Tests Conducted** | **326** |
-| **Tests Passed** | **326 (100%)** |
+| **Total Tests Conducted** | **333** |
+| **Tests Passed** | **333 (100%)** |
 | **Tests Failed** | **0 (0%)** |
 | **Errors** | **0** |
-| **Execution Duration** | 4.91 seconds |
+| **Execution Duration** | 5.72 seconds |
 | **Test Runner** | Python `unittest` (`python3 -m unittest discover -s tests`) |
 
 ### Test Suite Module Breakdown
@@ -403,6 +405,7 @@ Automated testing was conducted on **13 November 2026** alongside the release of
 | Test Module | Focus Area / Subsystem | Tests Conducted | Passed | Failed |
 | :--- | :--- | :---: | :---: | :---: |
 | `tests/test_about_window.py` | About dialog metadata, version parity, and GPLv3 attribution | 7 | 7 | 0 |
+| `tests/test_appimage_launcher.py` | Standalone AppImage launcher slice detection, assembly, and desktop integration | 7 | 7 | 0 |
 | `tests/test_audio_playback_fallback.py` | Audio pipeline fallbacks across GStreamer and SoundDevice drivers | 8 | 8 | 0 |
 | `tests/test_auto_remove_tags_and_font_popup.py` | XML/HTML tag stripping, cleanup regexes, and font zoom capsule | 19 | 19 | 0 |
 | `tests/test_bubble.py` | Word tracking bubble geometry, layout coordinates, and highlight tags | 37 | 37 | 0 |
@@ -429,7 +432,7 @@ Automated testing was conducted on **13 November 2026** alongside the release of
 | `tests/test_text_tools.py` | Sentence segmentation, symbol cleansing, paragraph gaps, and hyphenation | 56 | 56 | 0 |
 | `tests/test_wikipedia_importer.py` | REST API autocomplete, Top 25 table scraping, and thumbnail caching | 25 | 25 | 0 |
 | `tests/test_word_wrap.py` | TextView margin calculations, word wrapping, and window resize adaptability | 10 | 10 | 0 |
-| **Total Test Suite** | **Comprehensive Full System & Regression Validation** | **326** | **326** | **0** |
+| **Total Test Suite** | **Comprehensive Full System & Regression Validation** | **333** | **333** | **0** |
 
 ---
 

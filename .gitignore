@@ -18,6 +18,7 @@ dist/
 build_windows/build/
 build-arm64/
 build-appimage/
+build-appimage-launcher/
 build-macos/
 build-deb/
 *.log

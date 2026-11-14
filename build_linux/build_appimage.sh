@@ -136,5 +136,9 @@ echo "=== Splitting AppImage into multi-volume parts (${APPIMAGE_NAME}.001, .002
     fi
 )
 
+# 9. Build Standalone AppImage Launcher (with multi-slice auto-downloader)
+echo "=== Building Standalone AppImage Launcher ==="
+bash "${SCRIPT_DIR}/build_appimage_launcher.sh"
+
 ls -lh "${DIST_DIR}/${APPIMAGE_NAME}"* || true
-echo "=== Linux x86_64 AppImage split packaging complete! ==="
+echo "=== Linux x86_64 AppImage packaging complete! ==="
