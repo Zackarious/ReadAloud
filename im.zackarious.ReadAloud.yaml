@@ -1,0 +1,28 @@
+app-id: im.zackarious.ReadAloud
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: readaloud
+
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=fallback-x11
+  - --device=dri
+  - --socket=wayland
+  - --socket=pulseaudio
+
+cleanup-commands:
+  - python3 -m compileall --invalidation-mode=unchecked-hash /app
+
+modules:
+  - pip-dependencies.json
+
+  - name: readaloud
+    builddir: true
+    buildsystem: meson
+    sources:
+      - type: git
+        url: https://github.com/Zackarious/ReadAloud.git
+        tag: v1.8.19
+        commit: 97cc299cff4c35f225005d049784f8ad200acbb4
