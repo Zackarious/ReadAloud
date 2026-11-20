@@ -49,6 +49,39 @@ from .window import ReadAloudWindow
 from .bubble import ListenerBubbleWindow
 
 CHANGELOG_XML = r"""
+<p><em>Version 1.8.20 - (20 November 2026)</em></p>
+<p>Version 1.8.20 introduces a dedicated scalable vector drag-and-drop symbolic icon for empty workspace tabs, adds royalty-free designer attribution for Trimanggolo Mulyo and Noun Project in the Credits and Legal tabs, delivers a complete production-ready packaging suite for Flathub with verified multi-architecture support (x86_64 and aarch64), generates high-contrast 75% larger resolution-independent vector download badges for Windows, Linux AppImage, and Flathub, updates repository screenshots, and expands automated regression test coverage across all new assets.</p>
+
+<p><em>Features and Fixes Removed:</em></p>
+<ul>
+  <li><em>Legacy Folder Icon on Blank Tab Placeholder:</em> Removed the generic document-open-symbolic folder icon from the empty tab drag-and-drop placeholder card in src/window.ui. <em>Reason:</em> A generic folder symbol failed to intuitively convey document drag-and-drop ingestion; replaced with dedicated vector artwork illustrating active file dragging.</li>
+  <li><em>Plaintext URL Strings in MetaInfo Changelogs:</em> Removed raw plaintext URL links from release descriptions in data/im.zackarious.ReadAloud.metainfo.xml.in. <em>Reason:</em> Non-standard raw web URLs inside AppStream description tags triggered linter warnings under appstreamcli validate, blocking strict Flathub automated validation checks.</li>
+</ul>
+
+<p><em>Features and Fixes Added:</em></p>
+<ul>
+  <li><em>Dedicated Drag &amp; Drop Vector Symbolic Icon (im.zackarious.ReadAloud.drag-drop-symbolic.svg):</em> Designed and bundled a crisp, theme-adaptive vector symbolic icon (currentColor) sourced from Trimanggolo Mulyo via Noun Project into the GResource bundle and system icon directories. <em>Reason:</em> Delivers an unmistakable, modern Libadwaita aesthetic that visually guides users to drop .txt, .md, .pdf, or .epub documents directly onto the canvas.</li>
+  <li><em>Flathub Packaging &amp; Submission Suite (build_flatpak/):</em> Added production-ready Flatpak manifest (im.zackarious.ReadAloud.yaml), architecture configuration (flathub.json), local build script (build_flatpak.sh), and submission guide (README.md) targeting Flathub publication on x86_64 and aarch64. <em>Reason:</em> Streamlines official Flathub submission for im.zackarious.ReadAloud with pinned, verified offline dependencies and remote git tag checkout.</li>
+  <li><em>Designers &amp; Icon Providers Royalty-Free Attribution:</em> Added interactive credit rows for designer Trimanggolo Mulyo and Noun Project in the About dialog Credits tab and legal attribution in the Licensing and Copyright Information tab (LICENSING_TEXT). <em>Reason:</em> Complies fully with royalty-free licensing requirements and honors creative attribution for third-party design assets.</li>
+  <li><em>High-Contrast Scalable Vector Download Badges:</em> Generated custom vector SVG badges (download-windows.svg, download-appimage.svg, download-flathub.svg) via Cairo and Pango with resolution-independent text path glyphs. <em>Reason:</em> Replaced mismatched, small third-party shields with consistent, high-contrast, 75% larger download buttons that render identically across all browsers and devices.</li>
+</ul>
+
+<p><em>Features and Fixes Updated:</em></p>
+<ul>
+  <li><em>Drag-and-Drop Placeholder Card Template (src/window.ui):</em> Updated drop_placeholder GtkImage widget to reference im.zackarious.ReadAloud.drag-drop-symbolic at 64px optical size. <em>Reason:</em> Seamlessly integrates the new vector artwork with Libadwaita accent color adaptation.</li>
+  <li><em>Automated Regression Test Suite Expansion (333 Tests):</em> Added regression tests in tests/test_about_window.py, tests/test_button_recolour.py, and tests/test_drag_and_drop.py covering GResource icon registration, Credits row hyperlinks, legal notices, and placeholder widget inspection. <em>Reason:</em> Ensures new icon assets and attribution data cannot be accidentally broken or removed in future iterations.</li>
+  <li><em>Repository Documentation &amp; Screenshots:</em> Updated README.md, data/screenshots/01-drag-drop-importer.png, and documentation walkthroughs. <em>Reason:</em> Keeps promotional materials, user documentation, and release screenshots strictly synchronized with the live user interface.</li>
+  <li><em>Wikimedia-Compliant User-Agent Header:</em> Updated user-agent string to ReadAloud/1.8.20 (parolu on GitHub; contact@readaloud.app) in src/wikipedia_importer.py. <em>Reason:</em> Maintains strict compliance with Wikimedia Foundation User-Agent policies for the new version release.</li>
+  <li><em>Application Version Increment (1.8.20):</em> Updated application version to 1.8.20 across meson.build, src/main.py, src/error_logger.py, src/wikipedia_importer.py, data/im.zackarious.ReadAloud.metainfo.xml.in, README.md, build_windows/installer.iss, build_windows/win_entrypoint.py, build_windows/build_arm64_portable.py, build_linux/build_deb.sh, build_linux/build_appimage.sh, build_linux/build_appimage_launcher.sh, build_linux/debian/control, build_macos/build_macos.sh, tests/test_about_window.py, tests/test_error_logger.py, and CI workflows. <em>Reason:</em> Adheres to semantic versioning standards for the new release.</li>
+</ul>
+
+<p><em>Visual Changes and UI Updates:</em></p>
+<ul>
+  <li><em>New Centered Drag-and-Drop Guidance Emblem:</em> Displayed the custom hand-and-dashed-box vector icon at 64px optical size in .drag-drop-card. <em>Reason:</em> Delivers a clean, modern Libadwaita aesthetic that visually guides users to drop .txt, .md, .pdf, or .epub documents directly onto the canvas.</li>
+  <li><em>Synchronized Credits &amp; Legal Dialog Rows:</em> Styled the new designer and icon provider credit rows with adw-external-link-symbolic icons and dim subtitle URLs matching the existing AdwPreferencesGroup design. <em>Reason:</em> Provides visual uniformity and responsive tap/click targets across all attribution entries.</li>
+  <li><em>Updated Main Window Repository Screenshot:</em> Replaced data/screenshots/01-drag-drop-importer.png with a freshly captured high-DPI screenshot showcasing the new drag-and-drop icon on an empty document tab. <em>Reason:</em> Accurately reflects the current application visual styling in documentation and software center listings.</li>
+</ul>
+
 <p><em>Version 1.8.19 - (13 November 2026)</em></p>
 <p>Version 1.8.19 resolves Windows font rendering limitations by introducing native scalable vector symbolic icons for article view counts and import actions, makes the Wikipedia Top 25 Trending Topics pane open by default for immediate discovery, equips the Windows multi-part setup installer with automatic slice detection and seamless background downloading for both Part 1 and Part 2 data files, removes obsolete Wikipedia importer documentation entries, publishes formal automated test metrics and quality verification summaries, and frees over 36 GB of disk storage by cleaning historical build artifacts.</p>
 
@@ -1538,7 +1571,7 @@ class AboutReadAloudWindow(Adw.Window):
     application_name = GObject.Property(type=str, default='ReadAloud')
     application_icon = GObject.Property(type=str, default='im.zackarious.ReadAloud')
     developer_name = GObject.Property(type=str, default='zackarious')
-    version = GObject.Property(type=str, default='Version 1.8.19 - (13 November 2026)')
+    version = GObject.Property(type=str, default='Version 1.8.20 - (20 November 2026)')
     website = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
     issue_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud/issues')
     support_url = GObject.Property(type=str, default='https://github.com/Zackarious/ReadAloud')
@@ -1646,7 +1679,7 @@ class AboutReadAloudWindow(Adw.Window):
         box.append(dev_label)
 
         # Version
-        ver_label = Gtk.Label(label="Version 1.8.19 - (13 November 2026)")
+        ver_label = Gtk.Label(label="Version 1.8.20 - (20 November 2026)")
         ver_label.add_css_class("caption")
         ver_label.add_css_class("dim-label")
         box.append(ver_label)
@@ -2124,4 +2157,4 @@ def main(version):
     return result
 
 if __name__ == "__main__":
-    main("1.8.19")
+    main("1.8.20")

@@ -63,7 +63,7 @@ class TestAppImageLauncher(unittest.TestCase):
         appimage_dir.mkdir()
         data_dir.mkdir()
 
-        slice_name = "ReadAloud-1.8.19-linux-x86_64.AppImage.001"
+        slice_name = "ReadAloud-1.8.20-linux-x86_64.AppImage.001"
 
         # Initially missing
         found = appimage_launcher.find_slice(slice_name, appimage_dir, data_dir)

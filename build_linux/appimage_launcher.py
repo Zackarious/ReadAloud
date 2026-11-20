@@ -15,7 +15,7 @@ import urllib.request
 import subprocess
 from pathlib import Path
 
-VERSION = "1.8.19"
+VERSION = "1.8.20"
 REPO_URL = "https://github.com/Zackarious/ReadAloud"
 RELEASE_TAG = f"v{VERSION}"
 DOWNLOAD_BASE_URL = f"{REPO_URL}/releases/download/{RELEASE_TAG}"

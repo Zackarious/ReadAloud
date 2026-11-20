@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-VERSION="1.8.19"
+VERSION="1.8.20"
 APP_NAME="ReadAloud"
 LAUNCHER_APPDIR="${REPO_ROOT}/build-appimage-launcher/AppDir"
 DIST_DIR="${REPO_ROOT}/dist"
