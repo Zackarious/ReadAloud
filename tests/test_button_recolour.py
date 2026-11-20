@@ -76,6 +76,7 @@ class TestButtonRecolour(unittest.TestCase):
         self.assertIn("icons/im.zackarious.ReadAloud.folder-open.svg", content)
         self.assertIn("icons/im.zackarious.ReadAloud.eye-symbolic.svg", content)
         self.assertIn("icons/im.zackarious.ReadAloud.import-symbolic.svg", content)
+        self.assertIn("icons/im.zackarious.ReadAloud.drag-drop-symbolic.svg", content)
 
     def test_playback_state_toggles_preserve_styling(self):
         """Verify switching between playback states preserves the highlight-accent-btn styling."""

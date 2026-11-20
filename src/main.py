@@ -1169,6 +1169,12 @@ Source: https://www.svgrepo.com/author/Asam%20Munir/
 Author Website: https://www.flaticon.com/free-icon/cd_6749218?
 Source: https://www.flaticon.com/free-icon/cd_6749218
 
+• Drag and Drop Icon (Noun Project):
+  - Drag and drop placeholder icon (Blank tab dropzone)
+
+Designer: Trimanggolo Mulyo
+Source: https://thenounproject.com/icon/drag-and-drop-8117670/
+
 These icons are used with attribution as required. No modifications have been \
 made to the original icon designs.
 """
@@ -1886,6 +1892,7 @@ class AboutReadAloudWindow(Adw.Window):
             ]),
             (_("Designers"), [
                 ("Asam Munir (UI Icons)", "https://dribbble.com/asammunir"),
+                ("Trimanggolo Mulyo (Drag and Drop Icon)", "https://thenounproject.com/icon/drag-and-drop-8117670/"),
             ]),
             (_("Speech Engine and Voice Models"), [
                 ("Piper Neural Text-to-Speech Engine", "https://github.com/rhasspy/piper"),
@@ -1895,6 +1902,7 @@ class AboutReadAloudWindow(Adw.Window):
             (_("Icon Providers"), [
                 ("SVGRepo (Asam Munir Collection)", "https://www.svgrepo.com/author/Asam%20Munir/"),
                 ("Flaticon (CD Audio Icon)", "https://www.flaticon.com/free-icon/cd_6749218"),
+                ("Noun Project (Drag and Drop Icon)", "https://thenounproject.com/icon/drag-and-drop-8117670/"),
             ]),
             (_("Open Source Licenses"), [
                 ("GNU General Public License v3.0", "https://www.gnu.org/licenses/gpl-3.0.txt"),

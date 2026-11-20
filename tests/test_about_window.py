@@ -69,6 +69,7 @@ class TestAboutWindow(unittest.TestCase):
         self.assertIn("https://dribbble.com/asammunir", LICENSING_TEXT)
         self.assertIn("https://www.gnu.org/licenses/gpl-3.0.txt", LICENSING_TEXT)
         self.assertIn("https://www.flaticon.com/free-icon/cd_6749218", LICENSING_TEXT)
+        self.assertIn("https://thenounproject.com/icon/drag-and-drop-8117670/", LICENSING_TEXT)
 
     def test_about_window_properties_and_rows(self):
         app = ReadAloudApplication()
@@ -113,6 +114,8 @@ class TestAboutWindow(unittest.TestCase):
         self.assertEqual(rows["Walter Bernard (Original Creator of Parolu)"], "https://github.com/wbernard/parolu")
         self.assertIn("Asam Munir (UI Icons)", rows)
         self.assertEqual(rows["Asam Munir (UI Icons)"], "https://dribbble.com/asammunir")
+        self.assertIn("Trimanggolo Mulyo (Drag and Drop Icon)", rows)
+        self.assertEqual(rows["Trimanggolo Mulyo (Drag and Drop Icon)"], "https://thenounproject.com/icon/drag-and-drop-8117670/")
         self.assertIn("Piper Neural Text-to-Speech Engine", rows)
         self.assertEqual(rows["Piper Neural Text-to-Speech Engine"], "https://github.com/rhasspy/piper")
         self.assertIn("Piper Voice Models Repository", rows)
@@ -123,6 +126,8 @@ class TestAboutWindow(unittest.TestCase):
         self.assertEqual(rows["SVGRepo (Asam Munir Collection)"], "https://www.svgrepo.com/author/Asam%20Munir/")
         self.assertIn("Flaticon (CD Audio Icon)", rows)
         self.assertEqual(rows["Flaticon (CD Audio Icon)"], "https://www.flaticon.com/free-icon/cd_6749218")
+        self.assertIn("Noun Project (Drag and Drop Icon)", rows)
+        self.assertEqual(rows["Noun Project (Drag and Drop Icon)"], "https://thenounproject.com/icon/drag-and-drop-8117670/")
         self.assertIn("GNU General Public License v3.0", rows)
         self.assertEqual(rows["GNU General Public License v3.0"], "https://www.gnu.org/licenses/gpl-3.0.txt")
         self.assertIn("The MIT License", rows)

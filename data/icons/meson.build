@@ -23,5 +23,6 @@ install_data(
   actions_dir / ('@0@.stop-symbolic.svg').format(application_id),
   actions_dir / ('@0@.eye-symbolic.svg').format(application_id),
   actions_dir / ('@0@.import-symbolic.svg').format(application_id),
+  actions_dir / ('@0@.drag-drop-symbolic.svg').format(application_id),
   install_dir: get_option('datadir') / 'icons' / actions_dir
 )

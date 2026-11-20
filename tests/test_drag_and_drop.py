@@ -182,6 +182,12 @@ class TestDragAndDrop(unittest.TestCase):
         page0 = self.window.tab_view.get_nth_page(0)
         self.assertTrue(self.window.drop_placeholder.get_visible())
 
+        # Verify custom drag-drop symbolic icon
+        first_child = self.window.drop_placeholder.get_first_child()
+        self.assertIsInstance(first_child, Gtk.Image)
+        self.assertEqual(first_child.get_icon_name(), "im.zackarious.ReadAloud.drag-drop-symbolic")
+        self.assertEqual(first_child.get_pixel_size(), 64)
+
         # 2. User starts typing -> hidden
         tv = self.window.main_text_view
         buf = tv.get_buffer()
