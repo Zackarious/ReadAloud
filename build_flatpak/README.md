@@ -6,7 +6,7 @@ This directory contains the production-ready packaging files for publishing **Re
 
 ## Files Included
 
-1. **`im.zackarious.ReadAloud.yaml`**: The primary Flatpak manifest configured for Flathub. Fetches upstream source from GitHub at tag `v1.8.20`.
+1. **`im.zackarious.ReadAloud.yaml`**: The primary Flatpak manifest configured for Flathub. Fetches upstream source from GitHub at tag `v1.8.20` (`efaefa7616f35cb30d1cc9153032cda7c570e09d`).
 2. **`pip-dependencies.json`**: Pinned, offline Python wheel dependencies with SHA-256 integrity verification for both `x86_64` and `aarch64`.
 3. **`flathub.json`**: Specifies architecture build targets (`x86_64` and `aarch64`).
 4. **`build_flatpak.sh`**: Helper script to test-build and install the Flatpak locally.

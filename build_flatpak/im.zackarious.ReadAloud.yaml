@@ -25,4 +25,4 @@ modules:
       - type: git
         url: https://github.com/Zackarious/ReadAloud.git
         tag: v1.8.20
-        commit: 8996ceed85feb830b90aad30dacb90d66f40fdc2
+        commit: efaefa7616f35cb30d1cc9153032cda7c570e09d
