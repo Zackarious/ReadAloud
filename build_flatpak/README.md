@@ -54,7 +54,7 @@ git push -u origin im.zackarious.ReadAloud
 
 ```bash
 gh pr create --repo flathub/flathub \
-  --base master \
+  --base new-pr \
   --head Zackarious:im.zackarious.ReadAloud \
   --title "Add im.zackarious.ReadAloud" \
   --body "Add ReadAloud: An offline, private text-to-speech reader for Linux crafted with GTK4 and Libadwaita."
